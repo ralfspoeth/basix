@@ -71,4 +71,26 @@ class RingTest {
                 () -> assertEquals(1, rng.movePrevious().current())
         );
     }
+
+    @Test
+    void testCircle() {
+        var rng = new Ring<Integer>();
+        rng.insertBeforeCurrent(-1); // center piece
+        rng.insertAfterCurrent(1);
+        assert rng.current()==-1;
+        rng.insertBeforeCurrent(2);
+        assert rng.current()==-1;
+        // 2 <> -1 <> 1
+        assertAll(
+                () -> assertEquals(1, rng.moveNext().current()),
+                () -> assertEquals(2, rng.moveNext().current()),
+                () -> assertEquals(-1, rng.moveNext().current()),
+                () -> assertEquals(2, rng.movePrevious().current()),
+                () -> assertEquals(1, rng.movePrevious().current()),
+                () -> assertEquals(-1, rng.movePrevious().current())
+        );
+
+    }
+
+
 }
