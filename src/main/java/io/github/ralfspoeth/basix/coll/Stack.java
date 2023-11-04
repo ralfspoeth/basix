@@ -21,10 +21,11 @@ public final class Stack<T> implements Coll {
         return top == null ? null : top.item;
     }
 
-    public void push(T elem) {
+    public Stack<T> push(T elem) {
         var tmp = new Elem<>(elem);
         tmp.next = top;
         top = tmp;
+        return this;
     }
 
 }

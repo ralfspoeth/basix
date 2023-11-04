@@ -28,9 +28,10 @@ public final class Queue<T> implements Coll {
     public T remove() {
         var tmp = Objects.requireNonNull(first).item;
         first = first.previous;
-        first.next = null;
         if(first==null) {
             last = null;
+        } else {
+            first.next = null;
         }
         return tmp;
     }
