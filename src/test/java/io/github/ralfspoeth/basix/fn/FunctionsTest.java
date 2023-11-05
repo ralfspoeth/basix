@@ -35,17 +35,6 @@ class FunctionsTest {
     }
 
     @Test
-    void ofMap() {
-        var map = Map.of(1, "one", 2, "two");
-        var fun = Functions.of(map);
-        assertAll(
-                ()-> assertEquals("one", fun.apply(1)),
-                ()->assertEquals("two", fun.apply(2)),
-                ()->assertNull(fun.apply(3))
-        );
-    }
-
-    @Test
     void filterAndCast() {
         var values = List.of(1, 2d, true, false, "string", 'c');
         var numList = fnc(values, Number.class);

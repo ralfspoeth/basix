@@ -15,12 +15,6 @@ public final class Functions {
         // prevent instantiation
     }
 
-
-    public static <T, R> Function<T, R> of(Map<T, R> m) {
-        m = Map.copyOf(m);
-        return m::get;
-    }
-
     /**
      * Create a {@link Function function} based on a {@link Map map}
      * and an extraction function which extracts some property
@@ -88,7 +82,7 @@ public final class Functions {
      * The intended usage is therefore with a {@link Stream#flatMap(Function) flatMap}
      * mapping operation:
      * {@snippet :
-     * str.flatMap(filterAndCast(Double.class))
+     * str.flatMap(filterAndCast(Double.class)) // stream of Double values
      * }
      *
      * @param c the class to filter for and to cast the elements of the stream to
