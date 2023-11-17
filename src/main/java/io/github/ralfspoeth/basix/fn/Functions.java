@@ -57,6 +57,12 @@ public final class Functions {
         return indexed(array, 0);
     }
 
+    public static <L, T> Stream<Labeled<L, T>> labeled(Map<L, T> map) {
+        return map.entrySet()
+                .stream()
+                .map(e -> new Labeled<>(e.getKey(), e.getValue()));
+    }
+
     /**
      * Used to perform filtering for and casting to a given type
      * in a single call.
