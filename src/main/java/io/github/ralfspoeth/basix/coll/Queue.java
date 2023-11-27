@@ -1,14 +1,34 @@
 package io.github.ralfspoeth.basix.coll;
 
+import java.util.Iterator;
 import java.util.Objects;
 
-public final class Queue<T> implements Coll {
+import static java.util.Objects.requireNonNull;
+
+public final class Queue<T> implements IterableCollection<T> {
     private Elem<T> last = null;  // last element added
     private Elem<T> first = null; // first to be removed
 
     @Override
     public boolean isEmpty() {
         return last == null;
+    }
+
+    public Iterator<T> iterator() {
+        return new Iterator<>() {
+            Elem<T> current = first;
+            @Override
+            public boolean hasNext() {
+                return current!=null;
+            }
+
+            @Override
+            public T next() {
+                var tmp = current.item;
+                current = current.previous;
+                return tmp;
+            }
+        };
     }
 
     public Queue<T> add(T item) {
@@ -42,5 +62,15 @@ public final class Queue<T> implements Coll {
 
     public T tail() {
         return last==null?null:last.item;
+    }
+
+    private static class Elem<T> {
+        final T item;
+        Elem<T> next;
+        Elem<T> previous;
+
+        private Elem(T newItem) {
+            this.item = requireNonNull(newItem);
+        }
     }
 }
