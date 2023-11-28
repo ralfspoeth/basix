@@ -63,6 +63,10 @@ public final class Functions {
                 .map(e -> new Labeled<>(e.getKey(), e.getValue()));
     }
 
+    public static <L, T> Function<T, Labeled<L, T>> labeled(Function<T, L> label) {
+        return t -> new Labeled<>(label.apply(t), t);
+    }
+
     /**
      * Used to perform filtering for and casting to a given type
      * in a single call.
@@ -91,10 +95,13 @@ public final class Functions {
      * str.flatMap(filterAndCast(Double.class)) // stream of Double values
      * }
      *
+     * The method will soon be replaced by gatherers.
+     *
      * @param c the class to filter for and to cast the elements of the stream to
      * @return a function the wraps the given object into a singleton stream if it mathces
      * @param <T> the target type
      */
+    @Deprecated
     public static <T> Function<Object, Stream<T>> filterAndCast(Class<T> c) {
         return obj -> c.isInstance(obj)
                 ? Stream.of(obj).map(c::cast)
