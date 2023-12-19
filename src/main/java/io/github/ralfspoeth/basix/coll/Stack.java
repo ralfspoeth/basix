@@ -4,11 +4,10 @@ import java.util.Iterator;
 
 import static java.util.Objects.requireNonNull;
 
-public final class Stack<T> implements IterableCollection<T> {
+public final class Stack<T> implements Iterable<T> {
 
     private Elem<T> top = null;
 
-    @Override
     public boolean isEmpty() {
         return top == null;
     }

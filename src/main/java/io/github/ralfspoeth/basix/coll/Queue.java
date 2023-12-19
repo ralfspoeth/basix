@@ -1,19 +1,18 @@
 package io.github.ralfspoeth.basix.coll;
 
 import java.util.Iterator;
-import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
-public final class Queue<T> implements IterableCollection<T> {
+public final class Queue<T> implements Iterable<T> {
     private Elem<T> last = null;  // last element added
     private Elem<T> first = null; // first to be removed
 
-    @Override
     public boolean isEmpty() {
         return last == null;
     }
 
+    @Override
     public Iterator<T> iterator() {
         return new Iterator<>() {
             Elem<T> current = first;
@@ -46,7 +45,7 @@ public final class Queue<T> implements IterableCollection<T> {
     }
 
     public T remove() {
-        var tmp = Objects.requireNonNull(first).item;
+        var tmp = requireNonNull(first).item;
         first = first.previous;
         if(first==null) {
             last = null;
