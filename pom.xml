@@ -4,7 +4,7 @@
 
     <groupId>io.github.ralfspoeth</groupId>
     <artifactId>basix</artifactId>
-    <version>1.0.7-SNAPSHOT</version>
+    <version>1.0.7</version>
     <packaging>jar</packaging>
     <url>https://github.com/ralfspoeth/basix</url>
     <properties>
@@ -21,7 +21,7 @@
     <scm>
         <url>scm:git:https://github.com/ralfspoeth/basix</url>
         <developerConnection>scm:git:https://github.com/ralfspoeth/basix.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>basix-1.0.7</tag>
     </scm>
     <licenses>
         <license>
