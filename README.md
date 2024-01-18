@@ -11,7 +11,7 @@ work:
 
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 1.0.s7
+    version: 1.0.7
 
 You'll need Java version 21 or later to utilize this library.
 
@@ -45,7 +45,7 @@ Hence
 and 
 
     s.push(t);
-    assert t = s.pop();
+    assert t == s.pop();
 
 as well as
 
