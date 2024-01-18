@@ -60,4 +60,15 @@ class StackTest {
         assertEquals(IntStream.range(0, 10).boxed().toList().reversed(), al.stream().toList());
     }
 
+    @Test
+    void testStream() {
+        var s = new Stack<Integer>();
+        IntStream.rangeClosed(1, 10).forEach(s::push);
+        assertAll(
+                () -> assertEquals(10L, s.stream().count()),
+                () -> assertEquals(55, s.stream().reduce(Integer::sum).get()),
+                () -> assertEquals(10, s.stream().findFirst().get())
+        );
+    }
+
 }

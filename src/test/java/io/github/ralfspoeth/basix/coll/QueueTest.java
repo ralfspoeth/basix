@@ -82,4 +82,15 @@ class QueueTest {
         assertEquals(IntStream.range(0, 10).boxed().toList(), al.stream().toList());
     }
 
+    @Test
+    void testStream() {
+        var q = new Queue<Integer>();
+        IntStream.rangeClosed(1, 10).forEach(q::add);
+        assertAll(
+                () -> assertEquals(10L, q.stream().count()),
+                () -> assertEquals(55, q.stream().reduce(Integer::sum).get()),
+                () -> assertEquals(1, q.stream().findFirst().get())
+        );
+
+    }
 }
