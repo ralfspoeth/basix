@@ -11,7 +11,7 @@ work:
 
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 1.0.1
+    version: 1.0.s7
 
 You'll need Java version 21 or later to utilize this library.
 
@@ -51,7 +51,7 @@ as well as
 
     s.push(t);
     s.push(u);
-    assert u==s.pop() && t==s.pop() && s.isEmpty();
+    assert u == s.pop() && t == s.pop() && s.isEmpty();
 
 ## Queue
 
@@ -78,5 +78,82 @@ interfaces of the Java Collections Framework. They are useful
 exclusively when Java collections simply provide way to much
 for the task at hand.
 
-# Functions
+# Functions and Predicates
+
+The two classes `Functions` and `Predicates` provide utilities
+to instantiate functional interface implementations based on `Map`s and `List`s
+plus support for adding indexed and labelled data, and
+predicates (function with a `boolean` return value) based on `Map`s and `Set`s.
+
+## Functions
+
+The factory method `Functions::of(Map, Function)` returns a function which 
+first extracts some property of a given object and then looks up the value
+for this property in the given map.
+
+Let
+
+    record Point(int x, int y) {}
+
+and
+    
+    var m = Map.of(1, "One", 2, "Two");
+
+then
+
+    Function<Point, String> f = Functions.of(m, Point::x);
+    assert f.apply(new Point(1, 10)).equals("One");
+
+where
+
+    Function<Point, Integer> extr = Point::x;
+
+is the extraction function.
+Note that a map can be easily turned into a function using the method reference `Map::get`
+so there is no companion for this.
+
+Similarly, `Functions::of(List)` returns an `IntFunction` as in
+
+    var primes = List.of(2, 3, 5, 7, 11);
+    IntFunction<Integer> f = Functions.of(primes);
+    assert 3 == f.apply(1);
+
+Implementation note: both factory methods make a defensive copy of the given list or map and are
+therefore unmodifiable; and immutable when the elements of the list or map are immutable.
+
+The `indexed` methods are used to attach an index to an element in a stream like so:
+
+    Stream.of("One", "Two", "Three")
+        .map(indexed(1))
+        .toList(); 
+    // [Indexed(1, "One"), Indexed(2, "Two"), Indexed(3, "Three")]
+
+The `labeled` methods turns a map of key-value pairs into a stream of key-labeled values:
+
+    var m = Map.of("A", "AAA", "B", "BBB");
+    Functions.labeled(m); // equivalent Stream.of(new Labeled("A", "AAA"), new Labeled("B", "BBB"));
+
+## Predicates
+
+The `Predicates::in` factory methods instantiate predicates which take a map or a set and an 
+extraction function such that
+
+    var s = Set.of(1, 2, 3);
+    record Point(int x, int y) {}
+    Predicate<Point> pp = Predicates.in(s, Point::y);
+    // equivalently pp = p->s.contains(p.y());
+
+or for maps
+
+    var m = Map.of(1, "A", 2, "B", 3, "C");
+    record Point(int x, int y) {}
+    Predicate<Point> pp = Predicates.in(s, Point::y);
+    // equivalently pp = p -> s.containsKey(p.y());
+
+Similarly, the `Predicates::eq` factory method creates a predicate the checks for equality
+using `Objects::equals` internally:
+
+    record Point(int x, int y){}
+    Predicate<Point> y3 = Predicates.eq(3, Point::y);
+    // equivalently y3 = p -> Objects.equals(3, p.y());
 
