@@ -278,13 +278,15 @@ alternative names for a complex object:
 We can then write
 
     l.stream()
-        .filter(in(Set.of("Aaa", "Bbb"), firstName("nickname"))
+        .filter(in(Set.of("Aaa", "Bbb"), altName("nickname"))
         ...
 
 which is semantically clearer than
 
     l.stream()
-        .filter(co -> Set.of("Aaa", "Bbb").contains(co.alternatives.get("nickname"))
+        .filter(co -> Set.of("Aaa", "Bbb")
+            .contains(co.alternatives.get("nickname")
+        )
         ...
 
 and considering that the extraction function may be defined once and then reused:
