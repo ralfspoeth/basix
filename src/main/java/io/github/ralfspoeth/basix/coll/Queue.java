@@ -1,42 +1,13 @@
 package io.github.ralfspoeth.basix.coll;
 
-import java.util.Iterator;
-import java.util.Spliterators;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
 import static java.util.Objects.requireNonNull;
 
-public final class Queue<T> implements Iterable<T> {
+public final class Queue<T> {
     private Elem<T> last = null;  // last element added
     private Elem<T> first = null; // first to be removed
 
     public boolean isEmpty() {
         return last == null;
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-        return new Iterator<>() {
-            Elem<T> current = first;
-            @Override
-            public boolean hasNext() {
-                return current!=null;
-            }
-
-            @Override
-            public T next() {
-                var tmp = current.item;
-                current = current.previous;
-                return tmp;
-            }
-        };
-    }
-
-    public Stream<T> stream() {
-        return StreamSupport.stream(
-                Spliterators.spliteratorUnknownSize(this.iterator(), 0), false
-        );
     }
 
     public Queue<T> add(T item) {

@@ -62,4 +62,17 @@ class PredicatesTest {
                 () -> assertTrue(l.stream().allMatch(Predicates.in(m, identity())))
         );
     }
+
+    @Test
+    void testEq() {
+        var seven = "seven";
+        record Named(String name, Object value) { }
+        var namedList = List.of(new Named("seven", 7), new Named("eight", 8));
+        var sevenList = namedList.stream().filter(eq(seven, Named::name)).toList();
+        assertAll(
+                () -> assertEquals(1, sevenList.size()),
+                () -> assertEquals(seven, sevenList.getFirst().name),
+                () -> assertEquals(7, sevenList.getFirst().value)
+        );
+    }
 }

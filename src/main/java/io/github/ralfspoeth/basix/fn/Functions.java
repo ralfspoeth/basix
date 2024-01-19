@@ -9,7 +9,7 @@ import java.util.function.IntFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public final class Functions {
+public class Functions {
 
     private Functions() {
         // prevent instantiation

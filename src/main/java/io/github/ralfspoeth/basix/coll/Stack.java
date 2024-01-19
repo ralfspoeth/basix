@@ -1,42 +1,13 @@
 package io.github.ralfspoeth.basix.coll;
 
-import java.util.Iterator;
-import java.util.Spliterators;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
 import static java.util.Objects.requireNonNull;
 
-public final class Stack<T> implements Iterable<T> {
+public final class Stack<T> {
 
     private Elem<T> top = null;
 
     public boolean isEmpty() {
         return top == null;
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-        return new Iterator<>() {
-            Elem<T> current = top;
-            @Override
-            public boolean hasNext() {
-                return current!=null;
-            }
-
-            @Override
-            public T next() {
-                var tmp = current.item;
-                current = current.next;
-                return tmp;
-            }
-        };
-    }
-
-    public Stream<T> stream() {
-        return StreamSupport.stream(
-                Spliterators.spliteratorUnknownSize(this.iterator(), 0), false
-        );
     }
 
     public T pop() {

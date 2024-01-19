@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public final class Predicates {
+public class Predicates {
 
     private Predicates(){
         // prevent instantiation

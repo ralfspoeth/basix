@@ -157,12 +157,13 @@ We may then either code
 
 or else
 
-    args.map(indexed(1)).forEach(indexedArg -> 
-            ps.setString(indexedArg.index(), indexArg.value));
+    args.map(indexed(1)).forEach(ia -> // ia == indexedArg
+            ps.setString(ia.index(), ia.value()));
 
 or
 
-    indexed(args, 1).forEach(...);
+    indexed(args, 1).forEach(
+            ps.setString(ia.index(), ia.value()));
 
 ignoring the `SQLException`s for brevity.
 
@@ -181,7 +182,7 @@ Or, let
     record Comp(String name, int age){}
     var compList = List.of(new Comp("A", 5), new Comp("B", 7)); 
 
-Then
+then
 
     var cl = compList.map(labeled(Comp::name)).toList();
     // [Labeled("A", Comp(name="A", age=5)), Labeled("B", Comp(name="B", age=7))]
