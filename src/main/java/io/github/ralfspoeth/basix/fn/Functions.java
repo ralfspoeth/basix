@@ -63,8 +63,14 @@ public final class Functions {
                 .map(e -> new Labeled<>(e.getKey(), e.getValue()));
     }
 
-    public static <L, T> Function<T, Labeled<L, T>> labeled(Function<T, L> label) {
+    public static <L, T> Function<T, Labeled<L, T>> label(Function<T, L> label) {
         return t -> new Labeled<>(label.apply(t), t);
+    }
+
+    public static <L, T> Stream<Labeled<L, T>> labeled(Iterable<T> list, Function<T, L> label) {
+        return StreamSupport
+                .stream(list.spliterator(), false)
+                .map(t -> new Labeled<>(label.apply(t), t));
     }
 
     /**
@@ -101,7 +107,7 @@ public final class Functions {
      * @return a function the wraps the given object into a singleton stream if it mathces
      * @param <T> the target type
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static <T> Function<Object, Stream<T>> filterAndCast(Class<T> c) {
         return obj -> c.isInstance(obj)
                 ? Stream.of(obj).map(c::cast)

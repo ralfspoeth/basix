@@ -121,17 +121,89 @@ Similarly, `Functions::of(List)` returns an `IntFunction` as in
 Implementation note: both factory methods make a defensive copy of the given list or map and are
 therefore unmodifiable; and immutable when the elements of the list or map are immutable.
 
+## Indexed and Labeled
+
 The `indexed` methods are used to attach an index to an element in a stream like so:
 
     Stream.of("One", "Two", "Three")
-        .map(indexed(1))
+        .map(indexed(1)) // add an index starting with 1
         .toList(); 
     // [Indexed(1, "One"), Indexed(2, "Two"), Indexed(3, "Three")]
+
 
 The `labeled` methods turns a map of key-value pairs into a stream of key-labeled values:
 
     var m = Map.of("A", "AAA", "B", "BBB");
-    Functions.labeled(m); // equivalent Stream.of(new Labeled("A", "AAA"), new Labeled("B", "BBB"));
+    Functions.labeled(m); 
+    // equivalent Stream.of(new Labeled("A", "AAA"), new Labeled("B", "BBB"));
+
+
+### Where does `indexed` help us?
+
+While the `.stream()` method preserves the order of an ordered collection
+when in the sequential mode, we loose the index of an object in - say - an 
+`ArrayList`. We may nevertheless need that index; consider the `PreparedStatement` in the 
+JDBC package for example:
+
+    Connection conn; // some connection
+    var args = List.of("1", "One", "Two");
+    var ps = conn.prepareStatement("insert into A values(?, ?, ?)");
+    
+We may then either code
+
+    for(int i = 0; i<args.size(); i++) {
+        ps.setString(i+1, args.get(i));
+    }
+
+or else
+
+    args.map(indexed(1)).forEach(indexedArg -> 
+            ps.setString(indexedArg.index(), indexArg.value));
+
+or
+
+    indexed(args, 1).forEach(...);
+
+ignoring the `SQLException`s for brevity.
+
+### How can we utilize `labeled`?
+
+The most useful application of `labeled` is when we're actually interested in the values
+of a map but don't want to lose the key, or when you want to make a property of some complex
+object the label (or key) of that object in a list _without_ the requirement that this label be unique.
+
+    var m = Map.of("One", 1, "Two", 2, "Three", 3);
+    labeled(m).map(item -> item.mod(k -> k*k)).toList(); 
+    // ["One", 1, "Two", 4, "Three", 9]
+
+Or, let
+
+    record Comp(String name, int age){}
+    var compList = List.of(new Comp("A", 5), new Comp("B", 7)); 
+
+Then
+
+    var cl = compList.map(labeled(Comp::name)).toList();
+    // [Labeled("A", Comp(name="A", age=5)), Labeled("B", Comp(name="B", age=7))]
+
+We may then mess with the label as in
+
+    var nl = compList.map(labeled(Comp::name))
+        .map(lv -> lv.modValue(lv -> lv.value * lv.value))
+        .toList();
+    // same result as above
+
+or with the key as in
+
+    var kl = compList.map(labeled(Comp::age))
+        .map(lv -> lv.modKey(k -> k-10))
+        .toList();
+    // [Labeled(-5, Comp(name="A", age=5)), 
+        Labeled(-3, Comp(name="B", age=7))]        
+
+...nothing of which cannot be done with `Map.Entry` for sure, yet the notion
+of labeling objects is quite common and is therefore semantically useful while
+`Map.Entry::key` refers to an identifying unique tag rather than - well - just a label.
 
 ## Predicates
 
@@ -157,3 +229,69 @@ using `Objects::equals` internally:
     Predicate<Point> y3 = Predicates.eq(3, Point::y);
     // equivalently y3 = p -> Objects.equals(3, p.y());
 
+How does that help? Consider this:
+
+    class ComplexObject {
+        OtherBig ob, oc;
+        VeryLarge vl;
+        Map<String, String> alternatives = new HashMap<>();
+        String name;
+    }
+
+    var l = List.of(...); // ComplexObject instances
+
+We may then want to print the `vl` contents of all instances in `l` where the
+name starts with `'X'`; now we can write
+
+    import static io.github.ralfspoeth.basix.fn.Predicates.*;
+    // ...
+    l.stream()
+        .filter(eq('X', co -> co.name.charAt(0))) 
+        .map(co -> co.vl)
+        .forEach(System.out::println);
+
+or, where the name matches `'X'` or `'Y'`
+
+    l.stream()
+        .filter(in(Set.of('X', 'Y'), co -> co.name.charAt(0))) 
+        ...
+    // equivalent to 
+        .filter(co -> Set.of('X', 'Y').contains(co.name.charAt(0)))
+
+or like
+
+    l.stream()
+        .filter(in(Map.of('X', 1, 'Y', 2), co -> co.name.charAt(0)))
+        ...
+    // equivalent to 
+        .filter(co -> Map.of('X', 1, 'Y', 2).containsKey(co.name.charAt(0)))
+        ...
+
+There seems to be little gain here, but consider this function which returns
+alternative names for a complex object:
+
+    Function<ComplexObject, String> altName(String altNameType) {
+        return co -> co.alternatives.get(altNameType);
+    }
+
+We can then code
+
+    l.stream()
+        .filter(in(Set.of("Aaa", "Bbb"), firstName("nickname"))
+        ...
+
+which is semantically clearer than
+
+    l.stream()
+        .filter(co -> Set.of("Aaa", "Bbb").contains(co.alternatives.get("nickname"))
+        ...
+
+and considering that the extraction function may be defined once and then reused:
+
+    Function<ComplexObject, String> nickname = altName("nickname");
+    var nickies = Set.of("Aaa", "Bbb");
+
+    l.stream().filter(in(nickies, nickname))...;
+
+we may have more readable code in the end.
+But I admit it's a matter of taste...

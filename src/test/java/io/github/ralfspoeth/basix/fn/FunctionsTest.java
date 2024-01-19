@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import static io.github.ralfspoeth.basix.fn.Functions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FunctionsTest {
@@ -47,6 +48,27 @@ class FunctionsTest {
                 () -> assertTrue(charList.contains('c'))
         );
     }
+
+    @Test
+    void testLabeled() {
+        record Comp(String name, int age) {}
+        var compList = List.of(new Comp("Ada", 50), new Comp("Lisp", 90), new Comp("Java", 30));
+        System.out.println(compList);
+        var labeledCompList = labeled(compList, Comp::name)
+                .map(lv -> lv.modLabel(String::toUpperCase)) // modify label to upper-case
+                .map(lv -> lv.modValue(comp -> new Comp(comp.name, comp.age-10))) // modify value subtracting 10 from the age
+                .toList();
+        System.out.println(labeledCompList);
+        var llList = labeledCompList.stream().map(label(lsc -> lsc.label() + "_" + lsc.label())).toList();
+        System.out.println(llList);
+        var orig = llList.stream()
+                .map(llv -> llv.value().value())
+                .map(comp -> new Comp(comp.name, comp.age+10))
+                .toList();
+        System.out.println(orig);
+        assertEquals(compList, orig);
+    }
+
 
     private static <T> List<T> fnc(List<?> l, Class<T> c) {
         return l.stream().flatMap(Functions.filterAndCast(c)).toList();
