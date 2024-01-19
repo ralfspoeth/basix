@@ -275,7 +275,7 @@ alternative names for a complex object:
         return co -> co.alternatives.get(altNameType);
     }
 
-We can then code
+We can then write
 
     l.stream()
         .filter(in(Set.of("Aaa", "Bbb"), firstName("nickname"))
