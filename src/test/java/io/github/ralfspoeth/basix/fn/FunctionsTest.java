@@ -11,6 +11,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class FunctionsTest {
 
     @Test
+    void testConditional() {
+        var l = List.of(1, 2, 3);
+        var evenSquared = l.stream().map(conditional(i -> i%2==0, i -> i*i)).toList();
+        assertEquals(List.of(1, 4, 3), evenSquared);
+    }
+
+    @Test
     void testOfMapAndExtrFunc() {
         var m = Map.of(1, "one", 2, "two");
         record Int(int x) {
@@ -36,20 +43,6 @@ class FunctionsTest {
     }
 
     @Test
-    void filterAndCast() {
-        var values = List.of(1, 2d, true, false, "string", 'c');
-        var numList = fnc(values, Number.class);
-        var charList = fnc(values, Character.class);
-        assertAll(
-                () -> assertEquals(2, numList.size()),
-                () -> assertTrue(numList.contains(1)),
-                () -> assertTrue(numList.contains(2d)),
-                () -> assertEquals(1, charList.size()),
-                () -> assertTrue(charList.contains('c'))
-        );
-    }
-
-    @Test
     void testLabeled() {
         record Comp(String name, int age) {}
         var compList = List.of(new Comp("Ada", 50), new Comp("Lisp", 90), new Comp("Java", 30));
@@ -67,10 +60,5 @@ class FunctionsTest {
                 .toList();
         System.out.println(orig);
         assertEquals(compList, orig);
-    }
-
-
-    private static <T> List<T> fnc(List<?> l, Class<T> c) {
-        return l.stream().flatMap(Functions.filterAndCast(c)).toList();
     }
 }

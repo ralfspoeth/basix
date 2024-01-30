@@ -6,13 +6,24 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static java.util.function.Function.identity;
 
 public class Functions {
 
     private Functions() {
         // prevent instantiation
+    }
+
+    public static <T, R> Function<T, R> conditional(Predicate<? super T> condition, Function<T, R> ifTrue, Function<T, R> ifFalse) {
+        return t -> condition.test(t)?ifTrue.apply(t): ifFalse.apply(t);
+    }
+
+    public static <T> Function<T, T> conditional(Predicate<? super T> condition, Function<T, T> ifTrue) {
+        return conditional(condition, ifTrue, identity());
     }
 
     /**
@@ -71,46 +82,5 @@ public class Functions {
         return StreamSupport
                 .stream(list.spliterator(), false)
                 .map(t -> new Labeled<>(label.apply(t), t));
-    }
-
-    /**
-     * Used to perform filtering for and casting to a given type
-     * in a single call.
-     * <p>
-     * The standard idiom for filtering and casting is this:
-     * {@snippet :
-     * Stream<?> str; // ... something
-     * Class<?> clz;  // ... given
-     * str.filter(clz::isInstance).map(clz::cast);
-     * }
-     *
-     * It's easy to get this wrong like so:
-     * {@snippet :
-     * str.filter(e -> e instanceof Number).map(Double.class::cast)
-     * }
-     * while the other way around things are at least not ill-behaved
-     * {@snippet :
-     * str.filter(e -> e instanceof Double).map(Number.class::cast)
-     * }
-     *
-     * The function instantiated here returns a stream of the given input
-     * value which is either a singleton or an empty stream.
-     * The intended usage is therefore with a {@link Stream#flatMap(Function) flatMap}
-     * mapping operation:
-     * {@snippet :
-     * str.flatMap(filterAndCast(Double.class)) // stream of Double values
-     * }
-     *
-     * The method will soon be replaced by gatherers.
-     *
-     * @param c the class to filter for and to cast the elements of the stream to
-     * @return a function the wraps the given object into a singleton stream if it mathces
-     * @param <T> the target type
-     */
-    @Deprecated(forRemoval = true)
-    public static <T> Function<Object, Stream<T>> filterAndCast(Class<T> c) {
-        return obj -> c.isInstance(obj)
-                ? Stream.of(obj).map(c::cast)
-                : Stream.empty();
     }
 }
