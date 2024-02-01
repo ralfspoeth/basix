@@ -75,14 +75,14 @@ and for the operations
 
 Both queues and stacks do not implement either of the 
 interfaces of the Java Collections Framework. They are useful 
-exclusively when Java collections simply provide way to much
+exclusively when Java collections simply provide way too much
 for the task at hand.
 
 # Functions and Predicates
 
 The two classes `Functions` and `Predicates` provide utilities
 to instantiate functional interface implementations based on `Map`s and `List`s
-plus support for adding indexed and labelled data, and
+plus support for adding indexed and labeled data, and
 predicates (function with a `boolean` return value) based on `Map`s and `Set`s.
 
 ## Functions
