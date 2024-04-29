@@ -19,7 +19,7 @@ public class Functions {
     /**
      * Resembles the ternary operator {@code ? :}.
      * <p>
-     * {@snippet
+     * {@code
      * int x;
      * condition(
      *     t -> t==0,
