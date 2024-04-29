@@ -24,6 +24,7 @@ class QueueTest {
     void testSingle() {
         var q = new Queue<Integer>();
         assertAll(
+                () -> assertTrue(q.isEmpty()),
                 () -> assertFalse(q.add(1).isEmpty()),
                 () -> assertEquals(q.head(), q.tail()),
                 () -> assertEquals(1, q.head()),
@@ -36,6 +37,7 @@ class QueueTest {
     void testTwo() {
         var q = new Queue<Integer>();
         assertAll(
+                () -> assertTrue(q.isEmpty()),
                 () -> assertFalse(q.add(1).isEmpty()),
                 () -> assertFalse(q.add(2).isEmpty()),
                 () -> assertEquals(1, q.head()),

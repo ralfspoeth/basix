@@ -14,8 +14,10 @@ class FunctionsTest {
     @Test
     void testConditional() {
         var l = List.of(1, 2, 3);
-        var evenSquared = l.stream().map(conditional(i -> i%2==0, i -> i*i)).toList();
-        assertEquals(List.of(1, 4, 3), evenSquared);
+        var evenSquaredOfL = l.stream().map(
+                conditional(i -> i%2==0, i -> i*i, i -> i)
+        ).toList();
+        assertEquals(List.of(1, 4, 3), evenSquaredOfL);
     }
 
     @Test

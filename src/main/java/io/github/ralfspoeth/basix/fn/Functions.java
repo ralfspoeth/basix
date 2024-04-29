@@ -10,20 +10,36 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static java.util.function.Function.identity;
-
 public class Functions {
 
     private Functions() {
         // prevent instantiation
     }
 
-    public static <T, R> Function<T, R> conditional(Predicate<? super T> condition, Function<T, R> ifTrue, Function<T, R> ifFalse) {
+    /**
+     * Resembles the ternary operator {@code ? :}.
+     * <p>
+     * {@snippet
+     * int x;
+     * condition(
+     *     t -> t==0,
+     *     t -> "NULL",
+     *     t -> "not nully: " + t
+     * )}
+     *
+     * @param condition the test condition
+     * @param ifTrue  function that returns a result if the test condition evaluates to true
+     * @param ifFalse function that returns a result if the test condition evaluates to false
+     * @return the return value of either {@code ifTrue} or {@code ifFalse}
+     * @param <T> the type to be filtered
+     * @param <R> the return tye=pe
+     */
+    public static <T, R> Function<T, R> conditional(
+            Predicate<? super T> condition,
+            Function<T, R> ifTrue,
+            Function<T, R> ifFalse
+    ) {
         return t -> condition.test(t)?ifTrue.apply(t): ifFalse.apply(t);
-    }
-
-    public static <T> Function<T, T> conditional(Predicate<? super T> condition, Function<T, T> ifTrue) {
-        return conditional(condition, ifTrue, identity());
     }
 
     /**
