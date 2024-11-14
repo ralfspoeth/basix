@@ -36,8 +36,8 @@ public class Functions {
      */
     public static <T, R> Function<T, R> conditional(
             Predicate<? super T> condition,
-            Function<T, R> ifTrue,
-            Function<T, R> ifFalse
+            Function<? super T, ? extends R> ifTrue,
+            Function<? super T, ? extends R> ifFalse
     ) {
         return t -> condition.test(t)?ifTrue.apply(t): ifFalse.apply(t);
     }
@@ -88,10 +88,6 @@ public class Functions {
         return map.entrySet()
                 .stream()
                 .map(e -> new Labeled<>(e.getKey(), e.getValue()));
-    }
-
-    public static <L, T> Function<T, Labeled<L, T>> label(Function<T, L> label) {
-        return t -> new Labeled<>(label.apply(t), t);
     }
 
     public static <L, T> Stream<Labeled<L, T>> labeled(Iterable<T> list, Function<T, L> label) {

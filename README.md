@@ -11,7 +11,7 @@ work:
 
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 1.0.8
+    version: 1.0.13
 
 You'll need Java version 21 or later to utilize this library.
 
@@ -59,8 +59,8 @@ The FIFO (first in, first out) queue is similar but provides
 only `add` (or `addLast`) and `remove` (or `removeFirst`) 
 operations and -- as the stack -- `isEmpty` and additionally
 `head` and `tail` operations. The `head` of a queue is the 
-least recent element added to the queue and `tail` is the most recent 
-element.
+least recent and the `tail` the most recent 
+element added to the queue.
 
 Hence,
 
@@ -141,7 +141,7 @@ The `labeled` methods turns a map of key-value pairs into a stream of key-labele
 ### Where does `indexed` help us?
 
 While the `.stream()` method preserves the order of an ordered collection
-when in the sequential mode, we loose the index of an object in - say - an 
+when in the sequential mode, we loose the index of an object in -- say -- an 
 `ArrayList`. We may nevertheless need that index; consider the `PreparedStatement` in the 
 JDBC package for example:
 
@@ -187,7 +187,7 @@ then
     var cl = compList.map(labeled(Comp::name)).toList();
     // [Labeled("A", Comp(name="A", age=5)), Labeled("B", Comp(name="B", age=7))]
 
-We may then mess with the label as in
+We may then play with the label as in
 
     var nl = compList.map(labeled(Comp::name))
         .map(lv -> lv.modValue(lv -> lv.value * lv.value))
