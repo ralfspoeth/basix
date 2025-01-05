@@ -2,8 +2,10 @@ package io.github.ralfspoeth.basix.fn;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Gatherer;
 import java.util.stream.IntStream;
 
 import static io.github.ralfspoeth.basix.fn.Functions.*;
@@ -58,6 +60,20 @@ class FunctionsTest {
                 () -> IntStream.range(0, labeledList.size()).forEach(
                         i -> assertEquals(compList.get(i).age, labeledList.get(i).value())
                 )
+        );
+    }
+
+    @Test
+    void testFilterAndCast() {
+        // given
+        var input = new ArrayList<Number>();
+        // when
+        input.addAll(List.of(1, 2d, 3f, 4L, 1));
+        input.add(null);
+        // then
+        assertAll(
+                () -> assertEquals(List.of(4L), input.stream().gather(Gatherer.of(filterAndCast(Long.class))).toList()),
+                () -> assertEquals(List.of(1, 1), input.stream().gather(Gatherer.of(filterAndCast(Integer.class))).toList())
         );
     }
 }

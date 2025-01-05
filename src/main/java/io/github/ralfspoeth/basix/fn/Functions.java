@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -94,5 +95,35 @@ public class Functions {
         return StreamSupport
                 .stream(list.spliterator(), false)
                 .map(t -> new Labeled<>(label.apply(t), t));
+    }
+
+    /**
+     * Stateless integrator to be used with stream {@link Gatherer}s which combines
+     * filtering for the given type and casting to that.
+     * Usage:
+     * {@snippet :
+     * import module java.base;
+     *
+     * List<Object> list = List.<Object>of(); // @replace substring="List.<Object>of()" replacement="..."
+     * List<Long> result = list.stream().gather(Gatherer.of(filterAndCast(Long.class))).toList();
+     * }
+     *
+     * The type parameters {@code A} and {@code B} are mostly inferred,
+     * yet the target/filter type needs to be explicit.
+     * The integrator is stateless and may easily be used in parallel streams.
+     *
+     * @param type the type to filter for and to cast elements to
+     * @return an integrator
+     * @param <A> state type, irrelevant since it is stateless
+     * @param <T> the element type of the stream
+     * @param <R> the return determined by the given type
+     */
+    public static <A, T, R> Gatherer.Integrator<A, T, R> filterAndCast(final Class<R> type) {
+        return (_, element, downstream) -> {
+            if(element !=null && type.isAssignableFrom(element.getClass())) {
+                downstream.push(type.cast(element));
+            }
+            return true;
+        };
     }
 }
