@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Gatherer;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static io.github.ralfspoeth.basix.fn.Functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,6 +75,20 @@ class FunctionsTest {
         assertAll(
                 () -> assertEquals(List.of(4L), input.stream().gather(Gatherer.of(filterAndCast(Long.class))).toList()),
                 () -> assertEquals(List.of(1, 1), input.stream().gather(Gatherer.of(filterAndCast(Integer.class))).toList())
+        );
+    }
+
+    @Test
+    void testAlternating() {
+        // given
+        var input = List.of(1, 2, 2, 3, 2, 2, 2, 4, 4, 3, 3, 2, 3, 1);
+        // when
+        // then
+        assertAll(
+                () -> assertEquals(List.of(1), Stream.of(1, 1, 1).gather(alternating()).toList()),
+                () -> assertEquals(List.of(1, 2), Stream.of(1, 2, 2).gather(alternating()).toList()),
+                () -> assertEquals(List.of(1, 2, 1), Stream.of(1, 2, 1).gather(alternating()).toList()),
+                () -> assertEquals(List.of(1, 2, 3, 2, 4, 3, 2, 3, 1), input.stream().gather(alternating()).toList())
         );
     }
 }

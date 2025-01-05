@@ -3,7 +3,9 @@ package io.github.ralfspoeth.basix.fn;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
@@ -23,24 +25,24 @@ public class Functions {
      * {@code
      * int x;
      * condition(
-     *     t -> t==0,
-     *     t -> "NULL",
-     *     t -> "not nully: " + t
+     * t -> t==0,
+     * t -> "NULL",
+     * t -> "not nully: " + t
      * )}
      *
      * @param condition the test condition
-     * @param ifTrue  function that returns a result if the test condition evaluates to true
-     * @param ifFalse function that returns a result if the test condition evaluates to false
+     * @param ifTrue    function that returns a result if the test condition evaluates to true
+     * @param ifFalse   function that returns a result if the test condition evaluates to false
+     * @param <T>       the type to be filtered
+     * @param <R>       the return tye=pe
      * @return the return value of either {@code ifTrue} or {@code ifFalse}
-     * @param <T> the type to be filtered
-     * @param <R> the return tye=pe
      */
     public static <T, R> Function<T, R> conditional(
             Predicate<? super T> condition,
             Function<? super T, ? extends R> ifTrue,
             Function<? super T, ? extends R> ifFalse
     ) {
-        return t -> condition.test(t)?ifTrue.apply(t): ifFalse.apply(t);
+        return t -> condition.test(t) ? ifTrue.apply(t) : ifFalse.apply(t);
     }
 
     /**
@@ -48,11 +50,11 @@ public class Functions {
      * and an extraction function which extracts some property
      * of some object.
      *
-     * @param m a map
+     * @param m    a map
      * @param extr a function
+     * @param <T>  target type of the function
+     * @param <R>  return type of the function
      * @return a function that maps the extracted key to a value
-     * @param <T> target type of the function
-     * @param <R> return type of the function
      */
     public static <T, R> Function<T, R> of(Map<?, R> m, Function<T, ?> extr) {
         m = Map.copyOf(m);
@@ -63,9 +65,9 @@ public class Functions {
      * Considers a {@link List list} to be a {@link Function function}
      * of an index {@code i}.
      *
-     * @param l the list; defensively copied using {@link List#copyOf(Collection)}
-     * @return the function
+     * @param l   the list; defensively copied using {@link List#copyOf(Collection)}
      * @param <R> the content type of the list
+     * @return the function
      */
     public static <R> IntFunction<R> of(List<R> l) {
         l = List.copyOf(l);
@@ -102,28 +104,55 @@ public class Functions {
      * filtering for the given type and casting to that.
      * Usage:
      * {@snippet :
-     * import module java.base;
-     *
      * List<Object> list = List.<Object>of(); // @replace substring="List.<Object>of()" replacement="..."
      * List<Long> result = list.stream().gather(Gatherer.of(filterAndCast(Long.class))).toList();
-     * }
-     *
+     *}
+     * <p>
      * The type parameters {@code A} and {@code B} are mostly inferred,
      * yet the target/filter type needs to be explicit.
      * The integrator is stateless and may easily be used in parallel streams.
      *
      * @param type the type to filter for and to cast elements to
+     * @param <A>  state type, irrelevant since it is stateless
+     * @param <T>  the element type of the stream
+     * @param <R>  the return determined by the given type
      * @return an integrator
-     * @param <A> state type, irrelevant since it is stateless
-     * @param <T> the element type of the stream
-     * @param <R> the return determined by the given type
      */
     public static <A, T, R> Gatherer.Integrator<A, T, R> filterAndCast(final Class<R> type) {
         return (_, element, downstream) -> {
-            if(element !=null && type.isAssignableFrom(element.getClass())) {
+            if (element != null && type.isAssignableFrom(element.getClass())) {
                 downstream.push(type.cast(element));
             }
             return true;
         };
+    }
+
+    /**
+     * Stateful gatherer that removes any consecutive elements producing
+     * a stream of alternating elements (hence the name).
+     * {@snippet :
+     * assert List.of(1).equals(Stream.of(1, 1, 1).gather(alternating()).toList());
+     * assert List.of(1, 2).equals(Stream.of(1, 2, 2).gather(alternating()).toList());
+     * assert List.of(1, 2, 1).equals(Stream.of(1, 2, 1).gather(alternating()).toList());
+     * }
+     *
+     * Note that this gatherer is different from the {@link Stream#distinct()} built-in method
+     * since every element of upstream is compared to the last element pushed downstream.
+     * Furthermore, note that {@code null}s are swallowed.
+     *
+     * @return a gatherer producing alternating elements
+     * @param <T> the element type
+     */
+    public static <T> Gatherer<T, AtomicReference<T>, T> alternating() {
+        return Gatherer.ofSequential(
+                AtomicReference::new,
+                (state, element, downstream) -> {
+                    if (element != null && !Objects.equals(state.get(), element)) {
+                        downstream.push(element);
+                        state.set(element);
+                    }
+                    return true;
+                }
+        );
     }
 }
