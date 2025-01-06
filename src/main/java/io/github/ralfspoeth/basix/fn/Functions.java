@@ -115,7 +115,7 @@ public class Functions {
      * @param <R>  the return determined by the given type
      * @return a gatherer
      */
-    public static <T, R> Gatherer<T, ?, R> filterAndCast(final Class<R> type) {
+    public static <T, R> Gatherer<T, ?, R> filterAndCast(Class<R> type) {
         return Gatherer.of((_, element, downstream) -> {
             if (element != null && type.isAssignableFrom(element.getClass())) {
                 downstream.push(type.cast(element));

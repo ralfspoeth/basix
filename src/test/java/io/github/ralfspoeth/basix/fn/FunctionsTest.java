@@ -132,7 +132,8 @@ class FunctionsTest {
         assertAll(
                 ()-> assertEquals(List.of(3, 2, 1), input.stream().gather(reverse()).toList()),
                 ()-> assertEquals(input, input.stream().gather(reverse()).gather(reverse()).toList()),
-                ()-> assertEquals(input, input.stream().gather(reverse().andThen(reverse())).toList())
+                ()-> assertEquals(input, input.stream().gather(reverse()).gather(alternating()).gather(reverse()).toList()),
+                ()-> assertEquals(input, input.stream().gather(reverse().andThen(reverse()).andThen(alternating())).toList())
         );
     }
 }
