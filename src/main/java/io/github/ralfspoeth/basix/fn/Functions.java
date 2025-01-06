@@ -1,14 +1,12 @@
 package io.github.ralfspoeth.basix.fn;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -113,12 +111,11 @@ public class Functions {
      * The integrator is stateless and may easily be used in parallel streams.
      *
      * @param type the type to filter for and to cast elements to
-     * @param <A>  state type, irrelevant since it is stateless
      * @param <T>  the element type of the stream
      * @param <R>  the return determined by the given type
      * @return an integrator
      */
-    public static <A, T, R> Gatherer.Integrator<A, T, R> filterAndCast(final Class<R> type) {
+    public static <T, R> Gatherer.Integrator<Void, T, R> filterAndCast(final Class<R> type) {
         return (_, element, downstream) -> {
             if (element != null && type.isAssignableFrom(element.getClass())) {
                 downstream.push(type.cast(element));
@@ -134,14 +131,14 @@ public class Functions {
      * assert List.of(1).equals(Stream.of(1, 1, 1).gather(alternating()).toList());
      * assert List.of(1, 2).equals(Stream.of(1, 2, 2).gather(alternating()).toList());
      * assert List.of(1, 2, 1).equals(Stream.of(1, 2, 1).gather(alternating()).toList());
-     * }
-     *
+     *}
+     * <p>
      * Note that this gatherer is different from the {@link Stream#distinct()} built-in method
      * since every element of upstream is compared to the last element pushed downstream.
      * Furthermore, note that {@code null}s are swallowed.
      *
-     * @return a gatherer producing alternating elements
      * @param <T> the element type
+     * @return a gatherer producing alternating elements
      */
     public static <T> Gatherer<T, AtomicReference<T>, T> alternating() {
         return Gatherer.ofSequential(
@@ -154,5 +151,63 @@ public class Functions {
                     return true;
                 }
         );
+    }
+
+
+    /**
+     * Stateful gatherer which pushes an element downstream only if it is greater
+     * than the one most recently pushed downstream.
+     * {@snippet :
+     * List.of(1, 2, 3, 4).equals(Stream.of(1, 2, 1, 3, 1, 4).gather(increasing()).toList());
+     * }
+     * Note that in the given example the first occurrences of 2, 3 and 4 are being pushed downstream, respectively.
+     * {@code null}s are silently swallowed.
+     *
+     * @return a gather producing a stream of (strictly) increasing elements
+     * @param <T> the type of the stream elements.
+     */
+    public static <T> Gatherer<T, AtomicReference<T>, T> increasing(Comparator<? super T> comparator) {
+        return Gatherer.ofSequential(
+                (Supplier<AtomicReference<T>>)AtomicReference::new,
+                monotone(Order.inc, comparator)
+        );
+    }
+
+    public static <T extends Comparable<? super T>>  Gatherer<T, AtomicReference<T>, T> increasing() {
+        return increasing(Comparator.naturalOrder());
+    }
+
+    /**
+     * Same as {@link #increasing} yet the opposite order.
+     *
+     * @return a gather producing a stream of (strictly) decreasing elements
+     * @param <T> the type of the stream elements.
+     */
+    public static <T> Gatherer<T, AtomicReference<T>, T> decreasing(Comparator<? super T> comparator) {
+        return Gatherer.ofSequential(
+                (Supplier<AtomicReference<T>>)AtomicReference::new,
+                monotone(Order.dec, comparator)
+        );
+    }
+
+    public static <T extends Comparable<? super T>>  Gatherer<T, AtomicReference<T>, T> decreasing() {
+        return decreasing(Comparator.naturalOrder());
+    }
+
+    private enum Order {inc, dec}
+
+    private static <T> Gatherer.Integrator<AtomicReference<T>, T, T> monotone(Order order, Comparator<? super T> comparator) {
+        return (state, element, downstream) -> {
+            if (element != null) {
+                if (state.get() == null || switch (order) {
+                    case inc -> comparator.compare(state.get(), element) < 0;
+                    case dec -> comparator.compare(state.get(), element) > 0;
+                }) {
+                    downstream.push(element);
+                    state.set(element);
+                }
+            }
+            return true;
+        };
     }
 }

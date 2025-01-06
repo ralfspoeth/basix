@@ -18,7 +18,7 @@ class FunctionsTest {
     void testConditional() {
         var l = List.of(1, 2, 3);
         var evenSquaredOfL = l.stream().map(
-                conditional(i -> i%2==0, i -> i*i, i -> i)
+                conditional(i -> i % 2 == 0, i -> i * i, i -> i)
         ).toList();
         assertEquals(List.of(1, 4, 3), evenSquaredOfL);
     }
@@ -43,8 +43,8 @@ class FunctionsTest {
         var f = Functions.of(l);
         assertAll(
                 () -> assertEquals("three", f.apply(2)),
-                () -> assertThrows(Exception.class, ()->f.apply(-1)),
-                () -> assertThrows(Exception.class, ()->f.apply(3))
+                () -> assertThrows(Exception.class, () -> f.apply(-1)),
+                () -> assertThrows(Exception.class, () -> f.apply(3))
         );
     }
 
@@ -89,6 +89,39 @@ class FunctionsTest {
                 () -> assertEquals(List.of(1, 2), Stream.of(1, 2, 2).gather(alternating()).toList()),
                 () -> assertEquals(List.of(1, 2, 1), Stream.of(1, 2, 1).gather(alternating()).toList()),
                 () -> assertEquals(List.of(1, 2, 3, 2, 4, 3, 2, 3, 1), input.stream().gather(alternating()).toList())
+        );
+    }
+
+    @Test
+    void testMonotone123() {
+        // given
+        var input = List.of(1, 2, 3);
+        // then
+        assertAll(
+                () -> assertEquals(input, input.stream().gather(increasing()).toList()),
+                () -> assertEquals(List.of(1), input.stream().gather(decreasing()).toList())
+        );
+    }
+
+    @Test
+    void testMonotone120() {
+        // given
+        var input = List.of(1, 2, 0);
+        // then
+        assertAll(
+                () -> assertEquals(List.of(1, 2), input.stream().gather(increasing()).toList()),
+                () -> assertEquals(List.of(1, 0), input.stream().gather(decreasing()).toList())
+        );
+    }
+
+    @Test
+    void testMonotone1213() {
+        // given
+        var input = List.of(1, 2, 1, 3);
+        // then
+        assertAll(
+                () -> assertEquals(List.of(1, 2, 3), input.stream().gather(increasing()).toList()),
+                () -> assertEquals(List.of(3, 1), input.reversed().stream().gather(decreasing()).toList())
         );
     }
 }
