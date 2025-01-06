@@ -159,16 +159,16 @@ public class Functions {
      * than the one most recently pushed downstream.
      * {@snippet :
      * List.of(1, 2, 3, 4).equals(Stream.of(1, 2, 1, 3, 1, 4).gather(increasing()).toList());
-     * }
+     *}
      * Note that in the given example the first occurrences of 2, 3 and 4 are being pushed downstream, respectively.
      * {@code null}s are silently swallowed.
      *
-     * @return a gather producing a stream of (strictly) increasing elements
      * @param <T> the type of the stream elements.
+     * @return a gather producing a stream of (strictly) increasing elements
      */
     public static <T> Gatherer<T, AtomicReference<T>, T> increasing(Comparator<? super T> comparator) {
         return Gatherer.ofSequential(
-                (Supplier<AtomicReference<T>>)AtomicReference::new,
+                (Supplier<AtomicReference<T>>) AtomicReference::new,
                 monotone(Order.inc, comparator)
         );
     }
@@ -176,19 +176,19 @@ public class Functions {
     /**
      * Same as {@link #increasing(Comparator)} using {@link Comparator#naturalOrder()}} as comparator.
      */
-    public static <T extends Comparable<? super T>>  Gatherer<T, AtomicReference<T>, T> increasing() {
+    public static <T extends Comparable<? super T>> Gatherer<T, AtomicReference<T>, T> increasing() {
         return increasing(Comparator.naturalOrder());
     }
 
     /**
      * Same as {@link #increasing} yet the opposite order.
      *
-     * @return a gather producing a stream of (strictly) decreasing elements
      * @param <T> the type of the stream elements.
+     * @return a gather producing a stream of (strictly) decreasing elements
      */
     public static <T> Gatherer<T, AtomicReference<T>, T> decreasing(Comparator<? super T> comparator) {
         return Gatherer.ofSequential(
-                (Supplier<AtomicReference<T>>)AtomicReference::new,
+                (Supplier<AtomicReference<T>>) AtomicReference::new,
                 monotone(Order.dec, comparator)
         );
     }
@@ -196,7 +196,7 @@ public class Functions {
     /**
      * Same as {@link #decreasing(Comparator)} using {@link Comparator#naturalOrder()}} as comparator.
      */
-    public static <T extends Comparable<? super T>>  Gatherer<T, AtomicReference<T>, T> decreasing() {
+    public static <T extends Comparable<? super T>> Gatherer<T, AtomicReference<T>, T> decreasing() {
         return decreasing(Comparator.naturalOrder());
     }
 
@@ -215,5 +215,24 @@ public class Functions {
             }
             return true;
         };
+    }
+
+    /**
+     * Stateful sequential gatherer which reverses the stream of elements.
+     *
+     * @return a gatherer which reverses the encountering order
+     * @param <T> the element type of the stream
+     */
+    public static <T> Gatherer<T, Stack<T>, T> reverse() {
+        return Gatherer.ofSequential(
+                Stack::new,
+                (stack, element, _) -> {
+                    stack.push(element);
+                    return true;
+                },
+                (stack, downstream) -> {
+                    while (!stack.empty()) downstream.push(stack.pop());
+                }
+        );
     }
 }

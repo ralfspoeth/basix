@@ -123,4 +123,16 @@ class FunctionsTest {
                 () -> assertEquals(List.of(3, 1), input.reversed().stream().gather(decreasing()).toList())
         );
     }
+
+    @Test
+    void testReverse() {
+        // given
+        var input = List.of(1, 2, 3);
+        // then
+        assertAll(
+                ()-> assertEquals(List.of(3, 2, 1), input.stream().gather(reverse()).toList()),
+                ()-> assertEquals(input, input.stream().gather(reverse()).gather(reverse()).toList()),
+                ()-> assertEquals(input, input.stream().gather(reverse().andThen(reverse())).toList())
+        );
+    }
 }
