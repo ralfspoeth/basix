@@ -98,30 +98,30 @@ public class Functions {
     }
 
     /**
-     * Stateless integrator to be used with stream {@link Gatherer}s which combines
+     * Stateless gatherer to be used with streams  which combines
      * filtering for the given type and casting to that.
      * Usage:
      * {@snippet :
      * List<Object> list = List.<Object>of(); // @replace substring="List.<Object>of()" replacement="..."
-     * List<Long> result = list.stream().gather(Gatherer.of(filterAndCast(Long.class))).toList();
+     * List<Long> result = list.stream().gather(filterAndCast(Long.class)).toList();
      *}
      * <p>
-     * The type parameters {@code A} and {@code B} are mostly inferred,
+     * The type parameters {@code T} are mostly inferred,
      * yet the target/filter type needs to be explicit.
-     * The integrator is stateless and may easily be used in parallel streams.
+     * The integrator used is stateless and may easily be used in parallel streams.
      *
      * @param type the type to filter for and to cast elements to
      * @param <T>  the element type of the stream
      * @param <R>  the return determined by the given type
-     * @return an integrator
+     * @return a gatherer
      */
-    public static <T, R> Gatherer.Integrator<Void, T, R> filterAndCast(final Class<R> type) {
-        return (_, element, downstream) -> {
+    public static <T, R> Gatherer<T, ?, R> filterAndCast(final Class<R> type) {
+        return Gatherer.of((_, element, downstream) -> {
             if (element != null && type.isAssignableFrom(element.getClass())) {
                 downstream.push(type.cast(element));
             }
             return true;
-        };
+        });
     }
 
     /**
@@ -173,6 +173,9 @@ public class Functions {
         );
     }
 
+    /**
+     * Same as {@link #increasing(Comparator)} using {@link Comparator#naturalOrder()}} as comparator.
+     */
     public static <T extends Comparable<? super T>>  Gatherer<T, AtomicReference<T>, T> increasing() {
         return increasing(Comparator.naturalOrder());
     }
@@ -190,6 +193,9 @@ public class Functions {
         );
     }
 
+    /**
+     * Same as {@link #decreasing(Comparator)} using {@link Comparator#naturalOrder()}} as comparator.
+     */
     public static <T extends Comparable<? super T>>  Gatherer<T, AtomicReference<T>, T> decreasing() {
         return decreasing(Comparator.naturalOrder());
     }

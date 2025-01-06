@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Gatherer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -73,8 +72,8 @@ class FunctionsTest {
         input.add(null);
         // then
         assertAll(
-                () -> assertEquals(List.of(4L), input.stream().gather(Gatherer.of(filterAndCast(Long.class))).toList()),
-                () -> assertEquals(List.of(1, 1), input.stream().gather(Gatherer.of(filterAndCast(Integer.class))).toList())
+                () -> assertEquals(List.of(4L), input.stream().gather(filterAndCast(Long.class)).toList()),
+                () -> assertEquals(List.of(1, 1), input.stream().gather(filterAndCast(Integer.class)).toList())
         );
     }
 
