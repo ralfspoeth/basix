@@ -20,19 +20,20 @@ public class Functions {
     /**
      * Resembles the ternary operator {@code ? :}.
      * <p>
-     * {@code
-     * int x;
-     * condition(
+     * {@snippet :
+     * int x = 7;
+     * int y = conditional(
      * t -> t==0,
-     * t -> "NULL",
+     * _ -> "NULL",
      * t -> "not nully: " + t
-     * )}
+     * ).apply(x); // "not nully: 7"
+     * }
      *
      * @param condition the test condition
      * @param ifTrue    function that returns a result if the test condition evaluates to true
      * @param ifFalse   function that returns a result if the test condition evaluates to false
      * @param <T>       the type to be filtered
-     * @param <R>       the return tye=pe
+     * @param <R>       the return type
      * @return the return value of either {@code ifTrue} or {@code ifFalse}
      */
     public static <T, R> Function<T, R> conditional(
@@ -104,7 +105,7 @@ public class Functions {
      * {@snippet :
      * List<Object> list = List.<Object>of(); // @replace substring="List.<Object>of()" replacement="..."
      * List<Long> result = list.stream().gather(filterAndCast(Long.class)).toList();
-     *}
+     * }
      * <p>
      * The type parameters {@code T} are mostly inferred,
      * yet the target/filter type needs to be explicit.
@@ -125,7 +126,7 @@ public class Functions {
     }
 
     /**
-     * Stateful gatherer that removes any consecutive elements producing
+     * Sequential gatherer that removes any consecutively equal elements producing
      * a stream of alternating elements (hence the name).
      * {@snippet :
      * assert List.of(1).equals(Stream.of(1, 1, 1).gather(alternating()).toList());
@@ -134,7 +135,8 @@ public class Functions {
      *}
      * <p>
      * Note that this gatherer is different from the {@link Stream#distinct()} built-in method
-     * since every element of upstream is compared to the last element pushed downstream.
+     * since every element of upstream is compared to the last element pushed downstream only,
+     * in contrast to all previous elements as {@link Stream#distinct()} does.
      * Furthermore, note that {@code null}s are swallowed.
      *
      * @param <T> the element type
@@ -156,11 +158,16 @@ public class Functions {
 
     /**
      * Stateful gatherer which pushes an element downstream only if it is greater
-     * than the one most recently pushed downstream.
+     * than the one most recent element.
      * {@snippet :
-     * List.of(1, 2, 3, 4).equals(Stream.of(1, 2, 1, 3, 1, 4).gather(increasing()).toList());
+     * assert List.of(1, 2, 3, 4).equals(
+     *         Stream.of(1, 2, 1, 3, 1, 4)
+     *         .gather(increasing()).toList());
      *}
-     * Note that in the given example the first occurrences of 2, 3 and 4 are being pushed downstream, respectively.
+     * Note that in the given example the first occurrences of 2, 3, and 4, respectively
+     * are being pushed downstream.
+     * This variant uses the implicit {@link Comparator#naturalOrder()} comparator,
+     * see {@link #increasing() here}.
      * {@code null}s are silently swallowed.
      *
      * @param <T> the type of the stream elements.
@@ -219,7 +226,9 @@ public class Functions {
 
     /**
      * Stateful sequential gatherer which reverses the stream of elements.
-     *
+     * {@snippet :
+     * assert List.of(3, 2, 1).equals(Stream.of(1, 2, 3).gather(reverse()).toList());
+     * }
      * @return a gatherer which reverses the encountering order
      * @param <T> the element type of the stream
      */
