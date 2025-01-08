@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -49,7 +50,8 @@ class FunctionsTest {
 
     @Test
     void testLabeled() {
-        record Comp(String name, int age) {}
+        record Comp(String name, int age) {
+        }
         var compList = List.of(new Comp("Ada", 50), new Comp("Lisp", 90), new Comp("Java", 30));
         var labeledList = compList.stream().map(l -> new Labeled<>(l.name, l.age)).toList();
         assertAll(
@@ -66,13 +68,13 @@ class FunctionsTest {
     @Test
     void testFilterAndCast() {
         // given
-        var input = new ArrayList<Number>();
+        var input = new ArrayList<Number>(List.of(1, 2d, 3f, 4L, 1));
         // when
-        input.addAll(List.of(1, 2d, 3f, 4L, 1));
         input.add(null);
         // then
         assertAll(
                 () -> assertEquals(List.of(4L), input.stream().gather(filterAndCast(Long.class)).toList()),
+                () -> assertEquals(List.of(2d), input.stream().gather(filterAndCast(Double.class)).toList()),
                 () -> assertEquals(List.of(1, 1), input.stream().gather(filterAndCast(Integer.class)).toList())
         );
     }
@@ -80,7 +82,17 @@ class FunctionsTest {
     @Test
     void testAlternating() {
         // given
-        var input = List.of(1, 2, 2, 3, 2, 2, 2, 4, 4, 3, 3, 2, 3, 1);
+        var input = List.of(
+                1,
+                2, 2,
+                3,
+                2, 2, 2,
+                4, 4,
+                3, 3,
+                2,
+                3,
+                1
+        );
         // when
         // then
         assertAll(
@@ -130,10 +142,28 @@ class FunctionsTest {
         var input = List.of(1, 2, 3);
         // then
         assertAll(
-                ()-> assertEquals(List.of(3, 2, 1), input.stream().gather(reverse()).toList()),
-                ()-> assertEquals(input, input.stream().gather(reverse()).gather(reverse()).toList()),
-                ()-> assertEquals(input, input.stream().gather(reverse()).gather(alternating()).gather(reverse()).toList()),
-                ()-> assertEquals(input, input.stream().gather(reverse().andThen(reverse()).andThen(alternating())).toList())
+                () -> assertEquals(List.of(3, 2, 1), input.stream().gather(reverse()).toList()),
+                () -> assertEquals(input, input.stream().gather(reverse()).gather(reverse()).toList()),
+                () -> assertEquals(input, input.stream().gather(reverse()).gather(alternating()).gather(reverse()).toList()),
+                () -> assertEquals(input, input.stream().gather(reverse().andThen(reverse()).andThen(alternating())).toList())
+        );
+    }
+
+    @Test
+    void testSingle() {
+        // given
+        var input = List.of(1, 2, 3);
+        // when
+        Predicate<Integer> filterNone = _ -> false;
+        Predicate<Integer> filterOne = i -> i == 3;
+        Predicate<Integer> filterAll = _ -> true;
+        Predicate<Integer> filterSome = i -> i > 1;
+        // then
+        assertAll(
+                () -> assertTrue(input.stream().filter(filterNone).gather(single()).findFirst().isEmpty()),
+                () -> assertEquals(3, input.stream().filter(filterOne).gather(single()).findFirst().orElseThrow()),
+                () -> assertTrue(input.stream().filter(filterAll).gather(single()).findFirst().isEmpty()),
+                () -> assertTrue(input.stream().filter(filterSome).gather(single()).findFirst().isEmpty())
         );
     }
 }

@@ -27,7 +27,7 @@ public class Functions {
      * _ -> "NULL",
      * t -> "not nully: " + t
      * ).apply(x); // "not nully: 7"
-     * }
+     *}
      *
      * @param condition the test condition
      * @param ifTrue    function that returns a result if the test condition evaluates to true
@@ -105,7 +105,7 @@ public class Functions {
      * {@snippet :
      * List<Object> list = List.<Object>of(); // @replace substring="List.<Object>of()" replacement="..."
      * List<Long> result = list.stream().gather(filterAndCast(Long.class)).toList();
-     * }
+     *}
      * <p>
      * The type parameters {@code T} are mostly inferred,
      * yet the target/filter type needs to be explicit.
@@ -228,9 +228,10 @@ public class Functions {
      * Stateful sequential gatherer which reverses the stream of elements.
      * {@snippet :
      * assert List.of(3, 2, 1).equals(Stream.of(1, 2, 3).gather(reverse()).toList());
-     * }
-     * @return a gatherer which reverses the encountering order
+     *}
+     *
      * @param <T> the element type of the stream
+     * @return a gatherer which reverses the encountering order
      */
     public static <T> Gatherer<T, Stack<T>, T> reverse() {
         return Gatherer.ofSequential(
@@ -241,6 +242,45 @@ public class Functions {
                 },
                 (stack, downstream) -> {
                     while (!stack.empty()) downstream.push(stack.pop());
+                }
+        );
+    }
+
+    /**
+     * A gatherer which pushes an element from the upstream down
+     * if it is the only non-null element in the upstream; {@code null}s are swallowed.
+     * {@snippet :
+     * import java.util.stream.Stream;
+     * Stream.of(null, 1, null)
+     *     .gather(single())
+     *     .findFirst()
+     *     .orElseThrow(); // 1
+     * Stream.of(1, 2)
+     *     .gather(single())
+     *     .findFirst()
+     *     .isEmpty(); // true
+     * }
+     *
+     * @param <T> the element type
+     * @return a gatherer, may be used in parallel streams
+     */
+    public static <T> Gatherer<T, Set<T>, T> single() {
+        return Gatherer.of(
+                HashSet::new,
+                (set, elem, _) -> {
+                    if (elem != null) {
+                        set.add(elem);
+                    }
+                    return set.size() < 2;
+                },
+                (setA, setB) -> {
+                    setA.addAll(setB);
+                    return setA;
+                },
+                (set, downstream) -> {
+                    if (set.size() == 1) {
+                        downstream.push(set.stream().findFirst().orElseThrow());
+                    }
                 }
         );
     }
