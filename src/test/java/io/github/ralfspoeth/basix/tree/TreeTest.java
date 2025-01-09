@@ -10,7 +10,9 @@ class TreeTest {
     void testNew() {
         var tree = new Tree<Integer>();
         assertAll(
-                tree
+                () -> assertEquals(0, tree.root().children().size()),
+                () -> assertEquals(tree.root(), tree.root().root()),
+                () -> assertNull(tree.root().parent())
         );
     }
 

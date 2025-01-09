@@ -1,9 +1,9 @@
 package io.github.ralfspoeth.basix.tree;
 
 sealed abstract class AbstractNode<T> permits LeafNode, ChildNode {
-    protected Node<T> parent;
+    protected TreeNode<T> parent;
 
-    public Node<T> parent() {
+    public TreeNode<T> parent() {
         return parent;
     }
 }

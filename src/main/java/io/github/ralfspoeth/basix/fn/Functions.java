@@ -118,6 +118,9 @@ public class Functions {
      */
     public static <T, R> Gatherer<T, ?, R> filterAndCast(Class<R> type) {
         return Gatherer.of((_, element, downstream) -> {
+            if (downstream.isRejecting()) {
+                return false;
+            }
             if (element != null && type.isAssignableFrom(element.getClass())) {
                 downstream.push(type.cast(element));
             }
@@ -211,7 +214,7 @@ public class Functions {
 
     private static <T> Gatherer.Integrator<AtomicReference<T>, T, T> monotone(Order order, Comparator<? super T> comparator) {
         return (state, element, downstream) -> {
-            if(downstream.isRejecting()) {
+            if (downstream.isRejecting()) {
                 return false;
             }
             if (element != null) {
@@ -230,7 +233,11 @@ public class Functions {
     /**
      * Stateful sequential gatherer which reverses the stream of elements.
      * {@snippet :
-     * assert List.of(3, 2, 1).equals(Stream.of(1, 2, 3).gather(reverse()).toList());
+     * assert List.of(3, 2, 1)
+     *     .equals(Stream.of(1, 2, 3)
+     *         .gather(reverse())
+     *         .toList()
+     * );
      *}
      *
      * @param <T> the element type of the stream
@@ -240,7 +247,7 @@ public class Functions {
         return Gatherer.ofSequential(
                 Stack::new,
                 (stack, element, downstream) -> {
-                    if(downstream.isRejecting()) {
+                    if (downstream.isRejecting()) {
                         return false;
                     }
                     stack.push(element);
@@ -267,7 +274,7 @@ public class Functions {
      *     .gather(single())
      *     .findFirst()
      *     .isEmpty(); // true
-     * }
+     *}
      *
      * @param <T> the element type
      * @return a gatherer, may be used in parallel streams
@@ -276,7 +283,7 @@ public class Functions {
         return Gatherer.of(
                 ArrayList::new,
                 (elementsSoFar, elem, downstream) -> {
-                    if(downstream.isRejecting()) {
+                    if (downstream.isRejecting()) {
                         return false;
                     } else {
                         if (elem != null) {
@@ -292,6 +299,132 @@ public class Functions {
                 (visited, downstream) -> {
                     if (!downstream.isRejecting() && visited.size() == 1) {
                         downstream.push(visited.stream().findAny().orElseThrow());
+                    }
+                }
+        );
+    }
+
+    private static class ContCollection<T> extends AbstractSequentialList<T> {
+
+        private final Comparator<? super T> comparator;
+
+        private final List<T> elements = new ArrayList<>();
+        private Order order = null;
+
+        private ContCollection(Comparator<? super T> comparator) {
+            this.comparator = comparator;
+        }
+
+        @Override
+        public boolean add(T item) {
+            if (item == null) {
+                return false;
+            } else {
+                if (elements.isEmpty()) {
+                    return elements.add(item);
+                } else {
+                    if (order == null) {
+                        order = switch (comparator.compare(elements.getLast(), item)) {
+                            case int i when i < 0 -> Order.inc;
+                            case int j when j > 0 -> Order.dec;
+                            default -> null;
+                        };
+                        return elements.add(item);
+                    } else {
+                        if (    order == Order.inc && comparator.compare(elements.getLast(), item) > 0
+                             || order == Order.dec && comparator.compare(elements.getLast(), item) < 0
+                        ) {
+                            return false;
+                        } else {
+                            return elements.add(item);
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void clear() {
+            elements.clear();
+            order = null;
+        }
+
+        @Override
+        public Iterator<T> iterator() {
+            return elements.iterator();
+        }
+
+        @Override
+        public ListIterator<T> listIterator(int index) {
+            return elements.listIterator(index);
+        }
+
+        @Override
+        public int size() {
+            return elements.size();
+        }
+    }
+
+    public static <T extends Comparable<? super T>> Gatherer<T, SequencedCollection<T>, SequencedCollection<T>> monotoneSequences() {
+        return monotoneSequences(Comparator.naturalOrder());
+    }
+
+    /**
+     * Sequential gatherer which produces a stream of list each of which are in increasing or decreasing order.
+     * Considering the simple case {@code [1, 2, 1]}. We can see that we produce two lists of increasing and
+     * then decreasing elements {@code [1, 2], [2, 1]}. Note how the last element in the first list
+     * is the first element in the last list.
+     * <p>
+     * Usage:
+     * {@snippet :
+     * var input = List.of(1, 2, 3, 1, 2, 3);
+     * var comparator = Comparator.<Integer>naturalOrder();
+     * var result = input.stream().gather(monotoneSequences()).toList();
+     * // [1, 2, 3], [3, 1], [1, 2, 3]
+     * }
+     * </p>
+     * {@code null}s are swallowed.
+     * <p>
+     * The resulting collections are sequenced so that one may detect the order of a list
+     * by comparing the first and the last element easily:
+     * {@snippet :
+     * var result = List.<Integer>of(); // @replace substring="List.<Integer>of()" replacement="(see above)"
+     * int ordering = Comparator.<Integer>naturalOrder().compare(result.getFirst(), result.getLast()); // @replace substring="Comparator.<Integer>naturalOrder()" replacement="comparator"
+     * }
+     * </p>
+     * <p>
+     * Comparing the first and the last element is the preferred way in order to determine the ordering
+     * of the lists because it is covers the edge cases
+     * </p>
+     * <ul>
+     *     <li>{@code [1]->[[1]]}: a singleton list produces a list with a singleton list; note that {@code assert ordering==0;}</li>
+     *     <li>{@code [1, 1]->[[1, 1]]}: a list with all-equal elements produces a list of itself, again such that {@code assert ordering==0}</li>
+     *     <li>{@code [1, 1, 1,... , 2]->[[1, 1, 1, ..., 2]]}: comparing first and last now yields a negative value</li>
+     * </ul>
+     * @param comparator a comparator
+     * @return a gatherer producing a stream of monotone sequences
+     * @param <T> the item type
+     */
+    public static <T> Gatherer<T, SequencedCollection<T>, SequencedCollection<T>> monotoneSequences(Comparator<? super T> comparator) {
+        return Gatherer.ofSequential(
+                () -> new ContCollection<>(comparator),
+                (coll, item, downstream) -> {
+                    if (downstream.isRejecting()) {
+                        return false;
+                    } else {
+                        if (!coll.add(item)) {
+                            downstream.push(coll.stream().toList());
+                            T last = coll.getLast();
+                            coll.clear();
+                            coll.add(last);
+                            coll.add(item);
+                        }
+                        return true;
+                    }
+                },
+                (coll, downstream) -> {
+                    if (!downstream.isRejecting() && !coll.isEmpty()) {
+                        downstream.push(coll.stream().toList());
                     }
                 }
         );

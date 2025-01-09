@@ -96,6 +96,8 @@ class FunctionsTest {
         // when
         // then
         assertAll(
+                () -> assertEquals(List.of(), Stream.of().gather(alternating()).toList()),
+                () -> assertEquals(List.of(1), Stream.of(1).gather(alternating()).toList()),
                 () -> assertEquals(List.of(1), Stream.of(1, 1, 1).gather(alternating()).toList()),
                 () -> assertEquals(List.of(1, 2), Stream.of(1, 2, 2).gather(alternating()).toList()),
                 () -> assertEquals(List.of(1, 2, 1), Stream.of(1, 2, 1).gather(alternating()).toList()),
@@ -170,10 +172,54 @@ class FunctionsTest {
     @Test
     void testSingleInParallel() {
         // given
-        var input = IntStream.generate(()->1).limit(1_000_000L).boxed();
-        // when
-        input = input.parallel();
+        var input = IntStream.generate(() -> 1).limit(1_000_000L).boxed().parallel();
         // then
         assertTrue(input.gather(single()).findFirst().isEmpty());
+    }
+
+    @Test
+    void testMonoSeq() {
+        // given
+        var monotoneSequencesGatherer = Functions.<Integer>monotoneSequences();
+        // then
+        assertAll(
+                () -> assertEquals(
+                        List.of(List.of(1, 2, 3)),
+                        Stream.of(1, 2, 3).gather(monotoneSequencesGatherer).toList()
+                ), () -> assertEquals(
+                        List.of(List.of(1, 2, 3), List.of(3, 2, 1)),
+                        Stream.of(1, 2, 3, 2, 1).gather(monotoneSequencesGatherer).toList()
+                ), () -> assertEquals(
+                        List.of(List.of(1, 2, 3), List.of(3, 1)),
+                        Stream.of(1, 2, 3, 1).gather(monotoneSequencesGatherer).toList()
+                ), () -> assertEquals(
+                        List.of(List.of(1, 2, 3), List.of(3, 1), List.of(1, 2, 3)),
+                        Stream.of(1, 2, 3, 1, 2, 3).gather(monotoneSequencesGatherer).toList()
+                ), () -> assertEquals(
+                        List.of(List.of(1, 1, 1, 2)),
+                        Stream.of(1, 1, 1, 2).gather(monotoneSequencesGatherer).toList()
+                ), () -> assertEquals(
+                        List.of(List.of(1, 1, 1, 2), List.of(2, 1)),
+                        Stream.of(1, 1, 1, 2, 1).gather(monotoneSequencesGatherer).toList()
+                ), () -> assertEquals(
+                        List.of(List.of(1, 1, 1)),
+                        Stream.of(1, 1, 1).gather(monotoneSequencesGatherer).toList()
+                ), () -> assertEquals(
+                        List.of(List.of(1, 1)),
+                        Stream.of(1, 1).gather(monotoneSequencesGatherer).toList()
+                ), () -> assertEquals(
+                        List.of(List.of(1)),
+                        Stream.of(1).gather(monotoneSequencesGatherer).toList()
+                )
+        );
+    }
+
+
+    @Test
+    void combinedTest() {
+        var input = List.of(1, 2, 2, 3, 3, 3, 4, 4, 3, 2, -1, -1, -1);
+        System.out.println(input.stream().gather(alternating()).gather(monotoneSequences()).toList());
+        System.out.println(input.stream().gather(increasing()).toList());
+        System.out.println(input.stream().gather(decreasing()).toList());
     }
 }
