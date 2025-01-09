@@ -166,4 +166,14 @@ class FunctionsTest {
                 () -> assertTrue(input.stream().filter(filterSome).gather(single()).findFirst().isEmpty())
         );
     }
+
+    @Test
+    void testSingleInParallel() {
+        // given
+        var input = IntStream.generate(()->1).limit(1_000_000L).boxed();
+        // when
+        input = input.parallel();
+        // then
+        assertTrue(input.gather(single()).findFirst().isEmpty());
+    }
 }

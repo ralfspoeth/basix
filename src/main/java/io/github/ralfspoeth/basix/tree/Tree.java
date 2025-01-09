@@ -6,19 +6,10 @@ import java.util.Set;
 
 public class Tree<T> {
 
-    private Node<T> root;
+    private final ChildNode<T> root = new ChildNode<>();
 
-    private final Map<T, Node<T>> index = new HashMap<>();
-
-    public Tree<T> addNode(T data) {
-        var newNode = new Node<>(data);
-        index.put(data, newNode);
-        return this;
+    public Node<T> root() {
+        return root;
     }
-
-    public Set<T> data() {
-        return index.keySet();
-    }
-
 
 }

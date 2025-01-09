@@ -211,6 +211,9 @@ public class Functions {
 
     private static <T> Gatherer.Integrator<AtomicReference<T>, T, T> monotone(Order order, Comparator<? super T> comparator) {
         return (state, element, downstream) -> {
+            if(downstream.isRejecting()) {
+                return false;
+            }
             if (element != null) {
                 if (state.get() == null || switch (order) {
                     case inc -> comparator.compare(state.get(), element) < 0;
@@ -236,12 +239,17 @@ public class Functions {
     public static <T> Gatherer<T, Stack<T>, T> reverse() {
         return Gatherer.ofSequential(
                 Stack::new,
-                (stack, element, _) -> {
+                (stack, element, downstream) -> {
+                    if(downstream.isRejecting()) {
+                        return false;
+                    }
                     stack.push(element);
                     return true;
                 },
                 (stack, downstream) -> {
-                    while (!stack.empty()) downstream.push(stack.pop());
+                    while (!stack.empty() && !downstream.isRejecting()) {
+                        downstream.push(stack.pop());
+                    }
                 }
         );
     }
@@ -264,22 +272,26 @@ public class Functions {
      * @param <T> the element type
      * @return a gatherer, may be used in parallel streams
      */
-    public static <T> Gatherer<T, Set<T>, T> single() {
+    public static <T> Gatherer<T, Collection<T>, T> single() {
         return Gatherer.of(
-                HashSet::new,
-                (set, elem, _) -> {
-                    if (elem != null) {
-                        set.add(elem);
+                ArrayList::new,
+                (elementsSoFar, elem, downstream) -> {
+                    if(downstream.isRejecting()) {
+                        return false;
+                    } else {
+                        if (elem != null) {
+                            elementsSoFar.add(elem);
+                        }
+                        return elementsSoFar.size() < 2;
                     }
-                    return set.size() < 2;
                 },
-                (setA, setB) -> {
-                    setA.addAll(setB);
-                    return setA;
+                (visitedA, visitedB) -> {
+                    visitedA.addAll(visitedB);
+                    return visitedA;
                 },
-                (set, downstream) -> {
-                    if (set.size() == 1) {
-                        downstream.push(set.stream().findFirst().orElseThrow());
+                (visited, downstream) -> {
+                    if (!downstream.isRejecting() && visited.size() == 1) {
+                        downstream.push(visited.stream().findAny().orElseThrow());
                     }
                 }
         );
