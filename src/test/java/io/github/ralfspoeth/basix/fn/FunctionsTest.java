@@ -1,5 +1,6 @@
 package io.github.ralfspoeth.basix.fn;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -215,11 +216,23 @@ class FunctionsTest {
     }
 
 
+    @Disabled
     @Test
     void combinedTest() {
         var input = List.of(1, 2, 2, 3, 3, 3, 4, 4, 3, 2, -1, -1, -1);
         System.out.println(input.stream().gather(alternating()).gather(monotoneSequences()).toList());
         System.out.println(input.stream().gather(increasing()).toList());
         System.out.println(input.stream().gather(decreasing()).toList());
+    }
+
+    @Test
+    void testZipmap() {
+        // given
+        var keys = List.of(1, 2, 3);
+        var vals = List.of("one", "two", "three");
+        // when
+        var zipmap = zipmap(keys, vals);
+        // then
+        assertEquals(Map.of(1, "one", 2, "two", 3, "three"), zipmap);
     }
 }

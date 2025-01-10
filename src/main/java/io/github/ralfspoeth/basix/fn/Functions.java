@@ -365,7 +365,7 @@ public class Functions {
         }
     }
 
-    public static <T extends Comparable<? super T>> Gatherer<T, SequencedCollection<T>, SequencedCollection<T>> monotoneSequences() {
+    public static <T extends Comparable<? super T>> Gatherer<T, SequencedCollection<T>, List<T>> monotoneSequences() {
         return monotoneSequences(Comparator.naturalOrder());
     }
 
@@ -405,7 +405,7 @@ public class Functions {
      * @return a gatherer producing a stream of monotone sequences
      * @param <T> the item type
      */
-    public static <T> Gatherer<T, SequencedCollection<T>, SequencedCollection<T>> monotoneSequences(Comparator<? super T> comparator) {
+    public static <T> Gatherer<T, SequencedCollection<T>, List<T>> monotoneSequences(Comparator<? super T> comparator) {
         return Gatherer.ofSequential(
                 () -> new ContCollection<>(comparator),
                 (coll, item, downstream) -> {
@@ -428,5 +428,15 @@ public class Functions {
                     }
                 }
         );
+    }
+
+    public static <K, V> Map<K, V> zipmap(Iterable<K> keys, Iterable<V> values) {
+        Map<K, V> tmp = new HashMap<>();
+        var itk = keys.iterator();
+        var itv = values.iterator();
+        while(itk.hasNext() && itv.hasNext()) {
+            tmp.put(itk.next(), itv.next());
+        }
+        return Map.copyOf(tmp);
     }
 }
