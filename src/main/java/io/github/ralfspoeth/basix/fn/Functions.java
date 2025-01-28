@@ -57,7 +57,7 @@ public class Functions {
      * var l = List.of(new R(2), new R(3));
      * // then
      * assert List.of("two", "three").equals(l.stream().map(of(m, R::x)).toList());
-     * }
+     *}
      *
      * @param m    a map
      * @param extr a function
@@ -96,10 +96,11 @@ public class Functions {
      * // then
      * assert l.stream().map(indexed(1)).toList().equals(r);
      *
-     * }
+     *}
+     *
      * @param startWith the first index value
+     * @param <T>       the value type wrapped
      * @return a function
-     * @param <T> the value type wrapped
      */
     public static <T> Function<T, Indexed<T>> indexed(int startWith) {
         var seq = new AtomicInteger(startWith);
@@ -109,10 +110,10 @@ public class Functions {
     /**
      * Applies {@link #indexed(int)} to the given array.
      *
-     * @param array an array or some other {@link Iterable}
+     * @param array     an array or some other {@link Iterable}
      * @param startWith the first index value
+     * @param <T>       the type of the values of the array
      * @return a stream of {@link Indexed} values
-     * @param <T> the type of the values of the array
      */
     public static <T> Stream<Indexed<T>> indexed(Iterable<T> array, int startWith) {
         return StreamSupport.stream(array.spliterator(), false).map(indexed(startWith));
@@ -137,12 +138,12 @@ public class Functions {
      * var m = Map.of("one", 11, "two", 22);
      * // then
      * assert labeled(m).toList().equals(List.of(new Labeled<>("one", 11), new Labeled<>("two", 22)));
-     * }
+     *}
      *
      * @param map a map of key-value pairs
-     * @return a stream of labeled values
      * @param <K> the type of the keys in the map
      * @param <T> the type of the values in the map
+     * @return a stream of labeled values
      */
     public static <K, T> Stream<Labeled<K, T>> labeled(Map<K, T> map) {
         return map.entrySet()
@@ -162,13 +163,13 @@ public class Functions {
      * var result = List.of(new Labeled<>("o", new R("one", 1)), new Labeled<>("t", new R("two", 2)));
      * // then
      * assert result.equals(labeled(rs, r -> r.name().substring(0, 1)).toList());
-     * }
+     *}
      *
-     * @param list a list or array of values.
+     * @param list  a list or array of values.
      * @param label a labelling function
+     * @param <L>   the type of the label
+     * @param <T>   the type of the value
      * @return a stream of labeled values
-     * @param <L> the type of the label
-     * @param <T> the type of the value
      */
     public static <L, T> Stream<Labeled<L, T>> labeled(Iterable<T> list, Function<T, L> label) {
         return StreamSupport
@@ -409,8 +410,8 @@ public class Functions {
                         };
                         return elements.add(item);
                     } else {
-                        if (    order == Order.inc && comparator.compare(elements.getLast(), item) > 0
-                             || order == Order.dec && comparator.compare(elements.getLast(), item) < 0
+                        if (order == Order.inc && comparator.compare(elements.getLast(), item) > 0
+                            || order == Order.dec && comparator.compare(elements.getLast(), item) < 0
                         ) {
                             return false;
                         } else {
@@ -462,7 +463,7 @@ public class Functions {
      * var result = input.stream().gather(monotoneSequences(comparator)).toList();
      * // then
      * // result == [1, 2, 3], [3, 1], [1, 2, 3]
-     * }
+     *}
      * </p>
      * {@code null}s are silently swallowed.
      * <p>
@@ -471,7 +472,7 @@ public class Functions {
      * {@snippet :
      * var result = List.<Integer>of(); // @replace substring="List.<Integer>of()" replacement="(see above)"
      * int ordering = Comparator.<Integer>naturalOrder().compare(result.getFirst(), result.getLast()); // @replace substring="Comparator.<Integer>naturalOrder()" replacement="comparator"
-     * }
+     *}
      * </p>
      * <p>
      * Comparing the first and the last element is the preferred way in order to determine the ordering
@@ -482,9 +483,10 @@ public class Functions {
      *     <li>{@code [1, 1]->[[1, 1]]}: a list with all-equal elements produces a list of itself, again such that {@code assert ordering==0}</li>
      *     <li>{@code [1, 1, 1,... , 2]->[[1, 1, 1, ..., 2]]}: comparing first and last now yields a negative value</li>
      * </ul>
+     *
      * @param comparator a comparator
+     * @param <T>        the item type
      * @return a gatherer producing a stream of monotone sequences
-     * @param <T> the item type
      */
     public static <T> Gatherer<T, SequencedCollection<T>, List<T>> monotoneSequences(Comparator<? super T> comparator) {
         return Gatherer.ofSequential(
@@ -527,20 +529,19 @@ public class Functions {
      * assert List.of("one", "two", "three").equals(seqMap.sequencedValues().stream().toList());
      *}
      *
-     * @param keys array of keys, may contain {@code null} keys
+     * @param keys   array of keys, may contain {@code null} keys
      * @param values array of values, may contain {@code null} values
+     * @param <K>    the type of the keys
+     * @param <V>    the type of the values
      * @return a sequenced map where the first key/value pair is made of the first key and the first value,
-     *               the second key/value pair made of the second key and the second value and so forth;
-     *               note that the map may contain {@code} null keys and/or values
-     * @param <K> the type of the keys
-     * @param <V> the type of the values
+     * the second key/value pair made of the second key and the second value and so forth;
+     * note that the map may contain {@code} null keys and/or values
      */
+    @SuppressWarnings("unchecked")
     public static <K, V> SequencedMap<K, V> zipMap(Iterable<K> keys, Iterable<V> values) {
         SequencedMap<K, V> tmp = new LinkedHashMap<>();
-        var itk = keys.iterator();
-        var itv = values.iterator();
-        while(itk.hasNext() && itv.hasNext()) {
-            tmp.put(itk.next(), itv.next());
+        for (Iterator<?> itk = keys.iterator(), itv = values.iterator(); itk.hasNext() && itv.hasNext(); ) {
+            tmp.put((K) itk.next(), (V) itv.next());
         }
         return tmp;
     }
