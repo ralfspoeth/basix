@@ -1,6 +1,5 @@
 package io.github.ralfspoeth.basix.fn;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -221,14 +220,22 @@ class FunctionsTest {
         );
     }
 
-
-    @Disabled
     @Test
     void combinedTest() {
+        // given
         var input = List.of(1, 2, 2, 3, 3, 3, 4, 4, 3, 2, -1, -1, -1);
-        System.out.println(input.stream().gather(alternating()).gather(monotoneSequences()).toList());
-        System.out.println(input.stream().gather(increasing()).toList());
-        System.out.println(input.stream().gather(decreasing()).toList());
+        // when
+        var mono = List.of(List.of(1, 2, 3, 4), List.of(4, 3, 2, -1));
+        var alt = List.of(1, 2, 3, 4, 3, 2, -1);
+        var inc = List.of(1, 2, 3, 4);
+        var dec = List.of(1, -1);
+        // then
+        assertAll(
+                () -> assertEquals(alt, input.stream().gather(alternating()).toList()),
+                () -> assertEquals(mono, input.stream().gather(alternating()).gather(monotoneSequences()).toList()),
+                () -> assertEquals(inc, input.stream().gather(increasing()).toList()),
+                () -> assertEquals(dec, input.stream().gather(decreasing()).toList())
+        );
     }
 
     @Test
