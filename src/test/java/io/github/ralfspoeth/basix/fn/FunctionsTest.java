@@ -39,21 +39,28 @@ class FunctionsTest {
 
     @Test
     void testOfInt() {
+        // given
         var l = List.of("one", "two", "three");
+        // when
         var f = Functions.of(l);
+        // then
         assertAll(
+                () -> assertEquals("one", f.apply(0)),
+                () -> assertEquals("two", f.apply(1)),
                 () -> assertEquals("three", f.apply(2)),
-                () -> assertThrows(Exception.class, () -> f.apply(-1)),
-                () -> assertThrows(Exception.class, () -> f.apply(3))
+                () -> assertThrows(IndexOutOfBoundsException.class, () -> f.apply(-1)),
+                () -> assertThrows(IndexOutOfBoundsException.class, () -> f.apply(3))
         );
     }
 
     @Test
     void testLabeled() {
-        record Comp(String name, int age) {
-        }
+        // given
+        record Comp(String name, int age) {}
         var compList = List.of(new Comp("Ada", 50), new Comp("Lisp", 90), new Comp("Java", 30));
+        // when
         var labeledList = compList.stream().map(l -> new Labeled<>(l.name, l.age)).toList();
+        // then
         assertAll(
                 () -> assertEquals(compList.size(), labeledList.size()),
                 () -> IntStream.range(0, compList.size()).forEach(
