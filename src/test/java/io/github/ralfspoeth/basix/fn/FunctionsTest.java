@@ -27,8 +27,7 @@ class FunctionsTest {
     @Test
     void testOfMapAndExtrFunc() {
         var m = Map.of(1, "one", 2, "two");
-        record Int(int x) {
-        }
+        record Int(int x) {}
         var x = new Int(1);
         var y = new Int(3);
         var f = Functions.of(m, Int::x);
@@ -226,13 +225,28 @@ class FunctionsTest {
     }
 
     @Test
-    void testZipmap() {
+    void testZipMap() {
         // given
         var keys = List.of(1, 2, 3);
         var vals = List.of("one", "two", "three");
         // when
-        var zipmap = zipmap(keys, vals);
+        var zipmap = zipMap(keys, vals);
         // then
         assertEquals(Map.of(1, "one", 2, "two", 3, "three"), zipmap);
+    }
+
+    @Test
+    void testZipMapInv() {
+        // given
+        var keys = List.of(1, 2);
+        var vals = List.of("one");
+        // when
+        var zipmap = zipMap(keys, vals);
+        // then
+        assertAll(
+                () -> assertEquals(1, zipmap.size()),
+                () -> assertEquals(1, zipmap.firstEntry().getKey()),
+                () -> assertEquals("one", zipmap.firstEntry().getValue())
+        );
     }
 }

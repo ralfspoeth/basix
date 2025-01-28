@@ -48,6 +48,16 @@ public class Functions {
      * Create a {@link Function function} based on a {@link Map map}
      * and an extraction function which extracts some property
      * of some object.
+     * Example:
+     * {@snippet :
+     * // given
+     * var m = Map.of(1, "one", 2, "two", 3, "three");
+     * record R(int x) {}
+     * // when
+     * var l = List.of(new R(2), new R(3));
+     * // then
+     * assert List.of("two", "three").equals(l.stream().map(of(m, R::x)).toList());
+     * }
      *
      * @param m    a map
      * @param extr a function
@@ -73,25 +83,93 @@ public class Functions {
         return l::get;
     }
 
+    /**
+     * Create a {@link Function} which turns any object into an {@link Indexed} object,
+     * that is, a record composed of an index with this object.
+     * The index is incremented everytime the function is called.
+     * Example:
+     * {@snippet :
+     * // given
+     * var l = List.of("a", "b", "c");
+     * // when
+     * var r = List.of(new Indexed<>(1, "a"), new Indexed<>(2, "b"), new Indexed<>(3, "c"));
+     * // then
+     * assert l.stream().map(indexed(1)).toList().equals(r);
+     *
+     * }
+     * @param startWith the first index value
+     * @return a function
+     * @param <T> the value type wrapped
+     */
     public static <T> Function<T, Indexed<T>> indexed(int startWith) {
         var seq = new AtomicInteger(startWith);
         return x -> new Indexed<>(seq.getAndIncrement(), x);
     }
 
-    public static <T> Stream<Indexed<T>> indexed(Iterable<T> array, int offset) {
-        return StreamSupport.stream(array.spliterator(), false).map(indexed(offset));
+    /**
+     * Applies {@link #indexed(int)} to the given array.
+     *
+     * @param array an array or some other {@link Iterable}
+     * @param startWith the first index value
+     * @return a stream of {@link Indexed} values
+     * @param <T> the type of the values of the array
+     */
+    public static <T> Stream<Indexed<T>> indexed(Iterable<T> array, int startWith) {
+        return StreamSupport.stream(array.spliterator(), false).map(indexed(startWith));
     }
 
+    /**
+     * Applies {@link #indexed(int)} with a first index value of 0
+     * to the given array.
+     *
+     * @see #indexed(Iterable, int)
+     */
     public static <T> Stream<Indexed<T>> indexed(Iterable<T> array) {
         return indexed(array, 0);
     }
 
-    public static <L, T> Stream<Labeled<L, T>> labeled(Map<L, T> map) {
+    /**
+     * Turns a map into a stream of its values labeled with
+     * the respective key.
+     * Example:
+     * {@snippet :
+     * // given
+     * var m = Map.of("one", 11, "two", 22);
+     * // then
+     * assert labeled(m).toList().equals(List.of(new Labeled<>("one", 11), new Labeled<>("two", 22)));
+     * }
+     *
+     * @param map a map of key-value pairs
+     * @return a stream of labeled values
+     * @param <K> the type of the keys in the map
+     * @param <T> the type of the values in the map
+     */
+    public static <K, T> Stream<Labeled<K, T>> labeled(Map<K, T> map) {
         return map.entrySet()
                 .stream()
                 .map(e -> new Labeled<>(e.getKey(), e.getValue()));
     }
 
+    /**
+     * Turns an iterable list of values into stream of {@link Labeled} values
+     * where the label is extracted from each value by applying the given labelling function.
+     * Example:
+     * {@snippet :
+     * // given
+     * record R(String name, int x) {}
+     * var rs = List.of(new R("one", 1), new R("two", 2));
+     * // when
+     * var result = List.of(new Labeled<>("o", new R("one", 1)), new Labeled<>("t", new R("two", 2)));
+     * // then
+     * assert result.equals(labeled(rs, r -> r.name().substring(0, 1)).toList());
+     * }
+     *
+     * @param list a list or array of values.
+     * @param label a labelling function
+     * @return a stream of labeled values
+     * @param <L> the type of the label
+     * @param <T> the type of the value
+     */
     public static <L, T> Stream<Labeled<L, T>> labeled(Iterable<T> list, Function<T, L> label) {
         return StreamSupport
                 .stream(list.spliterator(), false)
@@ -377,13 +455,16 @@ public class Functions {
      * <p>
      * Usage:
      * {@snippet :
+     * // given
      * var input = List.of(1, 2, 3, 1, 2, 3);
      * var comparator = Comparator.<Integer>naturalOrder();
-     * var result = input.stream().gather(monotoneSequences()).toList();
-     * // [1, 2, 3], [3, 1], [1, 2, 3]
+     * // when
+     * var result = input.stream().gather(monotoneSequences(comparator)).toList();
+     * // then
+     * // result == [1, 2, 3], [3, 1], [1, 2, 3]
      * }
      * </p>
-     * {@code null}s are swallowed.
+     * {@code null}s are silently swallowed.
      * <p>
      * The resulting collections are sequenced so that one may detect the order of a list
      * by comparing the first and the last element easily:
@@ -430,13 +511,37 @@ public class Functions {
         );
     }
 
-    public static <K, V> Map<K, V> zipmap(Iterable<K> keys, Iterable<V> values) {
-        Map<K, V> tmp = new HashMap<>();
+    /**
+     * Creates a sequenced map by "zipping" two independent arrays whereby the order
+     * of the arrays is preserved, and the shorter array determines the size of the map.
+     * Example:
+     * {@snippet :
+     * // given
+     * var keys = new int[]{1, 2, 3}; // 3 items
+     * var vals = new String[]{"one", "two", "three", "four"}; // 4 items
+     * // when
+     * var seqMap = zipMap(keys, vals);
+     * // then
+     * assert 3==seqMap.size();
+     * assert List.of(keys).equals(seqMap.sequencedKeySet().stream().toList());
+     * assert List.of("one", "two", "three").equals(seqMap.sequencedValues().stream().toList());
+     *}
+     *
+     * @param keys array of keys, may contain {@code null} keys
+     * @param values array of values, may contain {@code null} values
+     * @return a sequenced map where the first key/value pair is made of the first key and the first value,
+     *               the second key/value pair made of the second key and the second value and so forth;
+     *               note that the map may contain {@code} null keys and/or values
+     * @param <K> the type of the keys
+     * @param <V> the type of the values
+     */
+    public static <K, V> SequencedMap<K, V> zipMap(Iterable<K> keys, Iterable<V> values) {
+        SequencedMap<K, V> tmp = new LinkedHashMap<>();
         var itk = keys.iterator();
         var itv = values.iterator();
         while(itk.hasNext() && itv.hasNext()) {
             tmp.put(itk.next(), itv.next());
         }
-        return Map.copyOf(tmp);
+        return tmp;
     }
 }
