@@ -545,4 +545,15 @@ public class Functions {
         }
         return tmp;
     }
+
+    public static <T> Gatherer<T, Void, T> interleave(Supplier<? extends T> generator) {
+        return Gatherer.ofSequential((_, item, downstream) -> {
+            if (downstream.isRejecting()) {
+                return false;
+            }
+            downstream.push(item);
+            downstream.push(generator.get());
+            return true;
+        });
+    }
 }

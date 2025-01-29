@@ -2,9 +2,8 @@ package io.github.ralfspoeth.basix.fn;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -262,5 +261,64 @@ class FunctionsTest {
                 () -> assertEquals(1, zipmap.firstEntry().getKey()),
                 () -> assertEquals("one", zipmap.firstEntry().getValue())
         );
+    }
+
+    @Test
+    void testInterleave() {
+        // given
+        var input = IntStream.range(0, 100).boxed();
+        // when
+        var first = new AtomicInteger(100);
+        var ret = input.gather(interleave(first::getAndIncrement)).limit(7).toList();
+        // then
+        System.out.println(ret);
+    }
+
+    @Test
+    void orderBook() {
+        // given
+        record Order(long amount, int limit) {
+            Order {
+                if (limit < 0) throw new IllegalArgumentException("limit cannot be negative");
+                if (amount == 0) throw new IllegalArgumentException("amount cannot be zero");
+            }
+        }
+        class OrderBook {
+            SortedMap<Integer, List<Order>> purchaseOrders = new TreeMap<>();
+            SortedMap<Integer, List<Order>> sellOrders = new TreeMap<>();
+
+            void postOrder(Order order) {
+                if (order.amount() < 0) {
+                    sellOrders.compute(order.limit, (p, l) -> {
+                        if (l == null) l = new ArrayList<>();
+                        l.add(order);
+                        return l;
+                    });
+                } else {
+                    purchaseOrders.compute(order.limit, (p, l) -> {
+                        if (l == null) l = new ArrayList<>();
+                        l.add(order);
+                        return l;
+                    });
+                }
+                tryProcessOrders();
+            }
+            void tryProcessOrders() {
+                if(sellOrders.isEmpty() || purchaseOrders.isEmpty()) return;
+                if(sellOrders.firstKey() <= purchaseOrders.lastKey()) {
+                    System.out.println(this);
+                }
+            }
+
+            @Override
+            public String toString() {
+                return purchaseOrders.toString() + "//" + sellOrders.toString();
+            }
+        }
+        // when
+        var book = new OrderBook();
+        book.postOrder(new Order(100, 11));
+        book.postOrder(new Order(-100, 10));
+
     }
 }

@@ -65,6 +65,7 @@
                 <configuration>
                     <compilerArgs>
                         <arg>--enable-preview</arg>
+                        <arg>-Xlint:preview</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
