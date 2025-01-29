@@ -287,6 +287,26 @@ class FunctionsTest {
             SortedMap<Integer, List<Order>> purchaseOrders = new TreeMap<>();
             SortedMap<Integer, List<Order>> sellOrders = new TreeMap<>();
 
+            long sellAmountAt(int limit) {
+                return sellOrders.entrySet()
+                        .stream()
+                        .filter(e -> e.getKey()<=limit)
+                        .map(Map.Entry::getValue)
+                        .flatMap(List::stream)
+                        .mapToLong(Order::amount)
+                        .sum();
+            }
+
+            long purchaseAmountAt(int limit) {
+                return purchaseOrders.entrySet()
+                        .stream()
+                        .filter(e -> e.getKey() >=limit)
+                        .map(Map.Entry::getValue)
+                        .flatMap(List::stream)
+                        .mapToLong(Order::amount)
+                        .sum();
+            }
+
             void postOrder(Order order) {
                 if (order.amount() < 0) {
                     sellOrders.compute(order.limit, (p, l) -> {
@@ -319,6 +339,7 @@ class FunctionsTest {
         var book = new OrderBook();
         book.postOrder(new Order(100, 11));
         book.postOrder(new Order(-100, 10));
-
+        System.out.println(book.sellAmountAt(12));
+        System.out.println(book.purchaseAmountAt(12));
     }
 }
