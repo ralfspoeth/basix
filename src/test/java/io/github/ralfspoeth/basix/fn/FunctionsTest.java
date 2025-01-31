@@ -373,6 +373,8 @@ class FunctionsTest {
         // when
         var book = new OrderBook();
         book.postOrder(new Order(100, 11));
+        book.postOrder(new Order(100, 12));
+        book.postOrder(new Order(100, 13));
         book.postOrder(new Order(-100, 10));
         book.postOrder(new Order(-80, 11));
         book.printOrdersAtLimit(8);
