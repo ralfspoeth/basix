@@ -313,8 +313,8 @@ class FunctionsTest {
             }
         }
         class OrderBook {
-            SortedMap<Integer, List<Order>> purchaseOrders = new TreeMap<>();
-            SortedMap<Integer, List<Order>> sellOrders = new TreeMap<>();
+            final SortedMap<Integer, List<Order>> purchaseOrders = new TreeMap<>();
+            final SortedMap<Integer, List<Order>> sellOrders = new TreeMap<>();
 
             long sellAmountAt(int limit) {
                 return sellOrders.entrySet()
@@ -338,13 +338,13 @@ class FunctionsTest {
 
             void postOrder(Order order) {
                 if (order.amount() < 0) {
-                    sellOrders.compute(order.limit, (p, l) -> {
+                    sellOrders.compute(order.limit, (_, l) -> {
                         if (l == null) l = new ArrayList<>();
                         l.add(order);
                         return l;
                     });
                 } else {
-                    purchaseOrders.compute(order.limit, (p, l) -> {
+                    purchaseOrders.compute(order.limit, (_, l) -> {
                         if (l == null) l = new ArrayList<>();
                         l.add(order);
                         return l;
@@ -361,14 +361,26 @@ class FunctionsTest {
 
             @Override
             public String toString() {
-                return purchaseOrders.toString() + "//" + sellOrders.toString();
+                return purchaseOrders + "//" + sellOrders;
+            }
+
+            void printOrdersAtLimit(int limit) {
+                System.out.printf("Limit: %3d, Purchase amount: %6d, Sell amount: %6d%n",
+                        limit, purchaseAmountAt(limit), -sellAmountAt(limit)
+                );
             }
         }
         // when
         var book = new OrderBook();
         book.postOrder(new Order(100, 11));
         book.postOrder(new Order(-100, 10));
-        System.out.println(book.sellAmountAt(12));
-        System.out.println(book.purchaseAmountAt(12));
+        book.postOrder(new Order(-80, 11));
+        book.printOrdersAtLimit(8);
+        book.printOrdersAtLimit(9);
+        book.printOrdersAtLimit(10);
+        book.printOrdersAtLimit(11);
+        book.printOrdersAtLimit(12);
+        book.printOrdersAtLimit(13);
+        book.printOrdersAtLimit(14);
     }
 }
