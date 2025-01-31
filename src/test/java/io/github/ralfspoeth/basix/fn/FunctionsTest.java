@@ -3,6 +3,7 @@ package io.github.ralfspoeth.basix.fn;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
@@ -273,6 +274,34 @@ class FunctionsTest {
         // then
         System.out.println(ret);
     }
+
+    @Test
+    void testConst() {
+        // given
+        var input = Stream.of(1, 2, 3);
+        // when
+        var result = input.gather(interleave(()->0)).toList();
+        // then
+        assertEquals(List.of(1, 0, 2, 0, 3, 0), result);
+    }
+
+    @Test
+    void testRnd() {
+        // given
+        var input = Stream.of(1, 2, 3);
+        var rnd = ThreadLocalRandom.current();
+        // when
+        var result = input.gather(interleave(rnd::nextInt)).toList();
+        // then
+        assertAll(
+                () -> assertEquals(6, result.size()),
+                () -> assertEquals(1, result.getFirst()),
+                () -> assertEquals(2, result.get(2)),
+                () -> assertEquals(3, result.get(4))
+        );
+    }
+
+
 
     @Test
     void orderBook() {

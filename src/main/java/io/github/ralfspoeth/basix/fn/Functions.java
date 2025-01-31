@@ -546,14 +546,48 @@ public class Functions {
         return tmp;
     }
 
+    /**
+     * A sequential gatherer which pushes an additional item downstream after each item it receives.
+     * Example generating a constant value:
+     * {@snippet :
+     * // given
+     * var list = List.of(1, 2, 3);
+     * // when
+     * var result = list.stream().gather(interleave(()->7)).toList();
+     * //then
+     * assert result.equals(List.of(1, 7, 2, 7, 3, 7));
+     * }
+     * Example generating a random number:
+     * {@snippet :
+     * // given
+     * import java.util.concurrent.ThreadLocalRandom;
+     * var list = List.of(1, 2, 3);
+     * var rnd = ThreadLocalRandom.current();
+     * // when
+     * var result = list.stream().gather(interleave(rnd::nextInt)).toList();
+     * // then
+     * assert result.size()==6;
+     * assert result.get(0)==1 && result.get(2)==2 && result.get(4)==3;
+     * }
+     *
+     * @param generator a supplier which may produces the same or a new item everytime
+     *                  it is called; doesn't prevent {@code null} elements
+     * @return a gatherer
+     * @param <T> the element type
+     */
     public static <T> Gatherer<T, Void, T> interleave(Supplier<? extends T> generator) {
         return Gatherer.ofSequential((_, item, downstream) -> {
             if (downstream.isRejecting()) {
                 return false;
+            } else {
+                downstream.push(item);
+                if (downstream.isRejecting()) {
+                    return false;
+                } else {
+                    downstream.push(generator.get());
+                    return true;
+                }
             }
-            downstream.push(item);
-            downstream.push(generator.get());
-            return true;
         });
     }
 }
