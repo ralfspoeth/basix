@@ -83,9 +83,9 @@ class FunctionsTest {
         input.add(null);
         // then
         assertAll(
-                () -> assertEquals(List.of(4L), input.stream().gather(filterAndCast(Long.class)).toList()),
-                () -> assertEquals(List.of(2d), input.stream().gather(filterAndCast(Double.class)).toList()),
-                () -> assertEquals(List.of(1, 1), input.stream().gather(filterAndCast(Integer.class)).toList())
+                () -> assertEquals(List.of(4L), input.stream().gather(Gatherers.filterAndCast(Long.class)).toList()),
+                () -> assertEquals(List.of(2d), input.stream().gather(Gatherers.filterAndCast(Double.class)).toList()),
+                () -> assertEquals(List.of(1, 1), input.stream().gather(Gatherers.filterAndCast(Integer.class)).toList())
         );
     }
 
@@ -106,12 +106,12 @@ class FunctionsTest {
         // when
         // then
         assertAll(
-                () -> assertEquals(List.of(), Stream.of().gather(alternatingEquality()).toList()),
-                () -> assertEquals(List.of(1), Stream.of(1).gather(alternatingEquality()).toList()),
-                () -> assertEquals(List.of(1), Stream.of(1, 1, 1).gather(alternatingEquality()).toList()),
-                () -> assertEquals(List.of(1, 2), Stream.of(1, 2, 2).gather(alternatingEquality()).toList()),
-                () -> assertEquals(List.of(1, 2, 1), Stream.of(1, 2, 1).gather(alternatingEquality()).toList()),
-                () -> assertEquals(List.of(1, 2, 3, 2, 4, 3, 2, 3, 1), input.stream().gather(alternatingEquality()).toList())
+                () -> assertEquals(List.of(), Stream.of().gather(Gatherers.alternatingEquality()).toList()),
+                () -> assertEquals(List.of(1), Stream.of(1).gather(Gatherers.alternatingEquality()).toList()),
+                () -> assertEquals(List.of(1), Stream.of(1, 1, 1).gather(Gatherers.alternatingEquality()).toList()),
+                () -> assertEquals(List.of(1, 2), Stream.of(1, 2, 2).gather(Gatherers.alternatingEquality()).toList()),
+                () -> assertEquals(List.of(1, 2, 1), Stream.of(1, 2, 1).gather(Gatherers.alternatingEquality()).toList()),
+                () -> assertEquals(List.of(1, 2, 3, 2, 4, 3, 2, 3, 1), input.stream().gather(Gatherers.alternatingEquality()).toList())
         );
     }
 
@@ -125,8 +125,8 @@ class FunctionsTest {
                 new T(4, 101),
                 new T(5, 100)
         );
-        var allAlt = input.stream().gather(alternating(comparing(T::K))).toList();
-        var first4Alt = input.stream().limit(4).gather(alternating(comparing(T::K))).toList();
+        var allAlt = input.stream().gather(Gatherers.alternating(comparing(T::K))).toList();
+        var first4Alt = input.stream().limit(4).gather(Gatherers.alternating(comparing(T::K))).toList();
         // then
         assertAll(
                 () -> assertEquals(List.of(new T(1, 100), new T(4, 101), new T(5, 100)), allAlt),
@@ -142,8 +142,8 @@ class FunctionsTest {
         var input = List.of(1, 2, 3);
         // then
         assertAll(
-                () -> assertEquals(input, input.stream().gather(increasing()).toList()),
-                () -> assertEquals(List.of(1), input.stream().gather(decreasing()).toList())
+                () -> assertEquals(input, input.stream().gather(Gatherers.increasing()).toList()),
+                () -> assertEquals(List.of(1), input.stream().gather(Gatherers.decreasing()).toList())
         );
     }
 
@@ -153,8 +153,8 @@ class FunctionsTest {
         var input = List.of(1, 2, 0);
         // then
         assertAll(
-                () -> assertEquals(List.of(1, 2), input.stream().gather(increasing()).toList()),
-                () -> assertEquals(List.of(1, 0), input.stream().gather(decreasing()).toList())
+                () -> assertEquals(List.of(1, 2), input.stream().gather(Gatherers.increasing()).toList()),
+                () -> assertEquals(List.of(1, 0), input.stream().gather(Gatherers.decreasing()).toList())
         );
     }
 
@@ -164,8 +164,8 @@ class FunctionsTest {
         var input = List.of(1, 2, 1, 3);
         // then
         assertAll(
-                () -> assertEquals(List.of(1, 2, 3), input.stream().gather(increasing()).toList()),
-                () -> assertEquals(List.of(3, 1), input.reversed().stream().gather(decreasing()).toList())
+                () -> assertEquals(List.of(1, 2, 3), input.stream().gather(Gatherers.increasing()).toList()),
+                () -> assertEquals(List.of(3, 1), input.reversed().stream().gather(Gatherers.decreasing()).toList())
         );
     }
 
@@ -175,10 +175,10 @@ class FunctionsTest {
         var input = List.of(1, 2, 3);
         // then
         assertAll(
-                () -> assertEquals(List.of(3, 2, 1), input.stream().gather(reverse()).toList()),
-                () -> assertEquals(input, input.stream().gather(reverse()).gather(reverse()).toList()),
-                () -> assertEquals(input, input.stream().gather(reverse()).gather(alternatingEquality()).gather(reverse()).toList()),
-                () -> assertEquals(input, input.stream().gather(reverse().andThen(reverse()).andThen(alternatingEquality())).toList())
+                () -> assertEquals(List.of(3, 2, 1), input.stream().gather(Gatherers.reverse()).toList()),
+                () -> assertEquals(input, input.stream().gather(Gatherers.reverse()).gather(Gatherers.reverse()).toList()),
+                () -> assertEquals(input, input.stream().gather(Gatherers.reverse()).gather(Gatherers.alternatingEquality()).gather(Gatherers.reverse()).toList()),
+                () -> assertEquals(input, input.stream().gather(Gatherers.reverse().andThen(Gatherers.reverse()).andThen(Gatherers.alternatingEquality())).toList())
         );
     }
 
@@ -193,10 +193,10 @@ class FunctionsTest {
         Predicate<Integer> filterSome = i -> i > 1;
         // then
         assertAll(
-                () -> assertTrue(input.stream().filter(filterNone).gather(single()).findFirst().isEmpty()),
-                () -> assertEquals(3, input.stream().filter(filterOne).gather(single()).findFirst().orElseThrow()),
-                () -> assertTrue(input.stream().filter(filterAll).gather(single()).findFirst().isEmpty()),
-                () -> assertTrue(input.stream().filter(filterSome).gather(single()).findFirst().isEmpty())
+                () -> assertTrue(input.stream().filter(filterNone).gather(Gatherers.single()).findFirst().isEmpty()),
+                () -> assertEquals(3, input.stream().filter(filterOne).gather(Gatherers.single()).findFirst().orElseThrow()),
+                () -> assertTrue(input.stream().filter(filterAll).gather(Gatherers.single()).findFirst().isEmpty()),
+                () -> assertTrue(input.stream().filter(filterSome).gather(Gatherers.single()).findFirst().isEmpty())
         );
     }
 
@@ -205,7 +205,7 @@ class FunctionsTest {
         // given
         var input = IntStream.generate(() -> 1).limit(1_000_000L).boxed().parallel();
         // then
-        assertTrue(input.gather(single()).findFirst().isEmpty());
+        assertTrue(input.gather(Gatherers.single()).findFirst().isEmpty());
     }
 
     @Test
@@ -217,17 +217,17 @@ class FunctionsTest {
         var first3 = List.of(1, 2, 3);
         // then
         assertAll(
-                () -> assertEquals(first3, input.stream().limit(3).gather(exactly(3)).toList()),
-                () -> assertEquals(empty, input.stream().gather(exactly(3)).toList()),
-                () -> assertEquals(empty, input.stream().limit(2).gather(exactly(3)).toList()),
-                () -> assertEquals(empty, input.stream().limit(4).gather(exactly(3)).toList())
+                () -> assertEquals(first3, input.stream().limit(3).gather(Gatherers.exactly(3)).toList()),
+                () -> assertEquals(empty, input.stream().gather(Gatherers.exactly(3)).toList()),
+                () -> assertEquals(empty, input.stream().limit(2).gather(Gatherers.exactly(3)).toList()),
+                () -> assertEquals(empty, input.stream().limit(4).gather(Gatherers.exactly(3)).toList())
         );
     }
 
     @Test
     void testMonoSeq() {
         // given
-        var monotoneSequencesGatherer = Functions.<Integer>monotoneSequences();
+        var monotoneSequencesGatherer = Gatherers.<Integer>monotoneSequences();
         // then
         assertAll(
                 () -> assertEquals(
@@ -272,10 +272,10 @@ class FunctionsTest {
         var dec = List.of(1, -1);
         // then
         assertAll(
-                () -> assertEquals(alt, input.stream().gather(alternating()).toList()),
-                () -> assertEquals(mono, input.stream().gather(alternating()).gather(monotoneSequences()).toList()),
-                () -> assertEquals(inc, input.stream().gather(increasing()).toList()),
-                () -> assertEquals(dec, input.stream().gather(decreasing()).toList())
+                () -> assertEquals(alt, input.stream().gather(Gatherers.alternating()).toList()),
+                () -> assertEquals(mono, input.stream().gather(Gatherers.alternating()).gather(Gatherers.monotoneSequences()).toList()),
+                () -> assertEquals(inc, input.stream().gather(Gatherers.increasing()).toList()),
+                () -> assertEquals(dec, input.stream().gather(Gatherers.decreasing()).toList())
         );
     }
 
@@ -311,7 +311,7 @@ class FunctionsTest {
         var input = IntStream.range(0, 100).boxed();
         // when
         var first = new AtomicInteger(100);
-        var ret = input.gather(interleave(first::getAndIncrement)).limit(7).toList();
+        var ret = input.gather(Gatherers.interleave(first::getAndIncrement)).limit(7).toList();
         // then
         System.out.println(ret);
     }
@@ -322,7 +322,7 @@ class FunctionsTest {
         var data = List.of(1, 3, 5);
         var intersperse = List.of(2, 4, 6);
         // when
-        var result = data.stream().gather(interleave(intersperse.iterator()::next)).toList();
+        var result = data.stream().gather(Gatherers.interleave(intersperse.iterator()::next)).toList();
         // then
         assertEquals(List.of(1, 2, 3, 4, 5, 6), result);
     }
@@ -333,7 +333,7 @@ class FunctionsTest {
         var data = List.of(1, 2, 3, 4);
         var inter = List.of(-1, -2);
         // when
-        var result = data.stream().gather(interleaveRotating(inter)).toList();
+        var result = data.stream().gather(Gatherers.interleaveRotating(inter)).toList();
         // then
         assertEquals(List.of(1, -1, 2, -2, 3, -1, 4, -2), result);
     }
@@ -344,7 +344,7 @@ class FunctionsTest {
         var data = List.of(1, 2, 3);
         var inter = List.of(-1, -2);
         // when
-        var result = data.stream().gather(interleaveAvailable(inter)).toList();
+        var result = data.stream().gather(Gatherers.interleaveAvailable(inter)).toList();
         assertEquals(List.of(1, -1, 2, -2, 3), result);
     }
 
@@ -353,7 +353,7 @@ class FunctionsTest {
         // given
         var input = Stream.of(1, 2, 3);
         // when
-        var result = input.gather(interleave(()->0)).toList();
+        var result = input.gather(Gatherers.interleave(()->0)).toList();
         // then
         assertEquals(List.of(1, 0, 2, 0, 3, 0), result);
     }
@@ -364,7 +364,7 @@ class FunctionsTest {
         var input = Stream.of(1, 2, 3);
         var rnd = ThreadLocalRandom.current();
         // when
-        var result = input.gather(interleave(rnd::nextInt)).toList();
+        var result = input.gather(Gatherers.interleave(rnd::nextInt)).toList();
         // then
         assertAll(
                 () -> assertEquals(6, result.size()),
@@ -390,22 +390,21 @@ class FunctionsTest {
             final SortedMap<Integer, List<Order>> sellOrders = new TreeMap<>();
 
             long sellAmountAt(int limit) {
-                return sellOrders.entrySet()
-                        .stream()
-                        .filter(e -> e.getKey()<=limit)
-                        .map(Map.Entry::getValue)
-                        .flatMap(List::stream)
-                        .mapToLong(Order::amount)
-                        .sum();
+                return amountAt(limit, true);
             }
 
             long purchaseAmountAt(int limit) {
-                return purchaseOrders.entrySet()
+                return amountAt(limit, false);
+            }
+
+            long amountAt(int limit, boolean smaller) {
+                return sellOrders.entrySet()
                         .stream()
-                        .filter(e -> e.getKey() >=limit)
+                        .filter(e -> smaller?e.getKey()<=limit:e.getKey()>=limit)
                         .map(Map.Entry::getValue)
                         .flatMap(List::stream)
                         .mapToLong(Order::amount)
+                        .map(Math::abs)
                         .sum();
             }
 
@@ -439,7 +438,7 @@ class FunctionsTest {
 
             void printOrdersAtLimit(int limit) {
                 System.out.printf("Limit: %3d, Purchase amount: %6d, Sell amount: %6d%n",
-                        limit, purchaseAmountAt(limit), -sellAmountAt(limit)
+                        limit, purchaseAmountAt(limit), sellAmountAt(limit)
                 );
             }
         }

@@ -1,10 +1,11 @@
 package io.github.ralfspoeth.basix.fn;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import static io.github.ralfspoeth.basix.fn.Functions.unboxedBoolean;
 
 public class Predicates {
 
@@ -41,7 +42,7 @@ public class Predicates {
      * @param <S> a set
      */
     public static <T, S> Predicate<T> in(Set<S> s, Function<T, ? extends S> extractor) {
-        return x -> s.contains(extractor.apply(x));
+        return unboxedBoolean(extractor.andThen(s::contains));
     }
 
     /**
@@ -57,7 +58,7 @@ public class Predicates {
      * @param <S> the type of the elements in the keySet
      */
     public static <T, S> Predicate<T> in(Map<S, ?> m, Function<T, ? extends S> extractor) {
-        return x -> m.containsKey(extractor.apply(x));
+        return unboxedBoolean(extractor.andThen(m::containsKey));
     }
 
     /**
@@ -67,6 +68,6 @@ public class Predicates {
      * parameter {@code s}.
      */
     public static <T, S> Predicate<T> eq(S s, Function<T, ? extends S> extractor) {
-        return x -> Objects.equals(s, extractor.apply(x));
+        return unboxedBoolean(extractor.andThen(s::equals));
     }
 }
