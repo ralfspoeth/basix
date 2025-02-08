@@ -11,6 +11,8 @@ import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.util.Objects.requireNonNull;
+
 public class Functions {
 
     private Functions() {
@@ -639,5 +641,40 @@ public class Functions {
                 }
             }
         });
+    }
+
+    public static <T> Gatherer<T, Void, T> interleaveRotating(Collection<? extends T> source) {
+        if(requireNonNull(source).isEmpty()) {
+            throw new IllegalArgumentException("The source cannot be empty");
+        }
+        return interleave(
+                new Supplier<>() {
+                    private Iterator<? extends T> iter = source.iterator();
+                    @Override
+                    public T get() {
+                        if(!iter.hasNext()) {
+                            iter = source.iterator();
+                        }
+                        return iter.next();
+                    }
+                }
+        );
+    }
+
+    public static <T> Gatherer<T, Iterator<? extends T>, T> interleaveAvailable(Collection<? extends T> source) {
+        return Gatherer.ofSequential(
+                source::iterator,
+                (Iterator<? extends T> iterator, T element, Gatherer.Downstream<? super T> downstream) -> {
+                    if(downstream.isRejecting()) {
+                        return false;
+                    } else {
+                        boolean down = downstream.push(element);
+                        if(down && iterator.hasNext()) {
+                            down = downstream.push(iterator.next());
+                        }
+                        return down;
+                    }
+                }
+        );
     }
 }

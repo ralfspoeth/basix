@@ -317,6 +317,38 @@ class FunctionsTest {
     }
 
     @Test
+    void testInterleaveList() {
+        // given
+        var data = List.of(1, 3, 5);
+        var intersperse = List.of(2, 4, 6);
+        // when
+        var result = data.stream().gather(interleave(intersperse.iterator()::next)).toList();
+        // then
+        assertEquals(List.of(1, 2, 3, 4, 5, 6), result);
+    }
+
+    @Test
+    void testInterleaveRot() {
+        // given
+        var data = List.of(1, 2, 3, 4);
+        var inter = List.of(-1, -2);
+        // when
+        var result = data.stream().gather(interleaveRotating(inter)).toList();
+        // then
+        assertEquals(List.of(1, -1, 2, -2, 3, -1, 4, -2), result);
+    }
+
+    @Test
+    void testInterleaveAvail() {
+        // given
+        var data = List.of(1, 2, 3);
+        var inter = List.of(-1, -2);
+        // when
+        var result = data.stream().gather(interleaveAvailable(inter)).toList();
+        assertEquals(List.of(1, -1, 2, -2, 3), result);
+    }
+
+    @Test
     void testConst() {
         // given
         var input = Stream.of(1, 2, 3);
