@@ -211,10 +211,10 @@ public class Functions {
      * Sequential gatherer that removes any consecutively equal elements producing
      * a stream of alternating elements (hence the name).
      * {@snippet :
-     * assert List.of(1).equals(Stream.of(1, 1, 1).gather(alternating()).toList());
-     * assert List.of(1, 2).equals(Stream.of(1, 2, 2).gather(alternating()).toList());
-     * assert List.of(1, 2, 1).equals(Stream.of(1, 2, 1).gather(alternating()).toList());
-     *}
+     * assert List.of(1).equals(Stream.of(1, 1, 1).gather(alternatingEquality()).toList());
+     * assert List.of(1, 2).equals(Stream.of(1, 2, 2).gather(alternatingEquality()).toList());
+     * assert List.of(1, 2, 1).equals(Stream.of(1, 2, 1).gather(alternatingEquality()).toList());
+     * }
      * <p>
      * Note that this gatherer is different from the {@link Stream#distinct()} built-in method
      * since every element of upstream is compared to the last element pushed downstream only,
@@ -224,7 +224,7 @@ public class Functions {
      * @param <T> the element type
      * @return a gatherer producing alternating elements
      */
-    public static <T> Gatherer<T, AtomicReference<T>, T> alternating() {
+    public static <T> Gatherer<T, AtomicReference<T>, T> alternatingEquality() {
         return Gatherer.ofSequential(
                 AtomicReference::new,
                 (state, element, downstream) -> {
@@ -233,6 +233,39 @@ public class Functions {
                         state.set(element);
                     }
                     return true;
+                }
+        );
+    }
+
+
+    /**
+     * Same as {@link #alternating(Comparator)} with a {@link Comparator#naturalOrder()} passed
+     * in as comparator.
+     */
+    public static <T extends Comparable<? super T>> Gatherer<T, AtomicReference<T>, T> alternating() {
+        return alternating(Comparator.naturalOrder());
+    }
+
+    /**
+     * Similar to {@link #alternatingEquality()} but with the elements being compared
+     * to the previous element pushed downstream using a {@link Comparator}.
+     *
+     * @param comparator the comparator
+     * @return a gatherer
+     * @param <T> the type of the elements
+     */
+    public static <T> Gatherer<T, AtomicReference<T>, T> alternating(Comparator<? super T> comparator) {
+        return Gatherer.ofSequential(
+                AtomicReference::new,
+                (state, element, downstream) -> {
+                    if(downstream.isRejecting()) {
+                        return false;
+                    } else if (state.get() == null || 0 != comparator.compare(element, state.get())) {
+                        state.set(element);
+                        return downstream.push(element);
+                    } else {
+                        return true;
+                    }
                 }
         );
     }
@@ -342,10 +375,10 @@ public class Functions {
 
     /**
      * A gatherer which pushes an element from the upstream down
-     * if it is the only non-null element in the upstream; {@code null}s are swallowed.
+     * if it is the only non-null element in the upstream.
      * {@snippet :
      * import java.util.stream.Stream;
-     * Stream.of(null, 1, null)
+     * Stream.of(1)
      *     .gather(single())
      *     .findFirst()
      *     .orElseThrow(); // 1
@@ -354,21 +387,38 @@ public class Functions {
      *     .findFirst()
      *     .isEmpty(); // true
      *}
+     * Note that empty streams remain exactly this: empty.
+     * {@snippet :
+     * Stream.of()
+     *      .gather(single())
+     *      .toList(); // empty list
+     *}
      *
      * @param <T> the element type
      * @return a gatherer, may be used in parallel streams
      */
     public static <T> Gatherer<T, Collection<T>, T> single() {
+        return exactly(1);
+    }
+
+    /**
+     * A gatherer which pushes exactly {@code n} elements downstream
+     * if and only if the upstream delivers exactly {@code n}.
+     * Note that {@code null}s are accepted and passed through.
+     *
+     * @param n   the number of elements to be met
+     * @param <T> the element type
+     * @return a gatherer
+     */
+    public static <T> Gatherer<T, Collection<T>, T> exactly(int n) {
         return Gatherer.of(
                 ArrayList::new,
                 (elementsSoFar, elem, downstream) -> {
                     if (downstream.isRejecting()) {
                         return false;
                     } else {
-                        if (elem != null) {
-                            elementsSoFar.add(elem);
-                        }
-                        return elementsSoFar.size() < 2;
+                        elementsSoFar.add(elem);
+                        return elementsSoFar.size() <= n;
                     }
                 },
                 (visitedA, visitedB) -> {
@@ -376,8 +426,8 @@ public class Functions {
                     return visitedA;
                 },
                 (visited, downstream) -> {
-                    if (!downstream.isRejecting() && visited.size() == 1) {
-                        downstream.push(visited.stream().findAny().orElseThrow());
+                    if (!downstream.isRejecting() && visited.size() == n) {
+                        visited.forEach(downstream::push);
                     }
                 }
         );
@@ -411,7 +461,7 @@ public class Functions {
                         return elements.add(item);
                     } else {
                         if (order == Order.inc && comparator.compare(elements.getLast(), item) > 0
-                            || order == Order.dec && comparator.compare(elements.getLast(), item) < 0
+                                || order == Order.dec && comparator.compare(elements.getLast(), item) < 0
                         ) {
                             return false;
                         } else {
@@ -465,7 +515,7 @@ public class Functions {
      * // result == [1, 2, 3], [3, 1], [1, 2, 3]
      *}
      * </p>
-     * {@code null}s are silently swallowed.
+     * {@code null}s are swallowed.
      * <p>
      * The resulting collections are sequenced so that one may detect the order of a list
      * by comparing the first and the last element easily:

@@ -58,9 +58,9 @@ and
 
 as well as
 
-    s.push(t);
-    s.push(u);
-    assert u == s.pop() && t == s.pop() && s.isEmpty();
+    s.push(first);
+    s.push(second);
+    assert second == s.pop() && first == s.pop() && s.isEmpty();
 
 ## Queue
 
@@ -78,9 +78,9 @@ Hence,
 
 and for the operations
 
-    q.add(t);
-    q.add(u);
-    assert t == q.remove() &&  u == q.remove() && q.isEmpty();
+    q.add(first);
+    q.add(second);
+    assert first == q.remove() &&  second == q.remove() && q.isEmpty();
 
 Both queues and stacks do not implement either of the 
 interfaces of the Java Collections Framework. They are useful 
@@ -307,3 +307,109 @@ and considering that the extraction function may be defined once and then reused
 
 we may have more readable code in the end.
 But I admit it's a matter of taste...
+
+## Gatherers
+
+Gatherers are enhancement to stream processors allowing for much 
+richer algorithms with streams.
+See [JEP 485](https://openjdk.org/jeps/485) for an in-depth explanation.
+The `Functions` class contains some support for creating gatherers.
+
+### Filter and Cast
+
+Simultaneously filtering and casting a stream of objects required either
+
+    Stream.of(...)
+        .filter(MyClass.class::isInstance)
+        .map(MyClass.class::cast)
+        ...
+
+or
+
+    Stream.of(...)
+        .flatMap(o -> o instanceof MyClass m?Set.<MyClass>of(m).stream():Set.<MyClass>of().stream())
+        ...
+
+both of which are pretty ugly. This can be simplified to
+
+    Stream.of(...)
+        .gather(filterAndCast(MyClass.class))
+        ...
+
+which is simpler, more elegant and not that prone to copy/paste failures especially compared
+to the first solution.
+
+### Accepting Streams of an Exact Number of Elements
+
+Sometimes a collection-like result is valid if and only if it contains a single element only.
+Think about retrieving a record from a database for some given primary key id field.
+You'd update that record if it is the only one and you'd probably raise an exception
+you'd encounter more than one record.
+
+You can now do simply this:
+
+    var result = Stream.of(...)
+        .filter(yourCriticalFilter)
+        .gather(single())
+        .toList(); 
+    // 0 or 1 elements, guaranteed no more
+    assert result.isEmpty() || result.size()==1;
+
+`Functions.single` is a special case of `Functions.exactly(int n)` where - as the name implies - 
+exactly `n` elements are acceptable.
+
+    var result = Stream.of(...)
+        .gather(exactly(4))
+        .toList();
+    // 0 or exactly 4 elements
+    assert result.isEmpty() || result.size()==4;
+
+### Alternating Elements
+
+Sometimes an element in a stream is interesting if it deviates from 
+the most recently visited element only.
+Consider measuring temperature with observations modelled as records
+of point in time and temperature
+
+    record T(long minute, long K) {}
+
+and the time series
+
+    var obs = List.of(new T(1, 100), new T(2, 100), new T(3, 100), new T(4, 101));
+
+The observations at minutes 2 and 3 don't information and might likely be skipped.
+We can do so with the `alternating` gatherers:
+
+    var alt = obs.gather(alternating(comparing(T::K)).toList();
+    assert List.of(new T(1, 100), new T(4, 101)).equals(alt);
+
+### Monotone Series
+
+Sometimes we are interested in the next extremist observation in a stream.
+Consider the numerical sequence
+
+    1, 2, 1, 3, 1, 4, 1, 5, 1, 1, 1, 1, 7
+
+where only the next element larger than the biggest so far is of interest.
+We'd boil the series down to 
+
+    1, 2, 3, 4, 5, 7
+
+then. We can do with the `increasing` and `decreasing` gatherers like so:
+
+    // given
+    var data = List.of(1, 2, 3, 1, 4, 1, 1, 1, 1, 7, 1);
+    // when
+    var inc = data.stream().gather(increasing()).toList();
+    // then
+    assert inc.equals(List.of(1, 2, 3, 4, 7));
+
+There are variants for de- and increasing gatherers with custom comparators.
+
+### Reverse
+
+Reversing the order of `SequentialCollection`s does not make sense any longer,
+however, having an arbitrary stream of elements and reversing the output is a sensible
+operation.
+
+    

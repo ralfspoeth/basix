@@ -2,6 +2,9 @@ package io.github.ralfspoeth.basix.fn;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,6 +13,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.github.ralfspoeth.basix.fn.Functions.*;
+import static java.util.Comparator.comparing;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FunctionsTest {
@@ -86,7 +90,7 @@ class FunctionsTest {
     }
 
     @Test
-    void testAlternating() {
+    void testAlternatingEquals() {
         // given
         var input = List.of(
                 1,
@@ -102,14 +106,35 @@ class FunctionsTest {
         // when
         // then
         assertAll(
-                () -> assertEquals(List.of(), Stream.of().gather(alternating()).toList()),
-                () -> assertEquals(List.of(1), Stream.of(1).gather(alternating()).toList()),
-                () -> assertEquals(List.of(1), Stream.of(1, 1, 1).gather(alternating()).toList()),
-                () -> assertEquals(List.of(1, 2), Stream.of(1, 2, 2).gather(alternating()).toList()),
-                () -> assertEquals(List.of(1, 2, 1), Stream.of(1, 2, 1).gather(alternating()).toList()),
-                () -> assertEquals(List.of(1, 2, 3, 2, 4, 3, 2, 3, 1), input.stream().gather(alternating()).toList())
+                () -> assertEquals(List.of(), Stream.of().gather(alternatingEquality()).toList()),
+                () -> assertEquals(List.of(1), Stream.of(1).gather(alternatingEquality()).toList()),
+                () -> assertEquals(List.of(1), Stream.of(1, 1, 1).gather(alternatingEquality()).toList()),
+                () -> assertEquals(List.of(1, 2), Stream.of(1, 2, 2).gather(alternatingEquality()).toList()),
+                () -> assertEquals(List.of(1, 2, 1), Stream.of(1, 2, 1).gather(alternatingEquality()).toList()),
+                () -> assertEquals(List.of(1, 2, 3, 2, 4, 3, 2, 3, 1), input.stream().gather(alternatingEquality()).toList())
         );
     }
+
+    @Test
+    void testAlternating() {
+        // given
+        record T(long millis, long K) {}
+        // when
+        var input = List.of(
+                new T(1, 100), new T(2, 100), new T(3, 100),
+                new T(4, 101),
+                new T(5, 100)
+        );
+        var allAlt = input.stream().gather(alternating(comparing(T::K))).toList();
+        var first4Alt = input.stream().limit(4).gather(alternating(comparing(T::K))).toList();
+        // then
+        assertAll(
+                () -> assertEquals(List.of(new T(1, 100), new T(4, 101), new T(5, 100)), allAlt),
+                () -> assertEquals(List.of(new T(1, 100), new T(4, 101)), first4Alt)
+        );
+    }
+
+
 
     @Test
     void testMonotone123() {
@@ -152,8 +177,8 @@ class FunctionsTest {
         assertAll(
                 () -> assertEquals(List.of(3, 2, 1), input.stream().gather(reverse()).toList()),
                 () -> assertEquals(input, input.stream().gather(reverse()).gather(reverse()).toList()),
-                () -> assertEquals(input, input.stream().gather(reverse()).gather(alternating()).gather(reverse()).toList()),
-                () -> assertEquals(input, input.stream().gather(reverse().andThen(reverse()).andThen(alternating())).toList())
+                () -> assertEquals(input, input.stream().gather(reverse()).gather(alternatingEquality()).gather(reverse()).toList()),
+                () -> assertEquals(input, input.stream().gather(reverse().andThen(reverse()).andThen(alternatingEquality())).toList())
         );
     }
 
@@ -181,6 +206,22 @@ class FunctionsTest {
         var input = IntStream.generate(() -> 1).limit(1_000_000L).boxed().parallel();
         // then
         assertTrue(input.gather(single()).findFirst().isEmpty());
+    }
+
+    @Test
+    void testExactlyN() {
+        // given
+        var input = List.of(1, 2, 3, 4, 5);
+        // when
+        var empty = List.of();
+        var first3 = List.of(1, 2, 3);
+        // then
+        assertAll(
+                () -> assertEquals(first3, input.stream().limit(3).gather(exactly(3)).toList()),
+                () -> assertEquals(empty, input.stream().gather(exactly(3)).toList()),
+                () -> assertEquals(empty, input.stream().limit(2).gather(exactly(3)).toList()),
+                () -> assertEquals(empty, input.stream().limit(4).gather(exactly(3)).toList())
+        );
     }
 
     @Test
