@@ -411,5 +411,14 @@ There are variants for de- and increasing gatherers with custom comparators.
 Reversing the order of `SequentialCollection`s does not make sense any longer,
 however, having an arbitrary stream of elements and reversing the output is a sensible
 operation.
+Consider this stream with an interleaving gatherer
 
-    
+    Stream.of(1, 2, 3)
+        .gather(interleaving(() -> -5)) 1, -5, 2, -5, 3, -5
+        .limit(5) // 1, -5, 2, -5, 3
+        .gather(reverse())
+        .toList(); // 3, -5, 2, -5, 1
+
+This gatherer is stateful , sequential, and needs to record (`stack`) all elements before pushing it 
+downstream, and may therefore be costly.
+
