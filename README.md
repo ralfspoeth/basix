@@ -419,6 +419,6 @@ Consider this stream with an interleaving gatherer
         .gather(reverse())
         .toList(); // 3, -5, 2, -5, 1
 
-This gatherer is stateful , sequential, and needs to record (`stack`) all elements before pushing it 
+This gatherer is stateful, sequential, and needs to record (`stack`) all elements before pushing it 
 downstream, and may therefore be costly.
 
