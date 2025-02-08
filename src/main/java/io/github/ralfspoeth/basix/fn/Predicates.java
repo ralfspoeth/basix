@@ -34,39 +34,39 @@ public class Predicates {
      * as is the extraction function.
      *
      * @param s a {@link Set} of elements either of which must be matched, must not be {@code null}
-     * @param extr a {@link Function} that extracts a property of some object, must not be {@code null}
+     * @param extractor a {@link Function} that extracts a property of some object, must not be {@code null}
      * @return a new {@link Predicate} the {@link Predicate#test test} method of which tests
      *  whether the given set contains the extracted property of the given object
      * @param <T> the type of the target object to be tested
      * @param <S> a set
      */
-    public static <T, S> Predicate<T> in(Set<S> s, Function<T, ? extends S> extr) {
-        return x -> s.contains(extr.apply(x));
+    public static <T, S> Predicate<T> in(Set<S> s, Function<T, ? extends S> extractor) {
+        return x -> s.contains(extractor.apply(x));
     }
 
     /**
      * Creates a {@link Predicate} which for some object {@code x}
-     * of which an {@code extr}actor function extracts some property
+     * of which an {@code extractor} function extracts some property
      * which must then be in the {@link Map#keySet() keySet} of the
      * {@code m}ap.
      *
      * @param m the map
-     * @param extr an extractor function
+     * @param extractor an extractor function
      * @return a Predicate which extracts some value of an object and tests whether it is an element of the keySet of the map
      * @param <T> The for which the predicate will be defined
      * @param <S> the type of the elements in the keySet
      */
-    public static <T, S> Predicate<T> in(Map<S, ?> m, Function<T, ? extends S> extr) {
-        return x -> m.containsKey(extr.apply(x));
+    public static <T, S> Predicate<T> in(Map<S, ?> m, Function<T, ? extends S> extractor) {
+        return x -> m.containsKey(extractor.apply(x));
     }
 
     /**
      * Creates a {@link Predicate} which for some object {@code x}
-     * of which an {@code extr}actor function extracts some property
+     * of which an {@code extractor} function extracts some property
      * {@code p} which is tested for equality with the given
      * parameter {@code s}.
      */
-    public static <T, S> Predicate<T> eq(S s, Function<T, ? extends S> extr) {
-        return x -> Objects.equals(s, extr.apply(x));
+    public static <T, S> Predicate<T> eq(S s, Function<T, ? extends S> extractor) {
+        return x -> Objects.equals(s, extractor.apply(x));
     }
 }
