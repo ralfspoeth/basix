@@ -83,14 +83,14 @@ public class Gatherers {
      * to the previous element pushed downstream using a {@link Comparator}.
      *
      * @param comparator the comparator
+     * @param <T>        the type of the elements
      * @return a gatherer
-     * @param <T> the type of the elements
      */
     public static <T> Gatherer<T, AtomicReference<T>, T> alternating(Comparator<? super T> comparator) {
         return Gatherer.ofSequential(
                 AtomicReference::new,
                 (state, element, downstream) -> {
-                    if(downstream.isRejecting()) {
+                    if (downstream.isRejecting()) {
                         return false;
                     } else if (state.get() == null || 0 != comparator.compare(element, state.get())) {
                         state.set(element);
@@ -357,8 +357,8 @@ public class Gatherers {
      *
      * @param generator a supplier which may produces the same or a new item everytime
      *                  it is called; doesn't prevent {@code null} elements
+     * @param <T>       the element type
      * @return a gatherer
-     * @param <T> the element type
      */
     public static <T> Gatherer<T, Void, T> interleave(Supplier<? extends T> generator) {
         return Gatherer.ofSequential((_, item, downstream) -> {
@@ -377,15 +377,16 @@ public class Gatherers {
     }
 
     public static <T> Gatherer<T, Void, T> interleaveRotating(Collection<? extends T> source) {
-        if(requireNonNull(source).isEmpty()) {
+        if (requireNonNull(source).isEmpty()) {
             throw new IllegalArgumentException("The source cannot be empty");
         }
         return interleave(
                 new Supplier<>() {
                     private Iterator<? extends T> iter = source.iterator();
+
                     @Override
                     public T get() {
-                        if(!iter.hasNext()) {
+                        if (!iter.hasNext()) {
                             iter = source.iterator();
                         }
                         return iter.next();
@@ -398,11 +399,11 @@ public class Gatherers {
         return Gatherer.ofSequential(
                 source::iterator,
                 (Iterator<? extends T> iterator, T element, Gatherer.Downstream<? super T> downstream) -> {
-                    if(downstream.isRejecting()) {
+                    if (downstream.isRejecting()) {
                         return false;
                     } else {
                         boolean down = downstream.push(element);
-                        if(down && iterator.hasNext()) {
+                        if (down && iterator.hasNext()) {
                             down = downstream.push(iterator.next());
                         }
                         return down;
@@ -434,17 +435,15 @@ public class Gatherers {
                         order = switch (sign(comparator.compare(elements.getLast(), item))) {
                             case NEGATIVE -> Order.INCREASING;
                             case POSITIVE -> Order.DECREASING;
-                            default -> null;
+                            case ZERO -> null;
                         };
                         return elements.add(item);
                     } else {
-                        if (order == Order.INCREASING && comparator.compare(elements.getLast(), item) > 0
-                                || order == Order.DECREASING && comparator.compare(elements.getLast(), item) < 0
-                        ) {
-                            return false;
-                        } else {
-                            return elements.add(item);
-                        }
+                        return(order == Order.INCREASING
+                                && comparator.compare(elements.getLast(), item) <=0
+                                || order == Order.DECREASING
+                                && comparator.compare(elements.getLast(), item) >= 0
+                        ) && elements.add(item);
                     }
                 }
             }
