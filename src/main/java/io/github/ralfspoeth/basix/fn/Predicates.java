@@ -95,7 +95,7 @@ public class Predicates {
     }
 
     /**
-     * Same as {@link #smallerOrEqual(Object, Comparator)} )} with {@link Comparator#naturalOrder()}
+     * Same as {@link #smallerOrEqual(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
      */
     public static <T extends Comparable<? super T>> Predicate<T> smallerOrEqual(T ref) {
@@ -110,7 +110,7 @@ public class Predicates {
     }
 
     /**
-     * Same as {@link #equal(Object, Comparator)} )} with {@link Comparator#naturalOrder()}
+     * Same as {@link #equal(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
      */
     public static <T extends Comparable<? super T>> Predicate<T> equal(T ref) {
@@ -125,7 +125,7 @@ public class Predicates {
     }
 
     /**
-     * Same as {@link #greaterOrEqual(Object, Comparator)} )} with {@link Comparator#naturalOrder()}
+     * Same as {@link #greaterOrEqual(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
      */
     public static <T extends Comparable<? super T>> Predicate<T> greaterOrEqual(T ref) {
@@ -140,7 +140,7 @@ public class Predicates {
     }
 
     /**
-     * Same as {@link #greaterThan(Object, Comparator)} )} with {@link Comparator#naturalOrder()}
+     * Same as {@link #greaterThan(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
      */
     public static <T extends Comparable<T>> Predicate<T> greaterThan(T ref) {
@@ -156,7 +156,7 @@ public class Predicates {
     }
 
     /**
-     * Same as {@link #smallerOrGreater(Object, Comparator)} )} with {@link Comparator#naturalOrder()}
+     * Same as {@link #smallerOrGreater(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
      */
     public static <T extends Comparable<? super T>> Predicate<T> smallerOrGreater(T ref) {
