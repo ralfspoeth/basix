@@ -4,7 +4,7 @@ public class Tree<T> {
 
     private final ChildNode<T> root = new ChildNode<>();
 
-    public TreeNode<T> root() {
+    public ChildNode<T> root() {
         return root;
     }
 

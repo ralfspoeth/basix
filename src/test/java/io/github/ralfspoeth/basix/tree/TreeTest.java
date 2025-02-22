@@ -16,4 +16,16 @@ class TreeTest {
         );
     }
 
+    @Test
+    void test1(){
+        var tree = new Tree<Integer>();
+        var one = tree.root().addLeafNode(1);
+        assertAll(
+                ()->assertEquals(1, one.data()),
+                ()->assertEquals(1, tree.root().children().size()),
+                ()->assertEquals(one.root(), tree.root()),
+                ()->{}
+        );
+    }
+
 }

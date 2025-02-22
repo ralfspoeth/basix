@@ -10,6 +10,10 @@ import static io.github.ralfspoeth.basix.fn.Sign.sign;
 import static java.util.Objects.requireNonNull;
 
 public class Gatherers {
+
+    // prevent instantiation
+    private Gatherers(){}
+
     /**
      * Stateless gatherer to be used with streams  which combines
      * filtering for the given type and casting to that.
@@ -376,6 +380,24 @@ public class Gatherers {
         });
     }
 
+    /**
+     * A gatherer which interposes elements from the given {@code source} collection,
+     * re-starting with the first element when the last has been used; it's
+     * {@link #interleave(Supplier)} with a rotating or circulating supplier.
+     * Example:
+     * {@snippet :
+     * // given
+     * import java.util.stream.IntStream;
+     * var onetwo = List.of(1, 2);
+     * // when
+     * var rg = IntStream.range(0, 10).boxed();
+     * // then
+     * var result = rg.gather(interleaveRotating(onetwo)).toList();
+     * assert List.of(0, 1, 1, 2, 2, 1, 3, 2, 4, 1, 5, 2, 6, 1, 7, 2, 8, 1, 9, 2);
+     *}
+     *
+     * @param source the collection the elements of which are inserted into the downstream
+     */
     public static <T> Gatherer<T, Void, T> interleaveRotating(Collection<? extends T> source) {
         if (requireNonNull(source).isEmpty()) {
             throw new IllegalArgumentException("The source cannot be empty");
@@ -395,6 +417,13 @@ public class Gatherers {
         );
     }
 
+    /**
+     * A gatherer which interposes elements from the given {@code source} collection
+     * until it is exhausted; the stream continues to push downstream every element from the upstream
+     * even then.
+     *
+     * @param source the collection
+     */
     public static <T> Gatherer<T, Iterator<? extends T>, T> interleaveAvailable(Collection<? extends T> source) {
         return Gatherer.ofSequential(
                 source::iterator,
@@ -412,6 +441,7 @@ public class Gatherers {
         );
     }
 
+    //
     private static class ContCollection<T> extends AbstractSequentialList<T> {
 
         private final Comparator<? super T> comparator;

@@ -7,4 +7,8 @@ final class LeafNode<T> extends AbstractNode<T> implements TreeNode<T> {
     LeafNode(T data) {
         this.data = requireNonNull(data);
     }
+    @Override
+    public T data() {
+        return data;
+    }
 }
