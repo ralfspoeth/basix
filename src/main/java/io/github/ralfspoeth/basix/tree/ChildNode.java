@@ -13,7 +13,7 @@ final class ChildNode<T> extends AbstractNode<T> implements TreeNode<T> {
     }
 
     LeafNode<T> addLeafNode(T data) {
-        var n = new LeafNode<T>(data);
+        var n = new LeafNode<>(data);
         n.parent = this;
         children.add(n);
         return n;
