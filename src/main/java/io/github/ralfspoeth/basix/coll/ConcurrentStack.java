@@ -17,21 +17,9 @@ public final class ConcurrentStack<T> extends BaseStack<T> {
     private final Lock lock = new ReentrantLock();
 
     /**
-     * Pop the topmost element if it is not null.
+     * {@link super#popIf(Predicate)} implemented in a thread-safe way.
      */
-    public Optional<T> popIfNotEmpty() {
-        return popIf(Objects::nonNull);
-    }
-
-    /**
-     * Remove to the top element of this stack only if it meets
-     * the given condition.
-     *
-     * @param condition a condition; note that the object passed to its
-     *                  {@link Predicate#test(Object)} method may be {@code null}
-     * @return the topmost element of the stack wrapped in an optional, or
-     * {@link Optional#empty()}
-     */
+    @Override
     public Optional<T> popIf(Predicate<? super T> condition) {
         lock.lock();
         try {
@@ -41,11 +29,13 @@ public final class ConcurrentStack<T> extends BaseStack<T> {
         }
     }
 
+    @Override
     public ConcurrentStack<T> pushIfEmpty(T data) {
         return pushUnless(data, Objects::nonNull);
     }
 
-    private ConcurrentStack<T> pushUnless(T data, Predicate<? super T> condition) {
+    @Override
+    public ConcurrentStack<T> pushUnless(T data, Predicate<? super T> condition) {
         lock.lock();
         try {
             return condition.test(super.top()) ? this : (ConcurrentStack<T>) super.push(data);
@@ -53,7 +43,6 @@ public final class ConcurrentStack<T> extends BaseStack<T> {
             lock.unlock();
         }
     }
-
 
     @Override
     public boolean isEmpty() {
