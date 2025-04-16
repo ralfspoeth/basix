@@ -250,8 +250,7 @@ public class Gatherers {
                     if (downstream.isRejecting()) {
                         return false;
                     } else {
-                        elementsSoFar.add(elem);
-                        return elementsSoFar.size() <= n;
+                        return elementsSoFar.add(elem) && elementsSoFar.size() <= n;
                     }
                 },
                 (visitedA, visitedB) -> {
@@ -421,6 +420,16 @@ public class Gatherers {
      * A gatherer which interposes elements from the given {@code source} collection
      * until it is exhausted; the stream continues to push downstream every element from the upstream
      * even then.
+     * {@snippet :
+     * // given
+     * var list = List.of(1, 2, 3, 4);
+     * var interleave = List.of(100, 1000); // just two of them
+     * // when
+     * var result = list.stream().gather(Gatherers.interleaveAvailable(interleave)).toList();
+     * // then
+     * assert result.equals(List.of(1, 100, 2, 1000, 3, 4));
+     * }
+     *
      *
      * @param source the collection
      */
@@ -436,6 +445,46 @@ public class Gatherers {
                             down = downstream.push(iterator.next());
                         }
                         return down;
+                    }
+                }
+        );
+    }
+
+
+    /**
+     * A gatherer which interposes elements from a collection
+     * into the stream until the elements from collection are exhausted,
+     * and adds the remaining elements to the tail of the stream if it is done.
+     * If the source collection is smaller than the upstream it behaves like
+     * {@link #interleaveAvailable(Collection)}.
+     * Example:
+     * {@snippet :
+     * // given
+     * var stream = Stream.of(1, 2);
+     * var coll = List.of(91, 92, 93, 94);
+     * // when
+     * var result = stream.gather(interleaveAppendRest(coll)).toList();
+     * // then
+     * assert result.equals(List.of(1, 91, 2, 92, 93, 94));
+     * }
+     * @param source the collection of elements to inserted and finally appended to the stream
+     */
+    public static <T> Gatherer<T, Iterator<? extends T>, T> interleaveAppendRest(Collection<? extends T> source) {
+        return Gatherer.ofSequential(
+                source::iterator,
+                (iterator, elem, downstream) -> {
+                    if (downstream.isRejecting()) {
+                        return false;
+                    } else {
+                        boolean down = downstream.push(elem);
+                        if (down && iterator.hasNext()) {
+                            down = downstream.push(iterator.next());
+                        }
+                        return down;
+                    }
+                }, (iterator, downstream) -> {
+                    while (iterator.hasNext() && !downstream.isRejecting()) {
+                        downstream.push(iterator.next());
                     }
                 }
         );
