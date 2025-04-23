@@ -17,7 +17,7 @@ public final class ConcurrentStack<T> extends BaseStack<T> {
     private final Lock lock = new ReentrantLock();
 
     /**
-     * {@link super#popIf(Predicate)} implemented in a thread-safe way.
+     * {@link BaseStack#popIf(Predicate)} implemented in a thread-safe way.
      */
     @Override
     public Optional<T> popIf(Predicate<? super T> condition) {
