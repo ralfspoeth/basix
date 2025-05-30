@@ -19,8 +19,10 @@ public class Gatherers {
      * filtering for the given type and casting to that.
      * Usage:
      * {@snippet :
-     * List<Object> list = List.<Object>of(); // @replace substring="List.<Object>of()" replacement="..."
-     * List<Long> result = list.stream().gather(Gatherers.filterAndCast(Long.class)).toList();
+     * List<Number> list = List.of(); // @replace substring="List.of()" replacement="..."
+     * List<Long> result = list.stream()
+     *     .gather(Gatherers.filterAndCast(Long.class))
+     *     .toList();
      *}
      * <p>
      * The type parameters {@code T} are mostly inferred,
@@ -215,14 +217,14 @@ public class Gatherers {
      *     .gather(Gatherers.single())
      *     .findFirst()
      *     .orElseThrow(); // 1
-     * Stream.of(1, 2)
+     * assert Stream.of(1, 2)
      *     .gather(Gatherers.single())
      *     .findFirst()
      *     .isEmpty(); // true
      *}
      * Note that empty streams remain exactly this: empty.
      * {@snippet :
-     * Stream.of()
+     * var list = Stream.of()
      *      .gather(Gatherers.single())
      *      .toList(); // empty list
      *}
