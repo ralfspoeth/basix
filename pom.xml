@@ -5,14 +5,14 @@
     <parent>
         <groupId>io.github.ralfspoeth</groupId>
         <artifactId>plumbum</artifactId>
-        <version>1.4.3</version>
+        <version>1.4.4</version>
     </parent>
     <artifactId>basix</artifactId>
     <version>2.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>https://github.com/ralfspoeth/basix</url>
     <properties>
-        <maven.compiler.release>24</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.plugin.validation>VERBOSE</maven.plugin.validation>
     </properties>
