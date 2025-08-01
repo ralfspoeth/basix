@@ -8,11 +8,11 @@
         <version>1.4.9</version>
     </parent>
     <artifactId>basix</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>1.0.14-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>https://github.com/ralfspoeth/basix</url>
     <properties>
-        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.plugin.validation>VERBOSE</maven.plugin.validation>
     </properties>
