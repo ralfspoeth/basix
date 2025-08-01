@@ -1,5 +1,7 @@
 package io.github.ralfspoeth.basix.coll;
 
+import java.lang.reflect.Array;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -40,7 +42,9 @@ import static java.util.Objects.requireNonNull;
  * @param <T> the element type
  */
 public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
-    private Elem<T> top = null;
+    @SuppressWarnings("unchecked")
+    private T[] data = (T[])Array.newInstance(Object.class, 16);
+    private int next = 0;
 
     protected BaseStack() {
     }
@@ -88,19 +92,21 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @return true if empty
      */
     public boolean isEmpty() {
-        return top == null;
+        return next == 0;
     }
 
     /**
      * Return and remove the topmost element of the stack.
      *
      * @return the topmost element
-     * @throws NullPointerException when empty
+     * @throws NoSuchElementException when empty
      */
     public T pop() {
-        var tmp = requireNonNull(top).item;
-        top = top.next;
-        return tmp;
+        if(next>0) {
+            return data[--next];
+        } else {
+            throw new NoSuchElementException("stack is empty");
+        }
     }
 
     /**
@@ -110,28 +116,18 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @return the topmost element
      */
     public T top() {
-        return top == null ? null : top.item;
+        return next>0?data[next-1]:null;
     }
 
-    /**
-     * Add an element at the top of the stack.
-     *
-     * @param elem the element, may not be {@code null}
-     * @return this
-     */
+
     public BaseStack<T> push(T elem) {
-        var tmp = new Elem<>(elem);
-        tmp.next = top;
-        top = tmp;
-        return this;
-    }
-
-    private static class Elem<T> {
-        final T item;
-        Elem<T> next;
-
-        private Elem(T newItem) {
-            this.item = requireNonNull(newItem);
+        if(next==data.length) {
+            @SuppressWarnings("unchecked")
+            T[] tmp = (T[])Array.newInstance(Object.class, data.length*2);
+            System.arraycopy(data, 0, tmp, 0, data.length);
+            data = tmp;
         }
+        data[next++] = requireNonNull(elem);
+        return this;
     }
 }

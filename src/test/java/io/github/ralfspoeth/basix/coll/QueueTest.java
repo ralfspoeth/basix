@@ -3,6 +3,7 @@ package io.github.ralfspoeth.basix.coll;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,7 +30,7 @@ class QueueTest {
                 () -> assertEquals(q.head(), q.tail()),
                 () -> assertEquals(1, q.head()),
                 () -> assertEquals(1, q.remove()),
-                () -> assertThrows(NullPointerException.class, q::remove)
+                () -> assertThrows(NoSuchElementException.class, q::remove)
         );
     }
 
@@ -45,7 +46,7 @@ class QueueTest {
                 () -> assertEquals(1, q.remove()),
                 () -> assertEquals(2, q.remove()),
                 () -> assertTrue(q.isEmpty()),
-                () -> assertThrows(NullPointerException.class, q::remove)
+                () -> assertThrows(NoSuchElementException.class, q::remove)
         );
     }
 
