@@ -1,53 +1,13 @@
 package io.github.ralfspoeth.basix.coll;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Predicate;
-
 import static java.util.Objects.requireNonNull;
-import static java.util.function.Predicate.not;
 
 public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
-
-    @SuppressWarnings("unchecked")
-    private T[] data = (T[]) Array.newInstance(Object.class, 16);
-    private int next = 0;
-    private int top = 0;
-
-    private void checkSize() {
-        assert top <= next;
-        // next == top -> empty
-        // we can move both pointers back to the start
-        if (top == next) {
-            Arrays.fill(data, 0, next, null);
-            next = top = 0;
-        }
-        // capa exhausted?
-        else if (next == data.length) {
-            // less than half of the capa is used
-            if (top > data.length / 2) {
-                System.arraycopy(data, top, data, 0, next - top);
-                Arrays.fill(data, next - top, next, null);
-                next = next - top;
-                top = 0;
-            }
-            // or else grow
-            else {
-                @SuppressWarnings("unchecked")
-                var tmp = (T[]) Array.newInstance(Object.class, data.length * 2);
-                System.arraycopy(data, top, tmp, 0, next - top);
-                data = tmp;
-                next = next - top;
-                top = 0;
-            }
-        }
-    }
+    private Elem<T> last = null;  // last element added
+    private Elem<T> first = null; // first to be removed
 
     public boolean isEmpty() {
-        return next == top;
+        return last == null;
     }
 
     /**
@@ -57,72 +17,51 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
      * @return this
      */
     public BaseQueue<T> add(T item) {
-        checkSize();
-        data[next++] = requireNonNull(item);
+        Elem<T> tmp = new Elem<>(item);
+        if (last == null) {
+            assert first == null;
+            last = tmp;
+            first = tmp;
+        } else {
+            tmp.next = last;
+            last.previous = tmp;
+            last = tmp;
+        }
         return this;
-    }
-
-    public BaseQueue<T> addIfTail(T item, Predicate<? super T> condition) {
-        return condition.test(tail()) ? add(item) : this;
-    }
-
-    public BaseQueue<T> addIfQueue(T item, Predicate<? super BaseQueue<T>> condition) {
-        return condition.test(this) ? add(item) : this;
-    }
-
-    public BaseQueue<T> addIfNotEmpty(T item) {
-        return addIfQueue(item, not(BaseQueue::isEmpty));
     }
 
     /**
      * Removes and returns the element from the head of the queue.
      *
      * @return the element at the head of the queue
-     * @throws NoSuchElementException when empty.
+     * @throws NullPointerException when empty.
      */
     public T remove() {
-        if (top == next) {
-            throw new NoSuchElementException("queue is empty");
+        var tmp = requireNonNull(first).item;
+        first = first.previous;
+        if (first == null) {
+            last = null;
         } else {
-            T tmp = data[top];
-            data[top++] = null;
-            checkSize();
-            return tmp;
+            first.next = null;
         }
+        return tmp;
     }
 
-    public Optional<T> removeIfNotEmpty() {
-        return removeIfHead(Objects::nonNull);
-    }
-
-    public Optional<T> removeIfHead(Predicate<? super T> condition) {
-        if(condition.test(head())) {
-            return Optional.of(remove());
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    public Optional<T> removeIfQueue(Predicate<? super BaseQueue<T>> condition) {
-        if(condition.test(this)) {
-            return Optional.of(remove());
-        } else {
-            return Optional.empty();
-        }
-    }
-    /**
-     * The next element available in the queue.
-     */
     public T head() {
-        assert top < data.length;
-        return top == next ? null : data[top];
+        return first == null ? null : first.item;
     }
 
-    /**
-     * The last element added to the queue.
-     */
     public T tail() {
-        assert next <= data.length;
-        return top == next ? null : data[next - 1];
+        return last == null ? null : last.item;
+    }
+
+    private static class Elem<T> {
+        final T item;
+        Elem<T> next;
+        Elem<T> previous;
+
+        private Elem(T newItem) {
+            this.item = requireNonNull(newItem);
+        }
     }
 }

@@ -3,7 +3,6 @@ package io.github.ralfspoeth.basix.coll;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.NoSuchElementException;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,11 +12,7 @@ class QueueTest {
     @Test
     void testNullElems() {
         var q = new Queue<Integer>();
-        assertAll(
-                () -> assertThrows(NullPointerException.class, () -> q.add(null)),
-                () -> assertTrue(q.removeIfNotEmpty().isEmpty()),
-                () -> assertFalse(q.addIfNotEmpty(5).isEmpty())
-        );
+        assertThrows(NullPointerException.class, () -> q.add(null));
     }
 
     @Test
@@ -34,7 +29,7 @@ class QueueTest {
                 () -> assertEquals(q.head(), q.tail()),
                 () -> assertEquals(1, q.head()),
                 () -> assertEquals(1, q.remove()),
-                () -> assertThrows(NoSuchElementException.class, q::remove)
+                () -> assertThrows(NullPointerException.class, q::remove)
         );
     }
 
@@ -50,7 +45,7 @@ class QueueTest {
                 () -> assertEquals(1, q.remove()),
                 () -> assertEquals(2, q.remove()),
                 () -> assertTrue(q.isEmpty()),
-                () -> assertThrows(NoSuchElementException.class, q::remove)
+                () -> assertThrows(NullPointerException.class, q::remove)
         );
     }
 

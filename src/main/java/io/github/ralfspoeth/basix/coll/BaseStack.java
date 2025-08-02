@@ -1,7 +1,5 @@
 package io.github.ralfspoeth.basix.coll;
 
-import java.lang.reflect.Array;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -42,9 +40,10 @@ import static java.util.Objects.requireNonNull;
  * @param <T> the element type
  */
 public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
-    @SuppressWarnings("unchecked")
-    private T[] data = (T[]) Array.newInstance(Object.class, 16);
-    private int next = 0;
+    private Elem<T> top = null;
+
+    protected BaseStack() {
+    }
 
     /**
      * Pop the topmost element if it is not null.
@@ -74,7 +73,7 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
     /**
      * Push an element unless some condition is met.
      *
-     * @param data      the element to be pushed
+     * @param data the element to be pushed
      * @param condition the condition not be met if the element is to be pushed
      * @return this
      */
@@ -89,23 +88,19 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @return true if empty
      */
     public boolean isEmpty() {
-        return next == 0;
+        return top == null;
     }
 
     /**
      * Return and remove the topmost element of the stack.
      *
      * @return the topmost element
-     * @throws NoSuchElementException when empty
+     * @throws NullPointerException when empty
      */
     public T pop() {
-        if (next > 0) {
-            var tmp = data[--next];
-            data[next] = null;
-            return tmp;
-        } else {
-            throw new NoSuchElementException("stack is empty");
-        }
+        var tmp = requireNonNull(top).item;
+        top = top.next;
+        return tmp;
     }
 
     /**
@@ -115,18 +110,28 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @return the topmost element
      */
     public T top() {
-        return next > 0 ? data[next - 1] : null;
+        return top == null ? null : top.item;
     }
 
-
+    /**
+     * Add an element at the top of the stack.
+     *
+     * @param elem the element, may not be {@code null}
+     * @return this
+     */
     public BaseStack<T> push(T elem) {
-        if (next == data.length) {
-            @SuppressWarnings("unchecked")
-            T[] tmp = (T[]) Array.newInstance(Object.class, data.length * 2);
-            System.arraycopy(data, 0, tmp, 0, data.length);
-            data = tmp;
-        }
-        data[next++] = requireNonNull(elem);
+        var tmp = new Elem<>(elem);
+        tmp.next = top;
+        top = tmp;
         return this;
+    }
+
+    private static class Elem<T> {
+        final T item;
+        Elem<T> next;
+
+        private Elem(T newItem) {
+            this.item = requireNonNull(newItem);
+        }
     }
 }

@@ -1,7 +1,5 @@
 package io.github.ralfspoeth.basix.coll;
 
-import java.util.function.Predicate;
-
 /**
  * First in first out (FIFO) data structure.
  * Elements are appended at the end of and removed from the head of the queue.
@@ -27,20 +25,5 @@ public final class Queue<T> extends BaseQueue<T> {
     @Override
     public Queue<T> add(T item) {
         return (Queue<T>)super.add(item);
-    }
-
-    @Override
-    public Queue<T> addIfNotEmpty(T item) {
-        return (Queue<T>)super.addIfNotEmpty(item);
-    }
-
-    @Override
-    public Queue<T> addIfQueue(T item, Predicate<? super BaseQueue<T>> condition) {
-        return(Queue<T>)super.addIfQueue(item, condition);
-    }
-
-    @Override
-    public Queue<T> addIfTail(T item, Predicate<? super T> condition) {
-        return (Queue<T>)super.addIfTail(item, condition);
     }
 }
