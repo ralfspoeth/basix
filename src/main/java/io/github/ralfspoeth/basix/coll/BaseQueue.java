@@ -1,6 +1,7 @@
 package io.github.ralfspoeth.basix.coll;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 import static java.util.Objects.requireNonNull;
@@ -17,6 +18,7 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         // next == top -> empty
         // we can move both pointers back to the start
         if(top==next) {
+            Arrays.fill(data, 0, next, null);
             next = top = 0;
         }
         // capa exhausted?
@@ -24,6 +26,7 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
             // less than half of the capa is used
             if(top>data.length/2) {
                 System.arraycopy(data, top, data, 0, next-top);
+                Arrays.fill(data, next-top, next, null);
                 next = next-top;
                 top = 0;
             }
@@ -68,7 +71,8 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         if(top==next) {
             throw new NoSuchElementException("queue is empty");
         } else {
-            T tmp = data[top++];
+            T tmp = data[top];
+            data[top++] = null;
             checkSize();
             return tmp;
         }
