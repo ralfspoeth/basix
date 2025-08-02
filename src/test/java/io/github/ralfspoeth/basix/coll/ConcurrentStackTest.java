@@ -1,6 +1,5 @@
-package io.github.ralfspoeth.basix;
+package io.github.ralfspoeth.basix.coll;
 
-import io.github.ralfspoeth.basix.coll.ConcurrentStack;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

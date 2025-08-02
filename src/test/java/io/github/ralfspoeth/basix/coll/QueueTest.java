@@ -13,7 +13,11 @@ class QueueTest {
     @Test
     void testNullElems() {
         var q = new Queue<Integer>();
-        assertThrows(NullPointerException.class, () -> q.add(null));
+        assertAll(
+                () -> assertThrows(NullPointerException.class, () -> q.add(null)),
+                () -> assertTrue(q.removeIfNotEmpty().isEmpty()),
+                () -> assertFalse(q.addIfNotEmpty(5).isEmpty())
+        );
     }
 
     @Test

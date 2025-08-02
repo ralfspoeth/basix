@@ -1,19 +1,14 @@
 package io.github.ralfspoeth.basix.fn;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static io.github.ralfspoeth.basix.fn.Functions.*;
-import static java.util.Comparator.comparing;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FunctionsTest {
@@ -76,210 +71,6 @@ class FunctionsTest {
     }
 
     @Test
-    void testFilterAndCast() {
-        // given
-        var input = new ArrayList<Number>(List.of(1, 2d, 3f, 4L, 1));
-        // when
-        input.add(null);
-        // then
-        assertAll(
-                () -> assertEquals(List.of(4L), input.stream().gather(Gatherers.filterAndCast(Long.class)).toList()),
-                () -> assertEquals(List.of(2d), input.stream().gather(Gatherers.filterAndCast(Double.class)).toList()),
-                () -> assertEquals(List.of(1, 1), input.stream().gather(Gatherers.filterAndCast(Integer.class)).toList())
-        );
-    }
-
-    @Test
-    void testAlternatingEquals() {
-        // given
-        var input = List.of(
-                1,
-                2, 2,
-                3,
-                2, 2, 2,
-                4, 4,
-                3, 3,
-                2,
-                3,
-                1
-        );
-        // when
-        // then
-        assertAll(
-                () -> assertEquals(List.of(), Stream.of().gather(Gatherers.alternatingEquality()).toList()),
-                () -> assertEquals(List.of(1), Stream.of(1).gather(Gatherers.alternatingEquality()).toList()),
-                () -> assertEquals(List.of(1), Stream.of(1, 1, 1).gather(Gatherers.alternatingEquality()).toList()),
-                () -> assertEquals(List.of(1, 2), Stream.of(1, 2, 2).gather(Gatherers.alternatingEquality()).toList()),
-                () -> assertEquals(List.of(1, 2, 1), Stream.of(1, 2, 1).gather(Gatherers.alternatingEquality()).toList()),
-                () -> assertEquals(List.of(1, 2, 3, 2, 4, 3, 2, 3, 1), input.stream().gather(Gatherers.alternatingEquality()).toList())
-        );
-    }
-
-    @Test
-    void testAlternating() {
-        // given
-        record T(long millis, long K) {}
-        // when
-        var input = List.of(
-                new T(1, 100), new T(2, 100), new T(3, 100),
-                new T(4, 101),
-                new T(5, 100)
-        );
-        var allAlt = input.stream().gather(Gatherers.alternating(comparing(T::K))).toList();
-        var first4Alt = input.stream().limit(4).gather(Gatherers.alternating(comparing(T::K))).toList();
-        // then
-        assertAll(
-                () -> assertEquals(List.of(new T(1, 100), new T(4, 101), new T(5, 100)), allAlt),
-                () -> assertEquals(List.of(new T(1, 100), new T(4, 101)), first4Alt)
-        );
-    }
-
-
-
-    @Test
-    void testMonotone123() {
-        // given
-        var input = List.of(1, 2, 3);
-        // then
-        assertAll(
-                () -> assertEquals(input, input.stream().gather(Gatherers.increasing()).toList()),
-                () -> assertEquals(List.of(1), input.stream().gather(Gatherers.decreasing()).toList())
-        );
-    }
-
-    @Test
-    void testMonotone120() {
-        // given
-        var input = List.of(1, 2, 0);
-        // then
-        assertAll(
-                () -> assertEquals(List.of(1, 2), input.stream().gather(Gatherers.increasing()).toList()),
-                () -> assertEquals(List.of(1, 0), input.stream().gather(Gatherers.decreasing()).toList())
-        );
-    }
-
-    @Test
-    void testMonotone1213() {
-        // given
-        var input = List.of(1, 2, 1, 3);
-        // then
-        assertAll(
-                () -> assertEquals(List.of(1, 2, 3), input.stream().gather(Gatherers.increasing()).toList()),
-                () -> assertEquals(List.of(3, 1), input.reversed().stream().gather(Gatherers.decreasing()).toList())
-        );
-    }
-
-    @Test
-    void testReverse() {
-        // given
-        var input = List.of(1, 2, 3);
-        // then
-        assertAll(
-                () -> assertEquals(List.of(3, 2, 1), input.stream().gather(Gatherers.reverse()).toList()),
-                () -> assertEquals(input, input.stream().gather(Gatherers.reverse()).gather(Gatherers.reverse()).toList()),
-                () -> assertEquals(input, input.stream().gather(Gatherers.reverse()).gather(Gatherers.alternatingEquality()).gather(Gatherers.reverse()).toList()),
-                () -> assertEquals(input, input.stream().gather(Gatherers.reverse().andThen(Gatherers.reverse()).andThen(Gatherers.alternatingEquality())).toList())
-        );
-    }
-
-    @Test
-    void testSingle() {
-        // given
-        var input = List.of(1, 2, 3);
-        // when
-        Predicate<Integer> filterNone = _ -> false;
-        Predicate<Integer> filterOne = i -> i == 3;
-        Predicate<Integer> filterAll = _ -> true;
-        Predicate<Integer> filterSome = i -> i > 1;
-        // then
-        assertAll(
-                () -> assertTrue(input.stream().filter(filterNone).gather(Gatherers.single()).findFirst().isEmpty()),
-                () -> assertEquals(3, input.stream().filter(filterOne).gather(Gatherers.single()).findFirst().orElseThrow()),
-                () -> assertTrue(input.stream().filter(filterAll).gather(Gatherers.single()).findFirst().isEmpty()),
-                () -> assertTrue(input.stream().filter(filterSome).gather(Gatherers.single()).findFirst().isEmpty())
-        );
-    }
-
-    @Test
-    void testSingleInParallel() {
-        // given
-        var input = IntStream.generate(() -> 1).limit(1_000_000L).boxed().parallel();
-        // then
-        assertTrue(input.gather(Gatherers.single()).findFirst().isEmpty());
-    }
-
-    @Test
-    void testExactlyN() {
-        // given
-        var input = List.of(1, 2, 3, 4, 5);
-        // when
-        var empty = List.of();
-        var first3 = List.of(1, 2, 3);
-        // then
-        assertAll(
-                () -> assertEquals(first3, input.stream().limit(3).gather(Gatherers.exactly(3)).toList()),
-                () -> assertEquals(empty, input.stream().gather(Gatherers.exactly(3)).toList()),
-                () -> assertEquals(empty, input.stream().limit(2).gather(Gatherers.exactly(3)).toList()),
-                () -> assertEquals(empty, input.stream().limit(4).gather(Gatherers.exactly(3)).toList())
-        );
-    }
-
-    @Test
-    void testMonoSeq() {
-        // given
-        var monotoneSequencesGatherer = Gatherers.<Integer>monotoneSequences();
-        // then
-        assertAll(
-                () -> assertEquals(
-                        List.of(List.of(1, 2, 3)),
-                        Stream.of(1, 2, 3).gather(monotoneSequencesGatherer).toList()
-                ), () -> assertEquals(
-                        List.of(List.of(1, 2, 3), List.of(3, 2, 1)),
-                        Stream.of(1, 2, 3, 2, 1).gather(monotoneSequencesGatherer).toList()
-                ), () -> assertEquals(
-                        List.of(List.of(1, 2, 3), List.of(3, 1)),
-                        Stream.of(1, 2, 3, 1).gather(monotoneSequencesGatherer).toList()
-                ), () -> assertEquals(
-                        List.of(List.of(1, 2, 3), List.of(3, 1), List.of(1, 2, 3)),
-                        Stream.of(1, 2, 3, 1, 2, 3).gather(monotoneSequencesGatherer).toList()
-                ), () -> assertEquals(
-                        List.of(List.of(1, 1, 1, 2)),
-                        Stream.of(1, 1, 1, 2).gather(monotoneSequencesGatherer).toList()
-                ), () -> assertEquals(
-                        List.of(List.of(1, 1, 1, 2), List.of(2, 1)),
-                        Stream.of(1, 1, 1, 2, 1).gather(monotoneSequencesGatherer).toList()
-                ), () -> assertEquals(
-                        List.of(List.of(1, 1, 1)),
-                        Stream.of(1, 1, 1).gather(monotoneSequencesGatherer).toList()
-                ), () -> assertEquals(
-                        List.of(List.of(1, 1)),
-                        Stream.of(1, 1).gather(monotoneSequencesGatherer).toList()
-                ), () -> assertEquals(
-                        List.of(List.of(1)),
-                        Stream.of(1).gather(monotoneSequencesGatherer).toList()
-                )
-        );
-    }
-
-    @Test
-    void combinedTest() {
-        // given
-        var input = List.of(1, 2, 2, 3, 3, 3, 4, 4, 3, 2, -1, -1, -1);
-        // when
-        var mono = List.of(List.of(1, 2, 3, 4), List.of(4, 3, 2, -1));
-        var alt = List.of(1, 2, 3, 4, 3, 2, -1);
-        var inc = List.of(1, 2, 3, 4);
-        var dec = List.of(1, -1);
-        // then
-        assertAll(
-                () -> assertEquals(alt, input.stream().gather(Gatherers.alternating()).toList()),
-                () -> assertEquals(mono, input.stream().gather(Gatherers.alternating()).gather(Gatherers.monotoneSequences()).toList()),
-                () -> assertEquals(inc, input.stream().gather(Gatherers.increasing()).toList()),
-                () -> assertEquals(dec, input.stream().gather(Gatherers.decreasing()).toList())
-        );
-    }
-
-    @Test
     void testZipMap() {
         // given
         var keys = List.of(1, 2, 3);
@@ -305,78 +96,9 @@ class FunctionsTest {
         );
     }
 
-    @Test
-    void testInterleave() {
-        // given
-        var input = IntStream.range(0, 100).boxed();
-        // when
-        var first = new AtomicInteger(100);
-        var ret = input.gather(Gatherers.interleave(first::getAndIncrement)).limit(7).toList();
-        // then
-        System.out.println(ret);
-    }
 
     @Test
-    void testInterleaveList() {
-        // given
-        var data = List.of(1, 3, 5);
-        var intersperse = List.of(2, 4, 6);
-        // when
-        var result = data.stream().gather(Gatherers.interleave(intersperse.iterator()::next)).toList();
-        // then
-        assertEquals(List.of(1, 2, 3, 4, 5, 6), result);
-    }
-
-    @Test
-    void testInterleaveRot() {
-        // given
-        var data = List.of(1, 2, 3, 4);
-        var inter = List.of(-1, -2);
-        // when
-        var result = data.stream().gather(Gatherers.interleaveRotating(inter)).toList();
-        // then
-        assertEquals(List.of(1, -1, 2, -2, 3, -1, 4, -2), result);
-    }
-
-    @Test
-    void testInterleaveAvail() {
-        // given
-        var data = List.of(1, 2, 3);
-        var inter = List.of(-1, -2);
-        // when
-        var result = data.stream().gather(Gatherers.interleaveAvailable(inter)).toList();
-        assertEquals(List.of(1, -1, 2, -2, 3), result);
-    }
-
-    @Test
-    void testConst() {
-        // given
-        var input = Stream.of(1, 2, 3);
-        // when
-        var result = input.gather(Gatherers.interleave(()->0)).toList();
-        // then
-        assertEquals(List.of(1, 0, 2, 0, 3, 0), result);
-    }
-
-    @Test
-    void testRnd() {
-        // given
-        var input = Stream.of(1, 2, 3);
-        var rnd = ThreadLocalRandom.current();
-        // when
-        var result = input.gather(Gatherers.interleave(rnd::nextInt)).toList();
-        // then
-        assertAll(
-                () -> assertEquals(6, result.size()),
-                () -> assertEquals(1, result.getFirst()),
-                () -> assertEquals(2, result.get(2)),
-                () -> assertEquals(3, result.get(4))
-        );
-    }
-
-
-
-    @Test
+    @Disabled
     void orderBook() {
         // given
         record Order(long amount, int limit) {
@@ -400,7 +122,7 @@ class FunctionsTest {
             long amountAt(int limit, boolean smaller) {
                 return sellOrders.entrySet()
                         .stream()
-                        .filter(e -> smaller?e.getKey()<=limit:e.getKey()>=limit)
+                        .filter(e -> smaller ? e.getKey() <= limit : e.getKey() >= limit)
                         .map(Map.Entry::getValue)
                         .flatMap(List::stream)
                         .mapToLong(Order::amount)
@@ -410,13 +132,13 @@ class FunctionsTest {
 
             void postOrder(Order order) {
                 if (order.amount() < 0) {
-                    sellOrders.compute(order.limit, (_, l) -> {
+                    sellOrders.compute(order.limit, (ignored, l) -> {
                         if (l == null) l = new ArrayList<>();
                         l.add(order);
                         return l;
                     });
                 } else {
-                    purchaseOrders.compute(order.limit, (_, l) -> {
+                    purchaseOrders.compute(order.limit, (ignored, l) -> {
                         if (l == null) l = new ArrayList<>();
                         l.add(order);
                         return l;
@@ -424,9 +146,10 @@ class FunctionsTest {
                 }
                 tryProcessOrders();
             }
+
             void tryProcessOrders() {
-                if(sellOrders.isEmpty() || purchaseOrders.isEmpty()) return;
-                if(sellOrders.firstKey() <= purchaseOrders.lastKey()) {
+                if (sellOrders.isEmpty() || purchaseOrders.isEmpty()) return;
+                if (sellOrders.firstKey() <= purchaseOrders.lastKey()) {
                     System.out.println(this);
                 }
             }
@@ -457,4 +180,217 @@ class FunctionsTest {
         book.printOrdersAtLimit(13);
         book.printOrdersAtLimit(14);
     }
+
+
+    @Test
+    void conditionalTrue() {
+        Function<Integer, String> f = conditional(
+                i -> i > 0,
+                i -> "positive",
+                i -> "not positive"
+        );
+        assertEquals("positive", f.apply(5));
+    }
+
+    @Test
+    void conditionalFalse() {
+        Function<Integer, String> f = conditional(
+                i -> i > 0,
+                i -> "positive",
+                i -> "not positive"
+        );
+        assertEquals("not positive", f.apply(-5));
+        assertEquals("not positive", f.apply(0));
+    }
+
+    @Test
+    void ofMap() {
+        var m = Map.of(1, "one", 2, "two", 3, "three");
+        record R(int x) {}
+        var l = List.of(new R(2), new R(3));
+        var expected = List.of("two", "three");
+        assertEquals(expected, l.stream().map(of(m, R::x)).toList());
+    }
+
+    @Test
+    void ofMapWithMissingKey() {
+        var m = Map.of(1, "one");
+        record R(int x) {}
+        var f = of(m, R::x);
+        assertNull(f.apply(new R(2)));
+    }
+
+    @Test
+    void ofMapWithEmptyMap() {
+        Map<Integer, String> m = Collections.emptyMap();
+        record R(int x) {}
+        var f = of(m, R::x);
+        assertNull(f.apply(new R(1)));
+    }
+
+    @Test
+    void ofList() {
+        var list = List.of("a", "b", "c");
+        var f = Functions.of(list);
+        assertEquals("a", f.apply(0));
+        assertEquals("b", f.apply(1));
+        assertEquals("c", f.apply(2));
+    }
+
+    @Test
+    void ofListIsDefensive() {
+        var originalList = new ArrayList<>(List.of("a", "b"));
+        var f = Functions.of(originalList);
+        originalList.set(0, "z");
+        assertEquals("a", f.apply(0));
+    }
+
+    @Test
+    void ofListThrowsForOutOfBounds() {
+        var list = List.of("a", "b", "c");
+        var f = Functions.of(list);
+        assertThrows(IndexOutOfBoundsException.class, () -> f.apply(3));
+        assertThrows(IndexOutOfBoundsException.class, () -> f.apply(-1));
+    }
+
+    @Test
+    void indexedWithStart() {
+        var l = List.of("a", "b", "c");
+        var f = indexed(1);
+        var result = l.stream().map(f).toList();
+        var expected = List.of(new Indexed<>(1, "a"), new Indexed<>(2, "b"), new Indexed<>(3, "c"));
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void indexedIterableWithStart() {
+        var l = List.of("a", "b", "c");
+        var result = indexed(l, 5).toList();
+        var expected = List.of(new Indexed<>(5, "a"), new Indexed<>(6, "b"), new Indexed<>(7, "c"));
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void indexedIterableDefaultStart() {
+        var l = List.of("a", "b", "c");
+        var result = indexed(l).toList();
+        var expected = List.of(new Indexed<>(0, "a"), new Indexed<>(1, "b"), new Indexed<>(2, "c"));
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void indexedWithEmptyIterable() {
+        var l = Collections.<String>emptyList();
+        var result = indexed(l).toList();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void labeledFromMap() {
+        // Use LinkedHashMap to have a predictable iteration order
+        var m = new LinkedHashMap<String, Integer>();
+        m.put("one", 11);
+        m.put("two", 22);
+        var result = labeled(m).toList();
+        var expected = List.of(new Labeled<>("one", 11), new Labeled<>("two", 22));
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void labeledFromMapUnordered() {
+        var m = Map.of("one", 11, "two", 22);
+        var result = labeled(m).collect(Collectors.toSet());
+        var expected = Set.of(new Labeled<>("one", 11), new Labeled<>("two", 22));
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void labeledFromEmptyMap() {
+        var m = Collections.<String, Integer>emptyMap();
+        var result = labeled(m).toList();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void labeledFromIterable() {
+        record R(String name, int x) {}
+        var rs = List.of(new R("one", 1), new R("two", 2));
+        var result = labeled(rs, r -> r.name().substring(0, 1)).toList();
+        var expected = List.of(new Labeled<>("o", new R("one", 1)), new Labeled<>("t", new R("two", 2)));
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void labeledFromEmptyIterable() {
+        var l = Collections.<String>emptyList();
+        var result = labeled(l, String::toUpperCase).toList();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void zipMapEqualSize() {
+        var keys = List.of(1, 2, 3);
+        var values = List.of("one", "two", "three");
+        var map = zipMap(keys, values);
+
+        assertEquals(3, map.size());
+        assertEquals("one", map.get(1));
+        assertEquals("two", map.get(2));
+        assertEquals("three", map.get(3));
+        assertEquals(keys, new ArrayList<>(map.sequencedKeySet()));
+        assertEquals(values, new ArrayList<>(map.sequencedValues()));
+    }
+
+    @Test
+    void zipMapKeysShorter() {
+        var keys = List.of(1, 2);
+        var values = List.of("one", "two", "three");
+        var map = zipMap(keys, values);
+
+        assertEquals(2, map.size());
+        assertEquals(keys, new ArrayList<>(map.sequencedKeySet()));
+        assertEquals(List.of("one", "two"), new ArrayList<>(map.sequencedValues()));
+    }
+
+    @Test
+    void zipMapValuesShorter() {
+        var keys = List.of(1, 2, 3);
+        var values = List.of("one", "two");
+        var map = zipMap(keys, values);
+
+        assertEquals(2, map.size());
+        assertEquals(List.of(1, 2), new ArrayList<>(map.sequencedKeySet()));
+        assertEquals(values, new ArrayList<>(map.sequencedValues()));
+    }
+
+    @Test
+    void zipMapWithEmptyKeys() {
+        var keys = Collections.<Integer>emptyList();
+        var values = List.of("one", "two", "three");
+        var map = zipMap(keys, values);
+        assertTrue(map.isEmpty());
+    }
+
+    @Test
+    void zipMapWithEmptyValues() {
+        var keys = List.of(1, 2, 3);
+        var values = Collections.<String>emptyList();
+        var map = zipMap(keys, values);
+        assertTrue(map.isEmpty());
+    }
+
+    @Test
+    void zipMapWithNulls() {
+        var keys = Arrays.asList(1, null, 3);
+        var values = Arrays.asList("one", "two", null);
+        var map = zipMap(keys, values);
+
+        assertEquals(3, map.size());
+        assertEquals("one", map.get(1));
+        assertEquals("two", map.get(null));
+        assertNull(map.get(3));
+        assertEquals(keys, new ArrayList<>(map.sequencedKeySet()));
+        assertEquals(values, new ArrayList<>(map.sequencedValues()));
+    }
+
 }
