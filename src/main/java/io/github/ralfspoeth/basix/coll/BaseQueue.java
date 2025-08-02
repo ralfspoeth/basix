@@ -9,7 +9,7 @@ import static java.util.Objects.requireNonNull;
 public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
 
     @SuppressWarnings("unchecked")
-    private T[] data = (T[])Array.newInstance(Object.class, 16);
+    private T[] data = (T[]) Array.newInstance(Object.class, 16);
     private int next = 0;
     private int top = 0;
 
@@ -17,32 +17,29 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         assert top <= next;
         // next == top -> empty
         // we can move both pointers back to the start
-        if(top==next) {
+        if (top == next) {
             Arrays.fill(data, 0, next, null);
             next = top = 0;
         }
         // capa exhausted?
-        else if(next==data.length) {
+        else if (next == data.length) {
             // less than half of the capa is used
-            if(top>data.length/2) {
-                System.arraycopy(data, top, data, 0, next-top);
-                Arrays.fill(data, next-top, next, null);
-                next = next-top;
+            if (top > data.length / 2) {
+                System.arraycopy(data, top, data, 0, next - top);
+                Arrays.fill(data, next - top, next, null);
+                next = next - top;
                 top = 0;
             }
             // or else grow
             else {
                 @SuppressWarnings("unchecked")
-                var tmp = (T[])Array.newInstance(Object.class, data.length * 2);
+                var tmp = (T[]) Array.newInstance(Object.class, data.length * 2);
                 System.arraycopy(data, top, tmp, 0, next - top);
                 data = tmp;
                 next = next - top;
                 top = 0;
             }
         }
-    }
-
-    protected BaseQueue() {
     }
 
     public boolean isEmpty() {
@@ -68,7 +65,7 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
      * @throws NoSuchElementException when empty.
      */
     public T remove() {
-        if(top==next) {
+        if (top == next) {
             throw new NoSuchElementException("queue is empty");
         } else {
             T tmp = data[top];
@@ -82,14 +79,16 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
      * The next element available in the queue.
      */
     public T head() {
-        return top==next ? null : data[top];
+        assert top < data.length;
+        return top == next ? null : data[top];
     }
 
     /**
      * The last element added to the queue.
      */
     public T tail() {
-        return top==next ? null : data[next-1];
+        assert next <= data.length;
+        return top == next ? null : data[next - 1];
     }
 
 }

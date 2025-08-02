@@ -8,9 +8,8 @@ import java.util.stream.StreamSupport;
 
 public class Functions {
 
-    private Functions() {
-        // prevent instantiation
-    }
+    // prevent instantiation
+    private Functions() {}
 
     /**
      * Resembles the ternary operator {@code ?:}.
@@ -54,10 +53,10 @@ public class Functions {
      * assert List.of("two", "three").equals(l.stream().map(of(m, R::x)).toList());
      *}
      *
-     * @param m    a map
+     * @param m         a map
      * @param extractor a function
-     * @param <T>  target type of the function
-     * @param <R>  return type of the function
+     * @param <T>       target type of the function
+     * @param <R>       return type of the function
      * @return a function that maps the extracted key to a value
      */
     public static <T, R> Function<T, R> of(Map<?, R> m, Function<T, ?> extractor) {
@@ -204,15 +203,6 @@ public class Functions {
             tmp.put((K) itk.next(), (V) itv.next());
         }
         return tmp;
-    }
-
-    // unboxing
-    static <T> ToIntFunction<T> unboxedInt(Function<T, Integer> f) {
-        return f::apply;
-    }
-
-    static <T> ToLongFunction<T> unboxedLong(Function<T, Long> f) {
-        return f::apply;
     }
 
     static <T> Predicate<T> unboxedBoolean(Function<T, Boolean> f) {

@@ -43,11 +43,8 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
     @SuppressWarnings("unchecked")
-    private T[] data = (T[])Array.newInstance(Object.class, 16);
+    private T[] data = (T[]) Array.newInstance(Object.class, 16);
     private int next = 0;
-
-    protected BaseStack() {
-    }
 
     /**
      * Pop the topmost element if it is not null.
@@ -77,7 +74,7 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
     /**
      * Push an element unless some condition is met.
      *
-     * @param data the element to be pushed
+     * @param data      the element to be pushed
      * @param condition the condition not be met if the element is to be pushed
      * @return this
      */
@@ -102,8 +99,10 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @throws NoSuchElementException when empty
      */
     public T pop() {
-        if(next>0) {
-            return data[--next];
+        if (next > 0) {
+            var tmp = data[--next];
+            data[next] = null;
+            return tmp;
         } else {
             throw new NoSuchElementException("stack is empty");
         }
@@ -116,14 +115,14 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @return the topmost element
      */
     public T top() {
-        return next>0?data[next-1]:null;
+        return next > 0 ? data[next - 1] : null;
     }
 
 
     public BaseStack<T> push(T elem) {
-        if(next==data.length) {
+        if (next == data.length) {
             @SuppressWarnings("unchecked")
-            T[] tmp = (T[])Array.newInstance(Object.class, data.length*2);
+            T[] tmp = (T[]) Array.newInstance(Object.class, data.length * 2);
             System.arraycopy(data, 0, tmp, 0, data.length);
             data = tmp;
         }
