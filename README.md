@@ -1,7 +1,7 @@
 # basix - Basic Data Structures and Functions
 
 This tiny library contains some structures and functions
-which I frequently use by myself - and offer therefore for 
+that I frequently use by myself—and offer therefore for 
 others as well.
 
 ## Getting Started
@@ -11,9 +11,9 @@ work:
 
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 2.0.0
+    version: 1.0.15
 
-You'll need Java version 24 or later to utilize this library.
+You'll need Java version 21 or later to use this library.
 
 When working with JPMS modules, add this to your
 `module-info.java` file:
@@ -24,20 +24,18 @@ When working with JPMS modules, add this to your
 
 ## History and Compatability
 
-Beginning with version 2.0 we will use version 24 or later of the JDK
-and will use stream gatherers in particular.
-
-Version was compatible with version 21 of the JDK and will be supported
+Versions 1.0.x are compatible with version 21 of the JDK and will be supported
 at least until version 21 is superceded by the next LTS version of the JDK, 
-which is probably 25.
+which is probably 25. Version 2.0.x will provide some additions to be used
+with stream gatherers.
 
 # Purity Stack and Queue Implementations
 
 Though the Java Collections library contains a rich set
-of classes which provide much more functionality then 
-these two `Stack` and `Queue` implementations I prefer
+of classes which provide much more functionality than 
+these two `Stack` and `Queue` implementations. I prefer
 them frequently when I want to utilize their push/pop or 
-add/remove semantics, respectively, in pure manner.
+add/remove semantics, respectively, for purity reasons.
 
 ## Stack
 
@@ -86,6 +84,14 @@ Both queues and stacks do not implement either of the
 interfaces of the Java Collections Framework. They are useful 
 exclusively when Java collections simply provide way too much
 for the task at hand.
+
+## Concurrent Variants
+
+Both `Queue` and `Stack` have their concurrent counterparts
+`ConcurrentQueue` and `ConcurrentStack`.
+The support for atomic operations like `pushUnless` in `Stack` 
+or `addIfTail` in `Queue` is available in both the concurrent and
+the standard implementations.
 
 # Functions and Predicates
 

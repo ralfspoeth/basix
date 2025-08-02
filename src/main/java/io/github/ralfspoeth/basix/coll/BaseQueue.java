@@ -3,8 +3,12 @@ package io.github.ralfspoeth.basix.coll;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.function.Predicate.not;
 
 public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
 
@@ -58,6 +62,18 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         return this;
     }
 
+    public BaseQueue<T> addIfTail(T item, Predicate<? super T> condition) {
+        return condition.test(tail()) ? add(item) : this;
+    }
+
+    public BaseQueue<T> addIfQueue(T item, Predicate<? super BaseQueue<T>> condition) {
+        return condition.test(this) ? add(item) : this;
+    }
+
+    public BaseQueue<T> addIfNotEmpty(T item) {
+        return addIfQueue(item, not(BaseQueue::isEmpty));
+    }
+
     /**
      * Removes and returns the element from the head of the queue.
      *
@@ -75,6 +91,25 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         }
     }
 
+    public Optional<T> removeIfNotEmpty() {
+        return removeIfHead(Objects::nonNull);
+    }
+
+    public Optional<T> removeIfHead(Predicate<? super T> condition) {
+        if(condition.test(head())) {
+            return Optional.of(remove());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<T> removeIfQueue(Predicate<? super BaseQueue<T>> condition) {
+        if(condition.test(this)) {
+            return Optional.of(remove());
+        } else {
+            return Optional.empty();
+        }
+    }
     /**
      * The next element available in the queue.
      */
@@ -90,5 +125,4 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         assert next <= data.length;
         return top == next ? null : data[next - 1];
     }
-
 }
