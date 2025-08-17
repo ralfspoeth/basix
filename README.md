@@ -37,7 +37,7 @@ and will use stream `Ggatherer`s in particular.
 # Purity Stack and Queue Implementations
 
 Though the Java Collections library contains a rich set
-of classes which provide much more functionality then 
+of classes which provide much more functionality than 
 these two `Stack` and `Queue` implementations I prefer
 them frequently when I want to utilize their push/pop or 
 add/remove semantics, respectively, in pure manner.
@@ -346,8 +346,8 @@ to the first solution.
 
 Sometimes a collection-like result is valid if and only if it contains a single element only.
 Think about retrieving a record from a database for some given primary key id field.
-You'd update that record if it is the only one and you'd probably raise an exception
-you'd encounter more than one record.
+You'd update that record if it is the only one, and you'd probably raise an exception
+if you'd encounter more than one record.
 
 You can now do simply this:
 
