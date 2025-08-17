@@ -5,10 +5,12 @@ import org.jspecify.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.util.NoSuchElementException;
 
+import static java.util.Objects.requireNonNull;
+
 sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
 
     @SuppressWarnings("unchecked")
-    private T[] data = (T[]) Array.newInstance(Object.class, 16);
+    private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
     private int next = 0;
     private int top = 0;
 
@@ -54,7 +56,7 @@ sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
      */
     public BaseQueue<T> add(T item) {
         checkSize();
-        data[next++] = item;
+        data[next++] = requireNonNull(item);
         return this;
     }
 
@@ -70,6 +72,7 @@ sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         } else {
             T tmp = data[top++];
             checkSize();
+            assert tmp != null;
             return tmp;
         }
     }

@@ -3,6 +3,7 @@ package io.github.ralfspoeth.basix.coll;
 import org.jspecify.annotations.NonNull;import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,7 +24,7 @@ class StackTest {
                 () -> assertThrows(NullPointerException.class, () -> new Stack<>().push(null)),
                 () -> assertEquals(1, new Stack<@NonNull Integer>().push(1).top()),
                 () -> assertEquals(1, new Stack<@NonNull Integer>().push(1).pop()),
-                () -> assertThrows(NullPointerException.class, emptyStack::pop)
+                () -> assertThrows(NoSuchElementException.class, emptyStack::pop)
         );
     }
 

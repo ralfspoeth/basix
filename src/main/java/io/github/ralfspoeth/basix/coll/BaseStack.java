@@ -2,6 +2,8 @@ package io.github.ralfspoeth.basix.coll;
 
 import org.jspecify.annotations.Nullable;
 
+import java.lang.reflect.Array;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -45,7 +47,9 @@ import static java.util.Objects.requireNonNull;
  * @param <T> the element type
  */
 abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
-    private @Nullable Elem<T> top = null;
+    @SuppressWarnings("unchecked")
+    private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
+    private int next = 0;
 
     protected BaseStack() {
     }
@@ -93,19 +97,24 @@ abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @return true if empty
      */
     public boolean isEmpty() {
-        return top == null;
+        return next == 0;
     }
 
     /**
      * Return and remove the topmost element of the stack.
      *
      * @return the topmost element
-     * @throws NullPointerException when empty
+     * @throws NoSuchElementException when empty
      */
     public T pop() {
-        var tmp = requireNonNull(top).item;
-        top = top.next;
-        return tmp;
+        if(next>0) {
+            T tmp = data[--next];
+            data[next] = null;
+            assert tmp != null;
+            return tmp;
+        } else {
+            throw new NoSuchElementException("stack is empty");
+        }
     }
 
     /**
@@ -114,29 +123,19 @@ abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      *
      * @return the topmost element
      */
-    public @Nullable T top() {
-        return top == null ? null : top.item;
+    public T top() {
+        return next>0?data[next-1]:null;
     }
 
-    /**
-     * Add an element at the top of the stack.
-     *
-     * @param elem the element, may not be {@code null}
-     * @return this
-     */
+
     public BaseStack<T> push(T elem) {
-        var tmp = new Elem<>(elem);
-        tmp.next = top;
-        top = tmp;
-        return this;
-    }
-
-    private static class Elem<T> {
-        final T item;
-        @Nullable Elem<T> next;
-
-        private Elem(T newItem) {
-            this.item = requireNonNull(newItem);
+        if(next==data.length) {
+            @SuppressWarnings("unchecked")
+            T[] tmp = (T[])Array.newInstance(Object.class, data.length*2);
+            System.arraycopy(data, 0, tmp, 0, data.length);
+            data = tmp;
         }
+        data[next++] = requireNonNull(elem);
+        return this;
     }
 }
