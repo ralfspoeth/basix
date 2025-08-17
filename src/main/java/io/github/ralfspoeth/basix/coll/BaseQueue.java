@@ -3,8 +3,7 @@ package io.github.ralfspoeth.basix.coll;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Array;
-
-import static java.util.Objects.requireNonNull;
+import java.util.NoSuchElementException;
 
 sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
 
@@ -40,8 +39,11 @@ sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         }
     }
 
+    protected BaseQueue() {
+    }
+
     public boolean isEmpty() {
-        return last == null;
+        return next == top;
     }
 
     /**
@@ -51,16 +53,8 @@ sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
      * @return this
      */
     public BaseQueue<T> add(T item) {
-        Elem<T> tmp = new Elem<>(item);
-        if (last == null) {
-            assert first == null;
-            last = tmp;
-            first = tmp;
-        } else {
-            tmp.next = last;
-            last.previous = tmp;
-            last = tmp;
-        }
+        checkSize();
+        data[next++] = item;
         return this;
     }
 
@@ -68,34 +62,30 @@ sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
      * Removes and returns the element from the head of the queue.
      *
      * @return the element at the head of the queue
-     * @throws NullPointerException when empty.
+     * @throws NoSuchElementException when empty.
      */
     public T remove() {
-        var tmp = requireNonNull(first).item;
-        first = first.previous;
-        if (first == null) {
-            last = null;
+        if(top==next) {
+            throw new NoSuchElementException("queue is empty");
         } else {
-            first.next = null;
+            T tmp = data[top++];
+            checkSize();
+            return tmp;
         }
-        return tmp;
     }
 
+    /**
+     * The next element available in the queue.
+     */
     public @Nullable T head() {
-        return first == null ? null : first.item;
+        return top==next ? null : data[top];
     }
 
+    /**
+     * The last element added to the queue.
+     */
     public @Nullable T tail() {
-        return last == null ? null : last.item;
+        return top==next ? null : data[next-1];
     }
 
-    private static class Elem<T> {
-        final T item;
-        @Nullable Elem<T> next;
-        @Nullable Elem<T> previous;
-
-        private Elem(T newItem) {
-            this.item = requireNonNull(newItem);
-        }
-    }
 }
