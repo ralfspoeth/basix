@@ -13,8 +13,10 @@ package io.github.ralfspoeth.basix.coll;
  * queue.add(2);
  * assert queue.head()==1;
  * assert queue.tail()==2;
- * assert 1==queue.remove();
- * assert 2==queue.remove();
+ * var one = queue.remove();
+ * assert 1==one;
+ * var two = queue.remove();
+ * assert 2==two;
  * assert queue.isEmpty();
  *}
  *

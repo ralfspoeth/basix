@@ -4,7 +4,7 @@ import org.jspecify.annotations.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
-public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
+sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
     private @Nullable Elem<T> last = null;  // last element added
     private @Nullable Elem<T> first = null; // first to be removed
 

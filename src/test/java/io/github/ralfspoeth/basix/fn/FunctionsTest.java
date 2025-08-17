@@ -1,6 +1,5 @@
 package io.github.ralfspoeth.basix.fn;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -97,8 +96,9 @@ class FunctionsTest {
     }
 
 
-    @Test
-    @Disabled
+    /**
+     * demo code
+     */
     void orderBook() {
         // given
         record Order(long amount, int limit) {

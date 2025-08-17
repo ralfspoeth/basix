@@ -16,24 +16,27 @@ import static java.util.Objects.requireNonNull;
  * Most of the
  * A stack is empty after creation:
  * {@snippet :
- * BaseStack<Integer> stack = new Stack<>(); // new ConcurrentStack<>();
+ * Stack<Integer> stack = new Stack<>(); // new ConcurrentStack<>();
  * assert stack.isEmpty();
  * assert null==stack.top();
  *}
  * and after adding and removing a single element:
  * {@snippet :
- * BaseStack<Integer> stack = new Stack<>();
+ * Stack<Integer> stack = new Stack<>();
  * stack.push(1);
- * assert 1==stack.pop();
+ * var one = stack.pop();
+ * assert 1==one;
  * assert stack.isEmpty();
  *}
  * Elements are removed in LIFO order such that
  * {@snippet :
- * BaseStack<Integer> stack = new Stack<>();
+ * Stack<Integer> stack = new Stack<>();
  * stack.push(1).push(2);
  * assert 2==stack.top(); // topmost element without removing it
- * assert 2==stack.pop(); // topmost equals last added
- * assert 1==stack.pop(); // ... and now the added before
+ * var two = stack.pop();
+ * assert 2==two; // topmost equals last added
+ * var one = stack.pop();
+ * assert 1==one; // ... and now the added before
  * assert stack.isEmpty(); // leaving the stack empty in the end
  *}
  * The concurrent variant provides additional atomic compound operations
@@ -41,7 +44,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <T> the element type
  */
-public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
+abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
     private @Nullable Elem<T> top = null;
 
     protected BaseStack() {

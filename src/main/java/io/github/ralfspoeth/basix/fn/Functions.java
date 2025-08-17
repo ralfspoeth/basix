@@ -1,6 +1,6 @@
 package io.github.ralfspoeth.basix.fn;
 
-import java.util.*;
+import org.jspecify.annotations.Nullable;import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.Stream;
@@ -60,7 +60,7 @@ public class Functions {
      * @param <R>  return type of the function
      * @return a function that maps the extracted key to a value
      */
-    public static <T, R> Function<T, R> of(Map<?, R> m, Function<T, ?> extractor) {
+    public static <T, R> Function<T, @Nullable R> of(Map<?, R> m, Function<T, ?> extractor) {
         m = Map.copyOf(m);
         return extractor.andThen(m::get);
     }
@@ -206,16 +206,4 @@ public class Functions {
         return tmp;
     }
 
-    // unboxing
-    static <T> ToIntFunction<T> unboxedInt(Function<T, Integer> f) {
-        return f::apply;
-    }
-
-    static <T> ToLongFunction<T> unboxedLong(Function<T, Long> f) {
-        return f::apply;
-    }
-
-    static <T> Predicate<T> unboxedBoolean(Function<T, Boolean> f) {
-        return f::apply;
-    }
 }

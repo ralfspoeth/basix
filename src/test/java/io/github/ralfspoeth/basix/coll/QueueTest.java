@@ -1,6 +1,6 @@
 package io.github.ralfspoeth.basix.coll;
 
-import org.junit.jupiter.api.Test;
+import org.jspecify.annotations.NonNull;import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.stream.IntStream;
@@ -11,7 +11,7 @@ class QueueTest {
 
     @Test
     void testNullElems() {
-        var q = new Queue<Integer>();
+        var q = new Queue<@NonNull Integer>();
         assertThrows(NullPointerException.class, () -> q.add(null));
     }
 
@@ -22,7 +22,7 @@ class QueueTest {
 
     @Test
     void testSingle() {
-        var q = new Queue<Integer>();
+        var q = new Queue<@NonNull Integer>();
         assertAll(
                 () -> assertTrue(q.isEmpty()),
                 () -> assertFalse(q.add(1).isEmpty()),
@@ -35,7 +35,7 @@ class QueueTest {
 
     @Test
     void testTwo() {
-        var q = new Queue<Integer>();
+        var q = new Queue<@NonNull Integer>();
         assertAll(
                 () -> assertTrue(q.isEmpty()),
                 () -> assertFalse(q.add(1).isEmpty()),
@@ -51,7 +51,7 @@ class QueueTest {
 
     @Test
     void testRange() {
-        var q = new Queue<Integer>();
+        var q = new Queue<@NonNull Integer>();
         IntStream.range(0, 10).forEach(q::add);
         var al = new ArrayList<Integer>();
         while(!q.isEmpty()) {

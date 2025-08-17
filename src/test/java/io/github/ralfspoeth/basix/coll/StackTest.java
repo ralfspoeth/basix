@@ -1,9 +1,8 @@
 package io.github.ralfspoeth.basix.coll;
 
-import org.junit.jupiter.api.Test;
+import org.jspecify.annotations.NonNull;import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.NoSuchElementException;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,25 +11,25 @@ class StackTest {
 
     @Test
     void testEmpty() {
-        var s = new Stack<Integer>();
+        var s = new Stack<@NonNull Integer>();
         assertTrue(s.isEmpty());
     }
 
     @Test
     void testSingle() {
-        var emptyStack = new Stack<Integer>();
+        var emptyStack = new Stack<@NonNull Integer>();
         assertAll(
-                () -> assertFalse(new Stack<Integer>().push(1).isEmpty()),
+                () -> assertFalse(new Stack<@NonNull Integer>().push(1).isEmpty()),
                 () -> assertThrows(NullPointerException.class, () -> new Stack<>().push(null)),
-                () -> assertEquals(1, new Stack<Integer>().push(1).top()),
-                () -> assertEquals(1, new Stack<Integer>().push(1).pop()),
-                () -> assertThrows(NoSuchElementException.class, emptyStack::pop)
+                () -> assertEquals(1, new Stack<@NonNull Integer>().push(1).top()),
+                () -> assertEquals(1, new Stack<@NonNull Integer>().push(1).pop()),
+                () -> assertThrows(NullPointerException.class, emptyStack::pop)
         );
     }
 
     @Test
     void testRange() {
-        var stack = new Stack<Integer>();
+        var stack = new Stack<@NonNull Integer>();
         IntStream.range(0, 10).forEach(stack::push);
         var al = new ArrayList<Integer>();
         while (!stack.isEmpty()) {

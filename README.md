@@ -11,9 +11,9 @@ work:
 
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 2.0.0
+    version: 1.1.0
 
-You'll need Java version 24 or later to utilize this library.
+You'll need Java version 21 or later to utilize this library.
 
 When working with JPMS modules, add this to your
 `module-info.java` file:
@@ -22,14 +22,17 @@ When working with JPMS modules, add this to your
         requires io.github.ralfspoeth.basix;
     }
 
-## History and Compatability
+## History and Compatibility
+
+The initial 1.0.x releases provide the foundation of this library,
+providing purity `Stack`s and `Queue`s and functions that I found useful.
+The minimum JDK version 21.
+
+Beginning with versions 1.1.x we incorporate `org.jspecify` in the library.
 
 Beginning with version 2.0 we will use version 24 or later of the JDK
-and will use stream gatherers in particular.
+and will use stream `Ggatherer`s in particular.
 
-Version was compatible with version 21 of the JDK and will be supported
-at least until version 21 is superceded by the next LTS version of the JDK, 
-which is probably 25.
 
 # Purity Stack and Queue Implementations
 
