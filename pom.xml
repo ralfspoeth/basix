@@ -5,10 +5,10 @@
     <parent>
         <groupId>io.github.ralfspoeth</groupId>
         <artifactId>plumbum</artifactId>
-        <version>1.4.5</version>
+        <version>1.4.9</version>
     </parent>
     <artifactId>basix</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>1.0.16-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>https://github.com/ralfspoeth/basix</url>
     <properties>
@@ -82,6 +82,12 @@
         </plugins>
     </build>
     <dependencies>
+        <!-- jspecify -->
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <!-- testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

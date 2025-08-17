@@ -1,10 +1,12 @@
 package io.github.ralfspoeth.basix.coll;
 
+import org.jspecify.annotations.Nullable;
+
 import static java.util.Objects.requireNonNull;
 
 public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
-    private Elem<T> last = null;  // last element added
-    private Elem<T> first = null; // first to be removed
+    private @Nullable Elem<T> last = null;  // last element added
+    private @Nullable Elem<T> first = null; // first to be removed
 
     public boolean isEmpty() {
         return last == null;
@@ -47,18 +49,18 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         return tmp;
     }
 
-    public T head() {
+    public @Nullable T head() {
         return first == null ? null : first.item;
     }
 
-    public T tail() {
+    public @Nullable T tail() {
         return last == null ? null : last.item;
     }
 
     private static class Elem<T> {
         final T item;
-        Elem<T> next;
-        Elem<T> previous;
+        @Nullable Elem<T> next;
+        @Nullable Elem<T> previous;
 
         private Elem(T newItem) {
             this.item = requireNonNull(newItem);

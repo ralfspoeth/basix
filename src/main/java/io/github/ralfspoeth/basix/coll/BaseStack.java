@@ -1,5 +1,7 @@
 package io.github.ralfspoeth.basix.coll;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -40,7 +42,7 @@ import static java.util.Objects.requireNonNull;
  * @param <T> the element type
  */
 public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
-    private Elem<T> top = null;
+    private @Nullable Elem<T> top = null;
 
     protected BaseStack() {
     }
@@ -61,7 +63,7 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @return the topmost element of the stack wrapped in an optional, or
      * {@link Optional#empty()}
      */
-    public Optional<T> popIf(Predicate<? super T> condition) {
+    public Optional<T> popIf(Predicate<? super @Nullable T> condition) {
         return condition.test(top()) ? Optional.of(pop()) : Optional.empty();
     }
 
@@ -77,7 +79,7 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @param condition the condition not be met if the element is to be pushed
      * @return this
      */
-    public BaseStack<T> pushUnless(T data, Predicate<? super T> condition) {
+    public BaseStack<T> pushUnless(T data, Predicate<? super @Nullable T> condition) {
         return condition.test(top()) ? this : push(data);
     }
 
@@ -109,7 +111,7 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      *
      * @return the topmost element
      */
-    public T top() {
+    public @Nullable T top() {
         return top == null ? null : top.item;
     }
 
@@ -128,7 +130,7 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
 
     private static class Elem<T> {
         final T item;
-        Elem<T> next;
+        @Nullable Elem<T> next;
 
         private Elem(T newItem) {
             this.item = requireNonNull(newItem);
