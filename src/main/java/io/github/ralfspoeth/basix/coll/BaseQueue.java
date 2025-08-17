@@ -2,11 +2,43 @@ package io.github.ralfspoeth.basix.coll;
 
 import org.jspecify.annotations.Nullable;
 
+import java.lang.reflect.Array;
+
 import static java.util.Objects.requireNonNull;
 
 sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
-    private @Nullable Elem<T> last = null;  // last element added
-    private @Nullable Elem<T> first = null; // first to be removed
+
+    @SuppressWarnings("unchecked")
+    private T[] data = (T[]) Array.newInstance(Object.class, 16);
+    private int next = 0;
+    private int top = 0;
+
+    private void checkSize() {
+        assert top <= next;
+        // next == top -> empty
+        // we can move both pointers back to the start
+        if(top==next) {
+            next = top = 0;
+        }
+        // capa exhausted?
+        else if(next==data.length) {
+            // less than half of the capa is used
+            if(top>data.length/2) {
+                System.arraycopy(data, top, data, 0, next-top);
+                next = next-top;
+                top = 0;
+            }
+            // or else grow
+            else {
+                @SuppressWarnings("unchecked")
+                var tmp = (T[])Array.newInstance(Object.class, data.length * 2);
+                System.arraycopy(data, top, tmp, 0, next - top);
+                data = tmp;
+                next = next - top;
+                top = 0;
+            }
+        }
+    }
 
     public boolean isEmpty() {
         return last == null;
