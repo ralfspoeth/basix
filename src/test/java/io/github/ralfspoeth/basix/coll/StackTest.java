@@ -1,6 +1,7 @@
 package io.github.ralfspoeth.basix.coll;
 
-import org.jspecify.annotations.NonNull;import org.junit.jupiter.api.Test;
+import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
@@ -29,13 +30,50 @@ class StackTest {
     }
 
     @Test
+    void testPushIfEmpty() {
+        var s = new Stack<@NonNull Integer>();
+        assertAll(
+                () -> assertTrue(s.isEmpty()),
+                () -> assertFalse(s.pushIfEmpty(1).isEmpty()),
+                () -> assertEquals(1, s.top()),
+                () -> assertEquals(1, s.pushIfEmpty(2).top()),
+                () -> assertEquals(1, s.pop()),
+                () -> assertEquals(2, s.pushIfEmpty(2).top())
+        );
+    }
+
+    @Test
+    void testPushUnless() {
+        var s = new Stack<@NonNull Integer>();
+        assertAll(
+                () -> assertTrue(s.isEmpty())
+        );
+    }
+
+    @Test
+    void testPopIfNotEmpty() {
+        var s = new Stack<@NonNull Integer>();
+        assertAll(
+                () -> assertTrue(s.isEmpty()),
+                () -> assertFalse(s.popIfNotEmpty().isPresent()),
+                () -> assertTrue(s.push(1).popIfNotEmpty().isPresent())
+        );
+    }
+
+
+    @Test
     void testRange() {
+        // given
         var stack = new Stack<@NonNull Integer>();
         IntStream.range(0, 10).forEach(stack::push);
+        // when
         var al = new ArrayList<Integer>();
+        IntStream.iterate(9, i -> i - 1).limit(10).forEach(al::add);
+        // then
+        var result = new ArrayList<Integer>();
         while (!stack.isEmpty()) {
-            al.add(stack.pop());
+            result.add(stack.pop());
         }
-        assertEquals(IntStream.range(0, 10).boxed().toList().reversed(), al.stream().toList());
+        assertEquals(al, result);
     }
 }

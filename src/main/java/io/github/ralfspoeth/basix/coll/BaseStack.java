@@ -46,13 +46,12 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <T> the element type
  */
-abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
+sealed abstract class BaseStack<T> permits Stack, ConcurrentStack {
     @SuppressWarnings("unchecked")
     private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
     private int next = 0;
 
-    protected BaseStack() {
-    }
+    protected BaseStack() {}
 
     /**
      * Pop the topmost element if it is not null.
@@ -123,7 +122,7 @@ abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      *
      * @return the topmost element
      */
-    public T top() {
+    public @Nullable T top() {
         return next>0?data[next-1]:null;
     }
 

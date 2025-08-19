@@ -198,8 +198,8 @@ public class Functions {
      * note that the map may contain {@code} null keys and/or values
      */
     @SuppressWarnings("unchecked")
-    public static <K, V> SequencedMap<K, V> zipMap(Iterable<K> keys, Iterable<V> values) {
-        SequencedMap<K, V> tmp = new LinkedHashMap<>();
+    public static <K, V> Map<K, V> zipMap(Iterable<K> keys, Iterable<V> values) {
+        Map<K, V> tmp = new LinkedHashMap<>();
         for (Iterator<?> itk = keys.iterator(), itv = values.iterator(); itk.hasNext() && itv.hasNext(); ) {
             tmp.put((K) itk.next(), (V) itv.next());
         }

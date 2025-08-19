@@ -7,7 +7,7 @@ import java.util.NoSuchElementException;
 
 import static java.util.Objects.requireNonNull;
 
-sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
+sealed abstract class BaseQueue<T> permits Queue, ConcurrentQueue {
 
     @SuppressWarnings("unchecked")
     private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
