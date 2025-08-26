@@ -1,6 +1,6 @@
 package io.github.ralfspoeth.basix.coll;
 
-import org.jspecify.annotations.NonNull;import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
@@ -12,7 +12,7 @@ class QueueTest {
 
     @Test
     void testNullElems() {
-        var q = new Queue<@NonNull Integer>();
+        var q = new Queue<Integer>();
         assertThrows(NullPointerException.class, () -> q.add(null));
     }
 
@@ -23,7 +23,7 @@ class QueueTest {
 
     @Test
     void testSingle() {
-        var q = new Queue<@NonNull Integer>();
+        var q = new Queue<Integer>();
         assertAll(
                 () -> assertTrue(q.isEmpty()),
                 () -> assertFalse(q.add(1).isEmpty()),
@@ -36,7 +36,7 @@ class QueueTest {
 
     @Test
     void testTwo() {
-        var q = new Queue<@NonNull Integer>();
+        var q = new Queue<Integer>();
         assertAll(
                 () -> assertTrue(q.isEmpty()),
                 () -> assertFalse(q.add(1).isEmpty()),
@@ -52,10 +52,10 @@ class QueueTest {
 
     @Test
     void testRange() {
-        var q = new Queue<@NonNull Integer>();
+        var q = new Queue<Integer>();
         IntStream.range(0, 10).forEach(q::add);
         var al = new ArrayList<Integer>();
-        while(!q.isEmpty()) {
+        while (!q.isEmpty()) {
             al.add(q.remove());
         }
         assertEquals(IntStream.range(0, 10).boxed().toList(), al.stream().toList());

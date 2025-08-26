@@ -11,7 +11,7 @@ work:
 
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 1.1.0
+    version: 1.1.1
 
 You'll need Java version 21 or later to utilize this library.
 
@@ -31,8 +31,7 @@ The minimum JDK version 21.
 Beginning with versions 1.1.x we incorporate `org.jspecify` in the library.
 
 Beginning with version 2.0 we will use version 24 or later of the JDK
-and will use stream `Ggatherer`s in particular.
-
+and will use stream `Gatherer`s in particular.
 
 # Purity Stack and Queue Implementations
 

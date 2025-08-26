@@ -41,9 +41,6 @@ sealed abstract class BaseQueue<T> permits Queue, ConcurrentQueue {
         }
     }
 
-    protected BaseQueue() {
-    }
-
     public boolean isEmpty() {
         return next == top;
     }
