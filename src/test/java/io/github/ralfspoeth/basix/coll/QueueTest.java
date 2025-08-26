@@ -60,4 +60,24 @@ class QueueTest {
         }
         assertEquals(IntStream.range(0, 10).boxed().toList(), al.stream().toList());
     }
+
+    @Test
+    void testCheckRange() {
+        var q = new Queue<Integer>();
+        IntStream.range(0, 16).forEach(q::add);
+        assertAll(
+                () -> assertEquals(0, q.head()),
+                () -> assertEquals(15, q.tail()),
+                () -> assertEquals(0, q.remove()),
+                () -> assertEquals(1, q.remove()),
+                () -> assertEquals(2, q.remove()),
+                () -> assertEquals(3, q.remove()),
+                () -> assertEquals(4, q.remove()),
+                () -> assertEquals(5, q.remove()),
+                () -> assertEquals(6, q.remove()),
+                () -> assertEquals(7, q.remove()),
+                () -> assertNotNull(q.add(16)),
+                () -> assertEquals(16, q.tail())
+        );
+    }
 }
