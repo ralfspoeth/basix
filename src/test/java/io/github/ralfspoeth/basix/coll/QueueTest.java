@@ -80,4 +80,12 @@ class QueueTest {
                 () -> assertEquals(16, q.tail())
         );
     }
+
+
+
+    private static void remove(Queue<?> q, int elems) {
+        while(elems-->0) {
+            q.remove();
+        }
+    }
 }
