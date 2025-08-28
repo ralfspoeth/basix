@@ -8,7 +8,7 @@ import java.util.NoSuchElementException;
 
 import static java.util.Objects.requireNonNull;
 
-sealed abstract class BaseQueue<T> permits Queue, ConcurrentQueue {
+sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, ConcurrentQueue {
 
     @SuppressWarnings("unchecked")
     private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
@@ -48,10 +48,11 @@ sealed abstract class BaseQueue<T> permits Queue, ConcurrentQueue {
      * @param item an element, must not be {@code null}
      * @return this
      */
-    public BaseQueue<T> add(T item) {
+    @SuppressWarnings("unchecked")
+    public S add(T item) {
         growIfExhausted();
         data[next++] = requireNonNull(item);
-        return this;
+        return (S)this;
     }
 
     /**

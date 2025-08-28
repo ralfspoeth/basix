@@ -46,7 +46,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <T> the element type
  */
-sealed abstract class BaseStack<T> permits Stack, ConcurrentStack {
+sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, ConcurrentStack {
     @SuppressWarnings("unchecked")
     private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
     private int next = 0;
@@ -74,7 +74,7 @@ sealed abstract class BaseStack<T> permits Stack, ConcurrentStack {
     }
 
 
-    public BaseStack<T> pushIfEmpty(T data) {
+    public S pushIfEmpty(T data) {
         return pushUnless(data, Objects::nonNull);
     }
 
@@ -85,8 +85,9 @@ sealed abstract class BaseStack<T> permits Stack, ConcurrentStack {
      * @param condition the condition not be met if the element is to be pushed
      * @return this
      */
-    public BaseStack<T> pushUnless(T data, Predicate<? super @Nullable T> condition) {
-        return condition.test(top()) ? this : push(data);
+    @SuppressWarnings("unchecked")
+    public S pushUnless(T data, Predicate<? super @Nullable T> condition) {
+        return condition.test(top()) ? (S)this : push(data);
     }
 
 
@@ -127,14 +128,14 @@ sealed abstract class BaseStack<T> permits Stack, ConcurrentStack {
     }
 
 
-    public BaseStack<T> push(T elem) {
+    @SuppressWarnings("unchecked")
+    public S push(T elem) {
         if(next==data.length) {
-            @SuppressWarnings("unchecked")
             T[] tmp = (T[])Array.newInstance(Object.class, data.length*2);
             System.arraycopy(data, 0, tmp, 0, data.length);
             data = tmp;
         }
         data[next++] = requireNonNull(elem);
-        return this;
+        return (S)this;
     }
 }

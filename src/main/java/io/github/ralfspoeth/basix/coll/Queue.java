@@ -22,10 +22,4 @@ package io.github.ralfspoeth.basix.coll;
  *
  * @param <T> the element type.
  */
-public final class Queue<T> extends BaseQueue<T> {
-
-    @Override
-    public Queue<T> add(T item) {
-        return (Queue<T>)super.add(item);
-    }
-}
+public final class Queue<T> extends BaseQueue<Queue<T>, T> {}

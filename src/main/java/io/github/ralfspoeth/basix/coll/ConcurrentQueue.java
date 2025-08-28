@@ -8,19 +8,9 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @param <T>
  */
-public final class ConcurrentQueue<T> extends BaseQueue<T> {
+public final class ConcurrentQueue<T> extends BaseQueue<ConcurrentQueue<T>, T> {
 
     private final Lock lock = new ReentrantLock();
-
-    @Override
-    public ConcurrentQueue<T> add(T item) {
-        lock.lock();
-        try {
-            return (ConcurrentQueue<T>) super.add(item);
-        } finally {
-            lock.unlock();
-        }
-    }
 
     @Override
     public boolean isEmpty() {
@@ -28,6 +18,17 @@ public final class ConcurrentQueue<T> extends BaseQueue<T> {
         try {
             return super.isEmpty();
         } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public ConcurrentQueue<T> add(T item) {
+        lock.lock();
+        try {
+            return super.add(item);
+        }
+        finally {
             lock.unlock();
         }
     }
