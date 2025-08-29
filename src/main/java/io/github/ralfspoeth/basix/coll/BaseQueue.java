@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -80,15 +81,15 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
     /**
      * The next element available in the queue.
      */
-    public @Nullable T head() {
-        return top==next ? null : data[top];
+    public Optional<T> head() {
+        return top==next ? Optional.empty() : Optional.of(data[top]);
     }
 
     /**
      * The last element added to the queue.
      */
-    public @Nullable T tail() {
-        return top==next ? null : data[next-1];
+    public Optional<T> tail() {
+        return top==next ? Optional.empty() : Optional.of(data[next-1]);
     }
 
 }
