@@ -1,5 +1,7 @@
 package io.github.ralfspoeth.basix.coll;
 
+import org.jspecify.annotations.Nullable;
+
 import java.lang.reflect.Array;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -16,24 +18,27 @@ import static java.util.Objects.requireNonNull;
  * Most of the
  * A stack is empty after creation:
  * {@snippet :
- * BaseStack<Integer> stack = new Stack<>(); // new ConcurrentStack<>();
+ * Stack<Integer> stack = new Stack<>(); // new ConcurrentStack<>();
  * assert stack.isEmpty();
  * assert null==stack.top();
  *}
  * and after adding and removing a single element:
  * {@snippet :
- * BaseStack<Integer> stack = new Stack<>();
+ * Stack<Integer> stack = new Stack<>();
  * stack.push(1);
- * assert 1==stack.pop();
+ * var one = stack.pop();
+ * assert 1==one;
  * assert stack.isEmpty();
  *}
  * Elements are removed in LIFO order such that
  * {@snippet :
- * BaseStack<Integer> stack = new Stack<>();
+ * Stack<Integer> stack = new Stack<>();
  * stack.push(1).push(2);
  * assert 2==stack.top(); // topmost element without removing it
- * assert 2==stack.pop(); // topmost equals last added
- * assert 1==stack.pop(); // ... and now the added before
+ * var two = stack.pop();
+ * assert 2==two; // topmost equals last added
+ * var one = stack.pop();
+ * assert 1==one; // ... and now the added before
  * assert stack.isEmpty(); // leaving the stack empty in the end
  *}
  * The concurrent variant provides additional atomic compound operations
@@ -41,13 +46,12 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <T> the element type
  */
-public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
+sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, ConcurrentStack {
     @SuppressWarnings("unchecked")
-    private T[] data = (T[])Array.newInstance(Object.class, 16);
+    private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
     private int next = 0;
 
-    protected BaseStack() {
-    }
+    protected BaseStack() {}
 
     /**
      * Pop the topmost element if it is not null.
@@ -65,12 +69,12 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @return the topmost element of the stack wrapped in an optional, or
      * {@link Optional#empty()}
      */
-    public Optional<T> popIf(Predicate<? super T> condition) {
+    public Optional<T> popIf(Predicate<? super @Nullable T> condition) {
         return condition.test(top()) ? Optional.of(pop()) : Optional.empty();
     }
 
 
-    public BaseStack<T> pushIfEmpty(T data) {
+    public S pushIfEmpty(T data) {
         return pushUnless(data, Objects::nonNull);
     }
 
@@ -81,8 +85,9 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      * @param condition the condition not be met if the element is to be pushed
      * @return this
      */
-    public BaseStack<T> pushUnless(T data, Predicate<? super T> condition) {
-        return condition.test(top()) ? this : push(data);
+    @SuppressWarnings("unchecked")
+    public S pushUnless(T data, Predicate<? super @Nullable T> condition) {
+        return condition.test(top()) ? (S)this : push(data);
     }
 
 
@@ -103,7 +108,10 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      */
     public T pop() {
         if(next>0) {
-            return data[--next];
+            T tmp = data[--next];
+            data[next] = null;
+            assert tmp != null;
+            return tmp;
         } else {
             throw new NoSuchElementException("stack is empty");
         }
@@ -115,19 +123,19 @@ public abstract sealed class BaseStack<T> permits Stack, ConcurrentStack {
      *
      * @return the topmost element
      */
-    public T top() {
+    public @Nullable T top() {
         return next>0?data[next-1]:null;
     }
 
 
-    public BaseStack<T> push(T elem) {
+    @SuppressWarnings("unchecked")
+    public S push(T elem) {
         if(next==data.length) {
-            @SuppressWarnings("unchecked")
             T[] tmp = (T[])Array.newInstance(Object.class, data.length*2);
             System.arraycopy(data, 0, tmp, 0, data.length);
             data = tmp;
         }
         data[next++] = requireNonNull(elem);
-        return this;
+        return (S)this;
     }
 }

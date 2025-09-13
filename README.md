@@ -11,9 +11,9 @@ work:
 
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 2.0.0
+    version: 1.1.2
 
-You'll need Java version 24 or later to utilize this library.
+You'll need Java version 21 or later to utilize this library.
 
 When working with JPMS modules, add this to your
 `module-info.java` file:
@@ -22,19 +22,21 @@ When working with JPMS modules, add this to your
         requires io.github.ralfspoeth.basix;
     }
 
-## History and Compatability
+## History and Compatibility
+
+The initial 1.0.x releases provide the foundation of this library,
+providing purity `Stack`s and `Queue`s and functions that I found useful.
+The minimum JDK version 21.
+
+Beginning with versions 1.1.x we incorporate `org.jspecify` in the library.
 
 Beginning with version 2.0 we will use version 24 or later of the JDK
-and will use stream gatherers in particular.
-
-Version was compatible with version 21 of the JDK and will be supported
-at least until version 21 is superceded by the next LTS version of the JDK, 
-which is probably 25.
+and will use stream `Gatherer`s in particular.
 
 # Purity Stack and Queue Implementations
 
 Though the Java Collections library contains a rich set
-of classes which provide much more functionality then 
+of classes which provide much more functionality than 
 these two `Stack` and `Queue` implementations I prefer
 them frequently when I want to utilize their push/pop or 
 add/remove semantics, respectively, in pure manner.
@@ -343,8 +345,8 @@ to the first solution.
 
 Sometimes a collection-like result is valid if and only if it contains a single element only.
 Think about retrieving a record from a database for some given primary key id field.
-You'd update that record if it is the only one and you'd probably raise an exception
-you'd encounter more than one record.
+You'd update that record if it is the only one, and you'd probably raise an exception
+if you'd encounter more than one record.
 
 You can now do simply this:
 

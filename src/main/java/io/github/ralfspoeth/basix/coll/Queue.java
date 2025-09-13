@@ -13,17 +13,13 @@ package io.github.ralfspoeth.basix.coll;
  * queue.add(2);
  * assert queue.head()==1;
  * assert queue.tail()==2;
- * assert 1==queue.remove();
- * assert 2==queue.remove();
+ * var one = queue.remove();
+ * assert 1==one;
+ * var two = queue.remove();
+ * assert 2==two;
  * assert queue.isEmpty();
  *}
  *
  * @param <T> the element type.
  */
-public final class Queue<T> extends BaseQueue<T> {
-
-    @Override
-    public Queue<T> add(T item) {
-        return (Queue<T>)super.add(item);
-    }
-}
+public final class Queue<T> extends BaseQueue<Queue<T>, T> {}

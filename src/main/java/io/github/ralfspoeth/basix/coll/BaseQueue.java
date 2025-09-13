@@ -1,29 +1,29 @@
 package io.github.ralfspoeth.basix.coll;
 
+import org.jspecify.annotations.Nullable;
+
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
-public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
+sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, ConcurrentQueue {
 
     @SuppressWarnings("unchecked")
-    private T[] data = (T[])Array.newInstance(Object.class, 16);
+    private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
     private int next = 0;
     private int top = 0;
 
-    private void checkSize() {
+    private void growIfExhausted() {
         assert top <= next;
-        // next == top -> empty
-        // we can move both pointers back to the start
-        if(top==next) {
-            next = top = 0;
-        }
         // capa exhausted?
-        else if(next==data.length) {
+        if(next==data.length) {
             // less than half of the capa is used
-            if(top>data.length/2) {
+            if(top>=data.length/2) {
                 System.arraycopy(data, top, data, 0, next-top);
+                Arrays.fill(data, top, data.length, null);
                 next = next-top;
                 top = 0;
             }
@@ -39,9 +39,6 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         }
     }
 
-    protected BaseQueue() {
-    }
-
     public boolean isEmpty() {
         return next == top;
     }
@@ -52,10 +49,11 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
      * @param item an element, must not be {@code null}
      * @return this
      */
-    public BaseQueue<T> add(T item) {
-        checkSize();
+    @SuppressWarnings("unchecked")
+    public S add(T item) {
+        growIfExhausted();
         data[next++] = requireNonNull(item);
-        return this;
+        return (S)this;
     }
 
     /**
@@ -68,8 +66,14 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
         if(top==next) {
             throw new NoSuchElementException("queue is empty");
         } else {
-            T tmp = data[top++];
-            checkSize();
+            T tmp = data[top];
+            data[top++] = null; // prevent memory leak
+            // next == top -> empty
+            // we can move both pointers back to the start
+            if(top==next) {
+                next = top = 0;
+            }
+            assert tmp != null;
             return tmp;
         }
     }
@@ -77,15 +81,15 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
     /**
      * The next element available in the queue.
      */
-    public T head() {
-        return top==next ? null : data[top];
+    public Optional<T> head() {
+        return top==next ? Optional.empty() : Optional.of(data[top]);
     }
 
     /**
      * The last element added to the queue.
      */
-    public T tail() {
-        return top==next ? null : data[next-1];
+    public Optional<T> tail() {
+        return top==next ? Optional.empty() : Optional.of(data[next-1]);
     }
 
 }
