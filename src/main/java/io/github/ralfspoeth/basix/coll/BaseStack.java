@@ -46,7 +46,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <T> the element type
  */
-sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, ConcurrentStack {
+sealed abstract class BaseStack<S extends BaseStack<S, T>, T> implements LiFo<S, T> permits Stack, ConcurrentStack {
     @SuppressWarnings("unchecked")
     private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
     private int next = 0;
@@ -56,6 +56,7 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
     /**
      * Pop the topmost element if it is not null.
      */
+    @Override
     public Optional<T> popIfNotEmpty() {
         return popIf(Objects::nonNull);
     }
@@ -69,11 +70,13 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      * @return the topmost element of the stack wrapped in an optional, or
      * {@link Optional#empty()}
      */
+    @Override
     public Optional<T> popIf(Predicate<? super @Nullable T> condition) {
         return condition.test(top()) ? Optional.of(pop()) : Optional.empty();
     }
 
 
+    @Override
     public S pushIfEmpty(T data) {
         return pushUnless(data, Objects::nonNull);
     }
@@ -86,6 +89,7 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      * @return this
      */
     @SuppressWarnings("unchecked")
+    @Override
     public S pushUnless(T data, Predicate<? super @Nullable T> condition) {
         return condition.test(top()) ? (S)this : push(data);
     }
@@ -96,6 +100,7 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      *
      * @return true if empty
      */
+    @Override
     public boolean isEmpty() {
         return next == 0;
     }
@@ -106,6 +111,7 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      * @return the topmost element
      * @throws NoSuchElementException when empty
      */
+    @Override
     public T pop() {
         if(next>0) {
             T tmp = data[--next];
@@ -123,12 +129,14 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      *
      * @return the topmost element
      */
+    @Override
     public @Nullable T top() {
         return next>0?data[next-1]:null;
     }
 
 
     @SuppressWarnings("unchecked")
+    @Override
     public S push(T elem) {
         if(next==data.length) {
             T[] tmp = (T[])Array.newInstance(Object.class, data.length*2);

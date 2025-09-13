@@ -9,14 +9,15 @@ import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
-sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, ConcurrentQueue {
+sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> implements FiFo<S, T> permits Queue, ConcurrentQueue {
 
     @SuppressWarnings("unchecked")
     private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
     private int next = 0;
     private int top = 0;
 
-    private void growIfExhausted() {
+    @Override
+    public void growIfExhausted() {
         assert top <= next;
         // capa exhausted?
         if(next==data.length) {
@@ -39,6 +40,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
         }
     }
 
+    @Override
     public boolean isEmpty() {
         return next == top;
     }
@@ -50,6 +52,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
      * @return this
      */
     @SuppressWarnings("unchecked")
+    @Override
     public S add(T item) {
         growIfExhausted();
         data[next++] = requireNonNull(item);
@@ -62,6 +65,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
      * @return the element at the head of the queue
      * @throws NoSuchElementException when empty.
      */
+    @Override
     public T remove() {
         if(top==next) {
             throw new NoSuchElementException("queue is empty");
@@ -81,6 +85,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
     /**
      * The next element available in the queue.
      */
+    @Override
     public Optional<T> head() {
         return top==next ? Optional.empty() : Optional.of(data[top]);
     }
@@ -88,6 +93,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
     /**
      * The last element added to the queue.
      */
+    @Override
     public Optional<T> tail() {
         return top==next ? Optional.empty() : Optional.of(data[next-1]);
     }
