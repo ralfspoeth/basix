@@ -1,6 +1,6 @@
 package io.github.ralfspoeth.basix.fn;
 
-import java.util.*;
+import org.jspecify.annotations.Nullable;import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.Stream;
@@ -8,8 +8,9 @@ import java.util.stream.StreamSupport;
 
 public class Functions {
 
-    // prevent instantiation
-    private Functions() {}
+    private Functions() {
+        // prevent instantiation
+    }
 
     /**
      * Resembles the ternary operator {@code ?:}.
@@ -53,13 +54,13 @@ public class Functions {
      * assert List.of("two", "three").equals(l.stream().map(of(m, R::x)).toList());
      *}
      *
-     * @param m         a map
+     * @param m    a map
      * @param extractor a function
-     * @param <T>       target type of the function
-     * @param <R>       return type of the function
+     * @param <T>  target type of the function
+     * @param <R>  return type of the function
      * @return a function that maps the extracted key to a value
      */
-    public static <T, R> Function<T, R> of(Map<?, R> m, Function<T, ?> extractor) {
+    public static <T, R> Function<T, @Nullable R> of(Map<?, R> m, Function<T, ?> extractor) {
         m = Map.copyOf(m);
         return extractor.andThen(m::get);
     }
@@ -197,15 +198,12 @@ public class Functions {
      * note that the map may contain {@code} null keys and/or values
      */
     @SuppressWarnings("unchecked")
-    public static <K, V> SequencedMap<K, V> zipMap(Iterable<K> keys, Iterable<V> values) {
-        SequencedMap<K, V> tmp = new LinkedHashMap<>();
+    public static <K, V> Map<K, V> zipMap(Iterable<K> keys, Iterable<V> values) {
+        Map<K, V> tmp = new LinkedHashMap<>();
         for (Iterator<?> itk = keys.iterator(), itv = values.iterator(); itk.hasNext() && itv.hasNext(); ) {
             tmp.put((K) itk.next(), (V) itv.next());
         }
         return tmp;
     }
 
-    static <T> Predicate<T> unboxedBoolean(Function<T, Boolean> f) {
-        return f::apply;
-    }
 }

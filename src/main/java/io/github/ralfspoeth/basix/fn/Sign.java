@@ -20,7 +20,7 @@ public enum Sign {
      * @param num an integer
      * @return the sign
      */
-    public static Sign of(int num) {
+    public static Sign ofCompare(int num) {
         return (num < 0 ? Sign.NEGATIVE : (num == 0 ? Sign.ZERO : Sign.POSITIVE));
     }
 
