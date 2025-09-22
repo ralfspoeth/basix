@@ -1,8 +1,10 @@
 package io.github.ralfspoeth.basix.coll;
 
+import org.jspecify.annotations.Nullable;
+
+import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 
@@ -10,51 +12,82 @@ import java.util.function.Predicate;
  * The concurrent, i.e. thread-safe variant of a stack
  * which offers atomic test-and-modify operations.
  */
-public final class ConcurrentStack<T> extends BaseStack<ConcurrentStack<T>, T> {
+public final class ConcurrentStack<T> implements LiFo<ConcurrentStack<T>, T> {
 
-    // used to protect access to the internal state of the stack
-    private final Lock lock = new ReentrantLock();
+    private static class Node<T> {
+        final T data;
+        @Nullable Node<T> next;
 
-    /**
-     * {@link BaseStack#popIf(Predicate)} implemented in a thread-safe way.
-     */
-    @Override
-    public Optional<T> popIf(Predicate<? super T> condition) {
-        lock.lock();
-        try {
-            return condition.test(top()) ? Optional.of(pop()) : Optional.empty();
-        } finally {
-            lock.unlock();
+        Node(T data) {
+            this.data = data;
         }
     }
 
+    // Assuming the top of the stack is managed by AtomicReference
+    private final AtomicReference<Node<T>> top = new AtomicReference<>();
+
     @Override
     public boolean isEmpty() {
-        lock.lock();
-        try {
-            return super.isEmpty();
-        } finally {
-            lock.unlock();
-        }
+        return top.get() == null;
+    }
+
+    @Override
+    public Optional<T> popIf(Predicate<? super T> condition) {
+        Node<T> currentTop, next;
+        T data;
+        do {
+            currentTop = top.get();
+            if (currentTop == null) {
+                throw new NoSuchElementException();
+            }
+            else {
+                data = currentTop.data;
+                if(condition.test(data)) {
+                    next = currentTop.next;
+                } else {
+                    return Optional.empty();
+                }
+            }
+        } while (!top.compareAndSet(currentTop, next));
+        return Optional.of(data);
+    }
+
+    @Override
+    public ConcurrentStack<T> pushUnless(T data, Predicate<? super T> condition) {
+        Node<T> oldTop;
+        Node<T> newNode;
+        do {
+            oldTop = top.get();
+            if(condition.test(data)) {
+                return this;
+            } else {
+                newNode = new Node<T>(data);
+                newNode.next = oldTop;
+            }
+        } while (!top.compareAndSet(oldTop, newNode));
+        return this;
     }
 
     @Override
     public T pop() {
-        lock.lock();
-        try {
-            return super.pop();
-        } finally {
-            lock.unlock();
-        }
+        return popIf(t -> true).orElseThrow(NoSuchElementException::new);
+    }
+
+    @Override
+    public ConcurrentStack<T> push(T elem){
+        Node<T> newNode = new Node(elem);
+        Node<T> oldTop;
+        do {
+            oldTop = top.get();
+            newNode.next = oldTop;
+        } while (!top.compareAndSet(oldTop, newNode));
+        return this;
     }
 
     @Override
     public T top() {
-        lock.lock();
-        try {
-            return super.top();
-        } finally {
-            lock.unlock();
-        }
+        Node<T> d = top.get();
+        return d == null ? null : d.data;
     }
+
 }

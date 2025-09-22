@@ -112,8 +112,11 @@ public class Gatherers {
      * than the one most recent element.
      * {@snippet :
      * assert List.of(1, 2, 3, 4).equals(
-     *         Stream.of(1, 2, 1, 3, 1, 4)
-     *         .gather(Gatherers.increasing()).toList());
+     *         Stream
+     *             .of(1, 2, 1, 3, 1, 4)
+     *             .gather(Gatherers.increasing())
+     *             .toList()
+     * );
      *}
      * Note that in the given example the first occurrences of 2, 3, and 4, respectively
      * are being pushed downstream.
@@ -125,10 +128,7 @@ public class Gatherers {
      * @return a gather producing a stream of (strictly) increasing elements
      */
     public static <T> Gatherer<T, AtomicReference<T>, T> increasing(Comparator<? super T> comparator) {
-        return Gatherer.ofSequential(
-                (Supplier<AtomicReference<T>>) AtomicReference::new,
-                monotone(Order.INCREASING, comparator)
-        );
+        return  monotone(Order.INCREASING, comparator);
     }
 
     /**
@@ -145,10 +145,7 @@ public class Gatherers {
      * @return a gather producing a stream of (strictly) decreasing elements
      */
     public static <T> Gatherer<T, AtomicReference<T>, T> decreasing(Comparator<? super T> comparator) {
-        return Gatherer.ofSequential(
-                (Supplier<AtomicReference<T>>) AtomicReference::new,
-                monotone(Order.DECREASING, comparator)
-        );
+        return  monotone(Order.DECREASING, comparator);
     }
 
     /**
@@ -158,21 +155,20 @@ public class Gatherers {
         return decreasing(Comparator.naturalOrder());
     }
 
-        return (state, element, downstream) -> {
-            if (downstream.isRejecting()) {
-                return false;
-            }
-            if (element != null) {
-                if (state.get() == null || switch (order) {
-                    case INCREASING -> comparator.compare(state.get(), element) < 0;
-                    case DECREASING -> comparator.compare(state.get(), element) > 0;
-                }) {
-                    downstream.push(element);
-                    state.set(element);
+    private static <T> Gatherer<T, AtomicReference<T>, T> monotone(Order order, Comparator<? super T> comparator) {
+        return Gatherer.ofSequential(
+                (Supplier<AtomicReference<T>>) AtomicReference::new,
+                (state, element, downstream) -> {
+                    if (downstream.isRejecting()) {
+                        return false;
+                    } else if (state.get() == null || 0 != comparator.compare(element, state.get())) {
+                        state.set(element);
+                        return downstream.push(element);
+                    } else {
+                        return true;
+                    }
                 }
-            }
-            return true;
-        };
+        );
     }
 
     /**
@@ -511,7 +507,7 @@ public class Gatherers {
                     return elements.add(item);
                 } else {
                     if (order == null) {
-                        order = switch (sign(comparator.compare(elements.getLast(), item))) {
+                        order = switch (Sign.of(comparator.compare(elements.getLast(), item))) {
                             case NEGATIVE -> Order.INCREASING;
                             case POSITIVE -> Order.DECREASING;
                             case ZERO -> null;

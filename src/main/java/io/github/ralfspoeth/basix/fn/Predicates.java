@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static io.github.ralfspoeth.basix.fn.Sign.ofCompare;
+import static io.github.ralfspoeth.basix.fn.Sign.of;
 
 public class Predicates {
 
@@ -165,7 +165,7 @@ public class Predicates {
 
     // helper method
     private static <T> Predicate<T> comparison(T ref, Comparator<? super T> comparator, Sign... signs) {
-        return in(Set.of(signs), t -> ofCompare(comparator.compare(t, ref)));
+        return in(Set.of(signs), t -> of(comparator.compare(t, ref)));
     }
 
     private static <T> Predicate<T> unboxedBoolean(Function<T, Boolean> f) {

@@ -2,8 +2,7 @@ package io.github.ralfspoeth.basix.coll;
 
 import java.util.Optional;
 
-public interface FiFo<S extends BaseQueue<S, T>, T> {
-    void growIfExhausted();
+sealed interface FiFo<S extends FiFo<S, T>, T> permits Queue, ConcurrentQueue {
 
     boolean isEmpty();
 
