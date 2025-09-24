@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.github.ralfspoeth</groupId>
         <artifactId>plumbum</artifactId>
-        <version>1.4.9</version>
+        <version>1.4.11</version>
     </parent>
     <artifactId>basix</artifactId>
     <version>1.1.4-SNAPSHOT</version>

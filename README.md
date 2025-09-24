@@ -11,7 +11,7 @@ work:
 
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 1.1.2
+    version: 1.1.4
 
 You'll need Java version 21 or later to utilize this library.
 
