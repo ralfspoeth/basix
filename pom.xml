@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.github.ralfspoeth</groupId>
         <artifactId>plumbum</artifactId>
-        <version>1.4.11</version>
+        <version>1.4.13</version>
     </parent>
     <artifactId>basix</artifactId>
     <version>1.1.5-SNAPSHOT</version>
@@ -86,8 +86,6 @@
         <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
-            <version>1.0.0</version>
-            <scope>provided</scope>
         </dependency>
         <!-- testing -->
         <dependency>
