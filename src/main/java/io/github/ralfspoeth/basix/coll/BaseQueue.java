@@ -2,7 +2,6 @@ package io.github.ralfspoeth.basix.coll;
 
 import org.jspecify.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -12,7 +11,7 @@ import static java.util.Objects.requireNonNull;
 sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, ConcurrentQueue {
 
     @SuppressWarnings("unchecked")
-    private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
+    private @Nullable T[] data = (T[]) new Object[16];
     private int next = 0;
     private int top = 0;
 
@@ -21,16 +20,18 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
         // capa exhausted?
         if(next==data.length) {
             // less than half of the capa is used
+            // then move the elements to the start
             if(top>=data.length/2) {
                 System.arraycopy(data, top, data, 0, next-top);
                 Arrays.fill(data, top, data.length, null);
-                next = next-top;
+                next -= top;
                 top = 0;
             }
             // or else grow
+            // making capa at the end of the queue
             else {
                 @SuppressWarnings("unchecked")
-                var tmp = (T[])Array.newInstance(Object.class, data.length * 2);
+                var tmp = (T[])new Object[data.length * 2];
                 System.arraycopy(data, top, tmp, 0, next - top);
                 data = tmp;
                 next = next - top;

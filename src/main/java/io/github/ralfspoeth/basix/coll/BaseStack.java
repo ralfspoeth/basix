@@ -2,7 +2,6 @@ package io.github.ralfspoeth.basix.coll;
 
 import org.jspecify.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -48,10 +47,11 @@ import static java.util.Objects.requireNonNull;
  */
 sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, ConcurrentStack {
     @SuppressWarnings("unchecked")
-    private @Nullable T[] data = (T[]) Array.newInstance(Object.class, 16);
+    private @Nullable T[] data = (T[]) new Object[16];
     private int next = 0;
 
-    protected BaseStack() {}
+    protected BaseStack() {
+    }
 
     /**
      * Pop the topmost element if it is not null.
@@ -81,13 +81,13 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
     /**
      * Push an element unless some condition is met.
      *
-     * @param data the element to be pushed
+     * @param data      the element to be pushed
      * @param condition the condition not be met if the element is to be pushed
      * @return this
      */
     @SuppressWarnings("unchecked")
     public S pushUnless(T data, Predicate<? super @Nullable T> condition) {
-        return condition.test(top()) ? (S)this : push(data);
+        return condition.test(top()) ? (S) this : push(data);
     }
 
 
@@ -107,7 +107,7 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      * @throws NoSuchElementException when empty
      */
     public T pop() {
-        if(next>0) {
+        if (next > 0) {
             T tmp = data[--next];
             data[next] = null;
             assert tmp != null;
@@ -124,18 +124,18 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      * @return the topmost element
      */
     public @Nullable T top() {
-        return next>0?data[next-1]:null;
+        return next > 0 ? data[next - 1] : null;
     }
 
 
     @SuppressWarnings("unchecked")
     public S push(T elem) {
-        if(next==data.length) {
-            T[] tmp = (T[])Array.newInstance(Object.class, data.length*2);
+        if (next == data.length) {
+            T[] tmp = (T[]) new Object[data.length * 2];
             System.arraycopy(data, 0, tmp, 0, data.length);
             data = tmp;
         }
         data[next++] = requireNonNull(elem);
-        return (S)this;
+        return (S) this;
     }
 }
