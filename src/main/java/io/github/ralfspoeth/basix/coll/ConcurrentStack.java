@@ -1,5 +1,7 @@
 package io.github.ralfspoeth.basix.coll;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -23,6 +25,16 @@ public final class ConcurrentStack<T> extends BaseStack<ConcurrentStack<T>, T> {
         lock.lock();
         try {
             return condition.test(top()) ? Optional.of(pop()) : Optional.empty();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public ConcurrentStack<T> push(T elem) {
+        lock.lock();
+        try {
+            return super.push(elem);
         } finally {
             lock.unlock();
         }
@@ -53,6 +65,16 @@ public final class ConcurrentStack<T> extends BaseStack<ConcurrentStack<T>, T> {
         lock.lock();
         try {
             return super.top();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public ConcurrentStack<T> pushUnless(T data, Predicate<? super @Nullable T> condition) {
+        lock.lock();
+        try {
+            return super.pushUnless(data, condition);
         } finally {
             lock.unlock();
         }

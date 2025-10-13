@@ -1,6 +1,7 @@
 package io.github.ralfspoeth.basix.coll;
 
 import java.util.Optional;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -12,6 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class ConcurrentQueue<T> extends BaseQueue<ConcurrentQueue<T>, T> {
 
     private final Lock lock = new ReentrantLock();
+    private final Condition isEmptyCondition = lock.newCondition();
 
     @Override
     public boolean isEmpty() {
@@ -30,6 +32,7 @@ public final class ConcurrentQueue<T> extends BaseQueue<ConcurrentQueue<T>, T> {
             return super.add(item);
         }
         finally {
+            isEmptyCondition.signal();
             lock.unlock();
         }
     }
@@ -40,6 +43,28 @@ public final class ConcurrentQueue<T> extends BaseQueue<ConcurrentQueue<T>, T> {
         try {
             return super.remove();
         } finally {
+            lock.unlock();
+        }
+    }
+
+    public Optional<T> removeIfNotEmpty() {
+        lock.lock();
+        try {
+            return isEmpty() ? Optional.empty() : Optional.of(remove());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public T removeWhenAvailable() throws InterruptedException {
+        lock.lock();
+        try {
+            while(isEmpty()) {
+                isEmptyCondition.await();
+            }
+            return super.remove();
+        }
+        finally {
             lock.unlock();
         }
     }

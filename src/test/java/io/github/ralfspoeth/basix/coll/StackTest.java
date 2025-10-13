@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,7 +47,11 @@ class StackTest {
     void testPushUnless() {
         var s = new Stack<@NonNull Integer>();
         assertAll(
-                () -> assertTrue(s.isEmpty())
+                () -> assertTrue(s.isEmpty()),
+                () -> assertTrue(s.pushUnless(1, Objects::isNull).isEmpty()),
+                () -> assertFalse(s.pushUnless(1, Objects::nonNull).isEmpty()),
+                () -> assertEquals(1, s.top()),
+                () -> assertEquals(1, s.top())
         );
     }
 

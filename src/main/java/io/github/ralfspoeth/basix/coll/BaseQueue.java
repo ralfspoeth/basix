@@ -1,8 +1,6 @@
 package io.github.ralfspoeth.basix.coll;
 
 import org.jspecify.annotations.Nullable;
-
-import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -11,32 +9,30 @@ import static java.util.Objects.requireNonNull;
 sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, ConcurrentQueue {
 
     @SuppressWarnings("unchecked")
-    private @Nullable T[] data = (T[]) new Object[16];
-    private int next = 0;
-    private int top = 0;
+    private @Nullable T[] data = (T[]) new Object[4];
+    private int next = 0; // next available slot
+    private int top = 0; // next slot to be removed
 
     private void growIfExhausted() {
-        assert top <= next;
-        // capa exhausted?
-        if(next==data.length) {
-            // less than half of the capa is used
-            // then move the elements to the start
-            if(top>=data.length/2) {
-                System.arraycopy(data, top, data, 0, next-top);
-                Arrays.fill(data, top, data.length, null);
-                next -= top;
-                top = 0;
-            }
-            // or else grow
-            // making capa at the end of the queue
-            else {
-                @SuppressWarnings("unchecked")
-                var tmp = (T[])new Object[data.length * 2];
-                System.arraycopy(data, top, tmp, 0, next - top);
+        // next insertion point out of bounds?
+        if (next == data.length) {
+            // move next to the beginning of the queue,
+            if(top == 0) {
+                var tmp = (T[]) new Object[data.length * 2];
+                System.arraycopy(data, 0, tmp, 0, data.length);
                 data = tmp;
-                next = next - top;
-                top = 0;
+            } else {
+                next = 0;
             }
+        }
+        // insertion point overtakes top
+        else if(next == top && top > 0) {
+            var tmp = (T[]) new Object[data.length * 2];
+            System.arraycopy(data, top, tmp, 0, data.length - top);
+            System.arraycopy(data, 0, tmp, data.length - top, top);
+            top = 0;
+            next = data.length;
+            data = tmp;
         }
     }
 
@@ -54,7 +50,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
     public S add(T item) {
         growIfExhausted();
         data[next++] = requireNonNull(item);
-        return (S)this;
+        return (S) this;
     }
 
     /**
@@ -64,14 +60,15 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
      * @throws NoSuchElementException when empty.
      */
     public T remove() {
-        if(top==next) {
+        if (top == next) {
             throw new NoSuchElementException("queue is empty");
         } else {
             T tmp = data[top];
-            data[top++] = null; // prevent memory leak
+            data[top] = null; // prevent memory leak
+            top = (top + 1) % data.length;
             // next == top -> empty
             // we can move both pointers back to the start
-            if(top==next) {
+            if (top == next) {
                 next = top = 0;
             }
             assert tmp != null;
@@ -83,14 +80,14 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
      * The next element available in the queue.
      */
     public Optional<T> head() {
-        return top==next ? Optional.empty() : Optional.of(data[top]);
+        return top == next ? Optional.empty() : Optional.of(data[top]);
     }
 
     /**
      * The last element added to the queue.
      */
     public Optional<T> tail() {
-        return top==next ? Optional.empty() : Optional.of(data[next-1]);
+        return top == next ? Optional.empty() : Optional.of(data[next==0?data.length-1:next - 1]);
     }
 
 }
