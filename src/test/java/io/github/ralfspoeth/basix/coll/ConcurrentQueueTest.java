@@ -1,5 +1,6 @@
 package io.github.ralfspoeth.basix.coll;
 
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
@@ -12,11 +13,28 @@ import static org.junit.jupiter.api.Assertions.*;
 class ConcurrentQueueTest {
 
     @Test
+    void testRemoveAvailable() {
+        var q = new ConcurrentQueue<@NonNull Integer>();
+        AtomicInteger result = new AtomicInteger();
+        try(var es = Executors.newFixedThreadPool(2)) {
+            es.submit(() -> {
+                try {
+                    result.set(q.take());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+            es.submit(() -> q.add(5));
+        }
+        assertEquals(5, result.get());
+    }
+
+    @Test
     void testParallelInsertsThenRemovals() {
         final int parallel = Runtime.getRuntime().availableProcessors();
         final int num = 1_024;
         var cnt = new AtomicInteger(0);
-        var q = new ConcurrentQueue<Integer>();
+        var q = new ConcurrentQueue<@NonNull Integer>();
         try (var es = Executors.newFixedThreadPool(parallel)) {
             for (int i = 0; i < parallel * 4; i++) {
                 es.submit(() -> {
@@ -51,7 +69,7 @@ class ConcurrentQueueTest {
         // removal latch
         var latch = new AtomicInteger(0);
         // the queue
-        var q = new ConcurrentQueue<Integer>();
+        var q = new ConcurrentQueue<@NonNull Integer>();
         // the result
         var s = new ConcurrentSkipListSet<Integer>();
 
@@ -61,7 +79,7 @@ class ConcurrentQueueTest {
             final int tasks = parallel * 4;
             es.submit(() -> {
                 while (latch.get() < tasks) {
-                    q.removeIfNotEmpty().ifPresent(s::add);
+                    q.poll().ifPresent(s::add);
                 }
             });
             // insertion threads
@@ -97,7 +115,7 @@ class ConcurrentQueueTest {
         // removal latch
         var latch = new AtomicInteger(0);
         // the queue
-        var q = new ConcurrentQueue<Integer>();
+        var q = new ConcurrentQueue<@NonNull Integer>();
         // the result
         var s = new ConcurrentSkipListSet<Integer>();
 
@@ -116,7 +134,7 @@ class ConcurrentQueueTest {
             for (int i = 0; i < tasks / 2; i++) {
                 es.submit(() -> {
                     while (latch.get() < elems) {
-                        q.removeIfNotEmpty().ifPresent(r -> {
+                        q.poll().ifPresent(r -> {
                             s.add(r);
                             latch.getAndIncrement();
                         });
@@ -142,7 +160,7 @@ class ConcurrentQueueTest {
         // removal latch
         var latch = new AtomicInteger(0);
         // the queue
-        var q = new ConcurrentQueue<Integer>();
+        var q = new ConcurrentQueue<@NonNull Integer>();
         // the result
         var s = new ConcurrentSkipListSet<Integer>();
         // heads and tails
@@ -175,7 +193,7 @@ class ConcurrentQueueTest {
             for (int i = 0; i < tasks; i++) {
                 es.submit(() -> {
                     while (latch.get() < elems) {
-                        q.removeIfNotEmpty().ifPresent(r -> {
+                        q.poll().ifPresent(r -> {
                             s.add(r);
                             latch.getAndIncrement();
                         });
@@ -186,8 +204,8 @@ class ConcurrentQueueTest {
         // remove remaining elements to s
         assertAll(
                 () -> assertEquals(elems, s.size()),
-                () -> assertTrue(h.size()>=0),
-                () -> assertTrue(t.size()>=0)
+                () -> assertTrue(h.size()>=0), // black hole
+                () -> assertTrue(t.size()>=0) // black hole
         );
     }
 }

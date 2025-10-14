@@ -29,10 +29,10 @@ public final class ConcurrentQueue<T> extends BaseQueue<ConcurrentQueue<T>, T> {
     public ConcurrentQueue<T> add(T item) {
         lock.lock();
         try {
-            return super.add(item);
-        }
-        finally {
+            var retValue = super.add(item);
             isEmptyCondition.signal();
+            return retValue;
+        } finally {
             lock.unlock();
         }
     }
@@ -47,7 +47,7 @@ public final class ConcurrentQueue<T> extends BaseQueue<ConcurrentQueue<T>, T> {
         }
     }
 
-    public Optional<T> removeIfNotEmpty() {
+    public Optional<T> poll() {
         lock.lock();
         try {
             return isEmpty() ? Optional.empty() : Optional.of(remove());
@@ -56,15 +56,14 @@ public final class ConcurrentQueue<T> extends BaseQueue<ConcurrentQueue<T>, T> {
         }
     }
 
-    public T removeWhenAvailable() throws InterruptedException {
+    public T take() throws InterruptedException {
         lock.lock();
         try {
-            while(isEmpty()) {
+            while (isEmpty()) {
                 isEmptyCondition.await();
             }
             return super.remove();
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
     }
