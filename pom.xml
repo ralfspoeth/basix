@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.github.ralfspoeth</groupId>
         <artifactId>plumbum</artifactId>
-        <version>1.4.9</version>
+        <version>1.4.13</version>
     </parent>
     <artifactId>basix</artifactId>
     <version>2.0.0-SNAPSHOT</version>
@@ -82,6 +82,11 @@
         </plugins>
     </build>
     <dependencies>
+        <!-- jspecify -->
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
         <!-- testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

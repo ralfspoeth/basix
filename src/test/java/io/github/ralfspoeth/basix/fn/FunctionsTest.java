@@ -1,6 +1,5 @@
 package io.github.ralfspoeth.basix.fn;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -91,14 +90,14 @@ class FunctionsTest {
         // then
         assertAll(
                 () -> assertEquals(1, zipmap.size()),
-                () -> assertEquals(1, zipmap.firstEntry().getKey()),
-                () -> assertEquals("one", zipmap.firstEntry().getValue())
+                () -> assertEquals("one", zipmap.get(1))
         );
     }
 
 
-    @Test
-    @Disabled
+    /**
+     * demo code
+     */
     void orderBook() {
         // given
         record Order(long amount, int limit) {
@@ -337,8 +336,8 @@ class FunctionsTest {
         assertEquals("one", map.get(1));
         assertEquals("two", map.get(2));
         assertEquals("three", map.get(3));
-        assertEquals(keys, new ArrayList<>(map.sequencedKeySet()));
-        assertEquals(values, new ArrayList<>(map.sequencedValues()));
+        assertEquals(keys, new ArrayList<>(map.keySet()));
+        assertEquals(values, new ArrayList<>(map.values()));
     }
 
     @Test
@@ -348,8 +347,8 @@ class FunctionsTest {
         var map = zipMap(keys, values);
 
         assertEquals(2, map.size());
-        assertEquals(keys, new ArrayList<>(map.sequencedKeySet()));
-        assertEquals(List.of("one", "two"), new ArrayList<>(map.sequencedValues()));
+        assertEquals(keys, new ArrayList<>(map.keySet()));
+        assertEquals(List.of("one", "two"), new ArrayList<>(map.values()));
     }
 
     @Test
@@ -359,8 +358,8 @@ class FunctionsTest {
         var map = zipMap(keys, values);
 
         assertEquals(2, map.size());
-        assertEquals(List.of(1, 2), new ArrayList<>(map.sequencedKeySet()));
-        assertEquals(values, new ArrayList<>(map.sequencedValues()));
+        assertEquals(List.of(1, 2), new ArrayList<>(map.keySet()));
+        assertEquals(values, new ArrayList<>(map.values()));
     }
 
     @Test
@@ -389,8 +388,8 @@ class FunctionsTest {
         assertEquals("one", map.get(1));
         assertEquals("two", map.get(null));
         assertNull(map.get(3));
-        assertEquals(keys, new ArrayList<>(map.sequencedKeySet()));
-        assertEquals(values, new ArrayList<>(map.sequencedValues()));
+        assertEquals(keys, new ArrayList<>(map.keySet()));
+        assertEquals(values, new ArrayList<>(map.values()));
     }
 
 }

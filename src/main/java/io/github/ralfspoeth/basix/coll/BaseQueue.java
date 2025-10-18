@@ -1,13 +1,43 @@
 package io.github.ralfspoeth.basix.coll;
 
+import org.jspecify.annotations.Nullable;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import static java.util.Objects.requireNonNull;
 
-public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
-    private Elem<T> last = null;  // last element added
-    private Elem<T> first = null; // first to be removed
+sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, ConcurrentQueue {
+
+    @SuppressWarnings("unchecked")
+    private @Nullable T[] data = (T[]) new Object[4];
+    private int next = 0; // next available slot
+    private int top = 0; // next slot to be removed
+
+    private void growIfExhausted() {
+        // next insertion point out of bounds?
+        if (next == data.length) {
+            // move next to the beginning of the queue,
+            if(top == 0) {
+                var tmp = (T[]) new Object[data.length * 2];
+                System.arraycopy(data, 0, tmp, 0, data.length);
+                data = tmp;
+            } else {
+                next = 0;
+            }
+        }
+        // insertion point overtakes top
+        else if(next == top && top > 0) {
+            var tmp = (T[]) new Object[data.length * 2];
+            System.arraycopy(data, top, tmp, 0, data.length - top);
+            System.arraycopy(data, 0, tmp, data.length - top, top);
+            top = 0;
+            next = data.length;
+            data = tmp;
+        }
+    }
 
     public boolean isEmpty() {
-        return last == null;
+        return next == top;
     }
 
     /**
@@ -16,52 +46,48 @@ public sealed class BaseQueue<T> permits Queue, ConcurrentQueue {
      * @param item an element, must not be {@code null}
      * @return this
      */
-    public BaseQueue<T> add(T item) {
-        Elem<T> tmp = new Elem<>(item);
-        if (last == null) {
-            assert first == null;
-            last = tmp;
-            first = tmp;
-        } else {
-            tmp.next = last;
-            last.previous = tmp;
-            last = tmp;
-        }
-        return this;
+    @SuppressWarnings("unchecked")
+    public S add(T item) {
+        growIfExhausted();
+        data[next++] = requireNonNull(item);
+        return (S) this;
     }
 
     /**
      * Removes and returns the element from the head of the queue.
      *
      * @return the element at the head of the queue
-     * @throws NullPointerException when empty.
+     * @throws NoSuchElementException when empty.
      */
     public T remove() {
-        var tmp = requireNonNull(first).item;
-        first = first.previous;
-        if (first == null) {
-            last = null;
+        if (top == next) {
+            throw new NoSuchElementException("queue is empty");
         } else {
-            first.next = null;
-        }
-        return tmp;
-    }
-
-    public T head() {
-        return first == null ? null : first.item;
-    }
-
-    public T tail() {
-        return last == null ? null : last.item;
-    }
-
-    private static class Elem<T> {
-        final T item;
-        Elem<T> next;
-        Elem<T> previous;
-
-        private Elem(T newItem) {
-            this.item = requireNonNull(newItem);
+            T tmp = data[top];
+            data[top] = null; // prevent memory leak
+            top = (top + 1) % data.length;
+            // next == top -> empty
+            // we can move both pointers back to the start
+            if (top == next) {
+                next = top = 0;
+            }
+            assert tmp != null;
+            return tmp;
         }
     }
+
+    /**
+     * The next element available in the queue.
+     */
+    public Optional<T> head() {
+        return top == next ? Optional.empty() : Optional.of(data[top]);
+    }
+
+    /**
+     * The last element added to the queue.
+     */
+    public Optional<T> tail() {
+        return top == next ? Optional.empty() : Optional.of(data[next==0?data.length-1:next - 1]);
+    }
+
 }
