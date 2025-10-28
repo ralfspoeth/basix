@@ -64,8 +64,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
             throw new NoSuchElementException("queue is empty");
         } else {
             T tmp = data[top];
-            data[top] = null; // prevent memory leak
-            top = (top + 1) % data.length;
+            data[top++] = null; // prevent memory leak
             // next == top -> empty
             // we can move both pointers back to the start
             if (top == next) {

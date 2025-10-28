@@ -11,7 +11,7 @@ work:
 
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 1.1.5
+    version: 1.1.8
 
 You'll need Java version 21 or later to utilize this library.
 
@@ -211,7 +211,7 @@ or with the key as in
         .map(lv -> lv.modKey(k -> k-10))
         .toList();
     // [Labeled(-5, Comp(name="A", age=5)), 
-        Labeled(-3, Comp(name="B", age=7))]        
+    //  Labeled(-3, Comp(name="B", age=7))]        
 
 ...nothing of which cannot be done with `Map.Entry` for sure, yet the notion
 of labeling objects is quite common and is therefore semantically useful while
