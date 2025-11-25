@@ -1,5 +1,7 @@
 package io.github.ralfspoeth.basix.fn;
 
+import io.github.ralfspoeth.basix.coll.Stack;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -7,18 +9,21 @@ import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Gatherer.Integrator.ofGreedy;
+import static java.util.stream.Gatherer.ofSequential;
 
 public class Gatherers {
 
     // prevent instantiation
-    private Gatherers(){}
+    private Gatherers() {
+    }
 
     /**
      * Stateless gatherer to be used with streams  which combines
      * filtering for the given type and casting to that.
      * Usage:
      * {@snippet :
-     * List<Number> list = List.of(); // @replace substring="List.of()" replacement="..."
+     * List<Number> list = List.of(1); // @replace substring="List.of(1)" replacement="..."
      * List<Long> result = list.stream()
      *     .gather(Gatherers.filterAndCast(Long.class))
      *     .toList();
@@ -35,11 +40,8 @@ public class Gatherers {
      */
     public static <T, R> Gatherer<T, ?, R> filterAndCast(Class<R> type) {
         return Gatherer.of((_, element, downstream) -> {
-            if (downstream.isRejecting()) {
-                return false;
-            }
-            if (element != null && type.isAssignableFrom(element.getClass())) {
-                downstream.push(type.cast(element));
+            if (type.isAssignableFrom(element.getClass())) {
+                return downstream.push(type.cast(element));
             }
             return true;
         });
@@ -63,7 +65,7 @@ public class Gatherers {
      * @return a gatherer producing alternating elements
      */
     public static <T> Gatherer<T, AtomicReference<T>, T> alternatingEquality() {
-        return Gatherer.ofSequential(
+        return ofSequential(
                 AtomicReference::new,
                 (state, element, downstream) -> {
                     if (element != null && !Objects.equals(state.get(), element)) {
@@ -92,12 +94,10 @@ public class Gatherers {
      * @return a gatherer
      */
     public static <T> Gatherer<T, AtomicReference<T>, T> alternating(Comparator<? super T> comparator) {
-        return Gatherer.ofSequential(
+        return ofSequential(
                 AtomicReference::new,
                 (state, element, downstream) -> {
-                    if (downstream.isRejecting()) {
-                        return false;
-                    } else if (state.get() == null || 0 != comparator.compare(element, state.get())) {
+                    if (0 != comparator.compare(element, state.get())) {
                         state.set(element);
                         return downstream.push(element);
                     } else {
@@ -128,7 +128,7 @@ public class Gatherers {
      * @return a gather producing a stream of (strictly) increasing elements
      */
     public static <T> Gatherer<T, AtomicReference<T>, T> increasing(Comparator<? super T> comparator) {
-        return  monotone(Order.INCREASING, comparator);
+        return monotone(Order.INCREASING, comparator);
     }
 
     /**
@@ -145,7 +145,7 @@ public class Gatherers {
      * @return a gather producing a stream of (strictly) decreasing elements
      */
     public static <T> Gatherer<T, AtomicReference<T>, T> decreasing(Comparator<? super T> comparator) {
-        return  monotone(Order.DECREASING, comparator);
+        return monotone(Order.DECREASING, comparator);
     }
 
     /**
@@ -156,12 +156,10 @@ public class Gatherers {
     }
 
     private static <T> Gatherer<T, AtomicReference<T>, T> monotone(Order order, Comparator<? super T> comparator) {
-        return Gatherer.ofSequential(
+        return ofSequential(
                 (Supplier<AtomicReference<T>>) AtomicReference::new,
                 (state, element, downstream) -> {
-                    if (downstream.isRejecting()) {
-                        return false;
-                    } else if (state.get() == null || 0 != comparator.compare(element, state.get())) {
+                    if (0 != comparator.compare(element, state.get())) {
                         state.set(element);
                         return downstream.push(element);
                     } else {
@@ -185,17 +183,14 @@ public class Gatherers {
      * @return a gatherer which reverses the encountering order
      */
     public static <T> Gatherer<T, Stack<T>, T> reverse() {
-        return Gatherer.ofSequential(
+        return ofSequential(
                 Stack::new,
-                (stack, element, downstream) -> {
-                    if (downstream.isRejecting()) {
-                        return false;
-                    }
+                ofGreedy((stack, element, downstream) -> {
                     stack.push(element);
                     return true;
-                },
+                }),
                 (stack, downstream) -> {
-                    while (!stack.empty() && !downstream.isRejecting()) {
+                    while (!stack.isEmpty() && !downstream.isRejecting()) {
                         downstream.push(stack.pop());
                     }
                 }
@@ -243,11 +238,7 @@ public class Gatherers {
         return Gatherer.of(
                 ArrayList::new,
                 (elementsSoFar, elem, downstream) -> {
-                    if (downstream.isRejecting()) {
-                        return false;
-                    } else {
-                        return elementsSoFar.add(elem) && elementsSoFar.size() <= n;
-                    }
+                    return elementsSoFar.add(elem) && elementsSoFar.size() <= n;
                 },
                 (visitedA, visitedB) -> {
                     visitedA.addAll(visitedB);
@@ -306,7 +297,7 @@ public class Gatherers {
      * @return a gatherer producing a stream of monotone sequences
      */
     public static <T> Gatherer<T, SequencedCollection<T>, List<T>> monotoneSequences(Comparator<? super T> comparator) {
-        return Gatherer.ofSequential(
+        return ofSequential(
                 () -> new ContCollection<>(comparator),
                 (coll, item, downstream) -> {
                     if (downstream.isRejecting()) {
@@ -360,7 +351,7 @@ public class Gatherers {
      * @return a gatherer
      */
     public static <T> Gatherer<T, Void, T> interleave(Supplier<? extends T> generator) {
-        return Gatherer.ofSequential((_, item, downstream) -> {
+        return ofSequential((_, item, downstream) -> {
             if (downstream.isRejecting()) {
                 return false;
             } else {
@@ -424,13 +415,12 @@ public class Gatherers {
      * var result = list.stream().gather(Gatherers.interleaveAvailable(interleave)).toList();
      * // then
      * assert result.equals(List.of(1, 100, 2, 1000, 3, 4));
-     * }
-     *
+     *}
      *
      * @param source the collection
      */
     public static <T> Gatherer<T, Iterator<? extends T>, T> interleaveAvailable(Collection<? extends T> source) {
-        return Gatherer.ofSequential(
+        return ofSequential(
                 source::iterator,
                 (Iterator<? extends T> iterator, T element, Gatherer.Downstream<? super T> downstream) -> {
                     if (downstream.isRejecting()) {
@@ -462,11 +452,12 @@ public class Gatherers {
      * var result = stream.gather(interleaveAppendRest(coll)).toList();
      * // then
      * assert result.equals(List.of(1, 91, 2, 92, 93, 94));
-     * }
+     *}
+     *
      * @param source the collection of elements to inserted and finally appended to the stream
      */
     public static <T> Gatherer<T, Iterator<? extends T>, T> interleaveAppendRest(Collection<? extends T> source) {
-        return Gatherer.ofSequential(
+        return ofSequential(
                 source::iterator,
                 (iterator, elem, downstream) -> {
                     if (downstream.isRejecting()) {
@@ -514,8 +505,8 @@ public class Gatherers {
                         };
                         return elements.add(item);
                     } else {
-                        return(order == Order.INCREASING
-                                && comparator.compare(elements.getLast(), item) <=0
+                        return (order == Order.INCREASING
+                                && comparator.compare(elements.getLast(), item) <= 0
                                 || order == Order.DECREASING
                                 && comparator.compare(elements.getLast(), item) >= 0
                         ) && elements.add(item);
