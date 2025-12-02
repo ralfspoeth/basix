@@ -1,6 +1,7 @@
 package io.github.ralfspoeth.basix.coll;
 
 import org.jspecify.annotations.Nullable;
+
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -17,7 +18,8 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
         // next insertion point out of bounds?
         if (next == data.length) {
             // move next to the beginning of the queue,
-            if(top == 0) {
+            if (top == 0) {
+                @SuppressWarnings("unchecked")
                 var tmp = (T[]) new Object[data.length * 2];
                 System.arraycopy(data, 0, tmp, 0, data.length);
                 data = tmp;
@@ -25,8 +27,9 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
                 next = 0;
             }
         }
-        // insertion point overtakes top
-        else if(next == top && top > 0) {
+        // next at top but not empty
+        else if (next == top && next > 0) {
+            @SuppressWarnings("unchecked")
             var tmp = (T[]) new Object[data.length * 2];
             System.arraycopy(data, top, tmp, 0, data.length - top);
             System.arraycopy(data, 0, tmp, data.length - top, top);
@@ -37,7 +40,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
     }
 
     public boolean isEmpty() {
-        return next == top;
+        return next == top && next == 0;
     }
 
     /**
@@ -69,6 +72,8 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
             // we can move both pointers back to the start
             if (top == next) {
                 next = top = 0;
+            } else if (top == data.length) {
+                top = 0;
             }
             assert tmp != null;
             return tmp;
@@ -79,14 +84,14 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
      * The next element available in the queue.
      */
     public Optional<T> head() {
-        return top == next ? Optional.empty() : Optional.of(data[top]);
+        return isEmpty()? Optional.empty() : Optional.of(data[top]);
     }
 
     /**
      * The last element added to the queue.
      */
     public Optional<T> tail() {
-        return top == next ? Optional.empty() : Optional.of(data[next==0?data.length-1:next - 1]);
+        return isEmpty() ? Optional.empty() : Optional.of(data[next == 0 ? data.length - 1 : next - 1]);
     }
 
 }

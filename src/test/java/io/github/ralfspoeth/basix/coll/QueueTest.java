@@ -1,5 +1,6 @@
 package io.github.ralfspoeth.basix.coll;
 
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@NullMarked
 class QueueTest {
 
     @Test
@@ -81,11 +83,19 @@ class QueueTest {
         );
     }
 
-
-
-    private static void remove(Queue<?> q, int elems) {
-        while(elems-->0) {
-            q.remove();
-        }
+    @Test
+    void testReorg() {
+        // given
+        var q = new Queue<Integer>();
+        // insert four, remove one, add one
+        q.add(1).add(2).add(3).add(4);
+        var one = q.remove();
+        q.add(5);
+        assertAll(
+                () -> assertEquals(1, one),
+                () -> assertEquals(5, q.tail().orElseThrow()),
+                () -> assertEquals(2, q.head().orElseThrow())
+        );
     }
+
 }
