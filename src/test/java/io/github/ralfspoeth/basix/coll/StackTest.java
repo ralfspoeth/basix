@@ -21,6 +21,7 @@ class StackTest {
     @Test
     void testSingle() {
         var emptyStack = new Stack<@NonNull Integer>();
+        //noinspection DataFlowIssue
         assertAll(
                 () -> assertFalse(new Stack<@NonNull Integer>().push(1).isEmpty()),
                 () -> assertThrows(NullPointerException.class, () -> new Stack<>().push(null)),

@@ -148,7 +148,7 @@ public class Functions {
 
     /**
      * Turns an iterable list of values into stream of {@link Labeled} values
-     * where the label is extracted from each value by applying the given labelling function.
+     * where the label is extracted from each value by applying the given labeling function.
      * Example:
      * {@snippet :
      * // given
@@ -161,7 +161,7 @@ public class Functions {
      *}
      *
      * @param list  a list or array of values.
-     * @param label a labelling function
+     * @param label a labeling function
      * @param <L>   the type of the label
      * @param <T>   the type of the value
      * @return a stream of labeled values

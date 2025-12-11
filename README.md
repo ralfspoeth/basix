@@ -370,7 +370,7 @@ exactly `n` elements are acceptable.
 
 Sometimes an element in a stream is interesting if it deviates from 
 the most recently visited element only.
-Consider measuring temperature with observations modelled as records
+Consider measuring temperature with observations modeled as records
 of point in time and temperature
 
     record T(long minute, long K) {}
@@ -409,7 +409,7 @@ then. We can do with the `increasing` and `decreasing` gatherers like so:
 There are variants for de- and increasing gatherers with custom comparators.
 
 It may then be interesting to turn a series of observations in series of sections
-of increasing followed by decreasing (or vica versa) points of data.
+of increasing followed by decreasing (or vice versa) points of data.
 `montononeSequences` does exactly that.
 Consider this series
 

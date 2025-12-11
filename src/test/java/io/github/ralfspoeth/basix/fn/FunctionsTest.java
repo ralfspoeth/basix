@@ -98,6 +98,7 @@ class FunctionsTest {
     /**
      * demo code
      */
+    @SuppressWarnings("unused")
     void orderBook() {
         // given
         record Order(long amount, int limit) {
@@ -217,6 +218,7 @@ class FunctionsTest {
         record R(int x) {}
         var f = of(m, R::x);
         assertNull(f.apply(new R(2)));
+        assertNull(f.apply(new R(3)));
     }
 
     @Test
@@ -225,6 +227,7 @@ class FunctionsTest {
         record R(int x) {}
         var f = of(m, R::x);
         assertNull(f.apply(new R(1)));
+        assertNull(f.apply(new R(2)));
     }
 
     @Test
@@ -382,6 +385,7 @@ class FunctionsTest {
     void zipMapWithNulls() {
         var keys = Arrays.asList(1, null, 3);
         var values = Arrays.asList("one", "two", null);
+        @SuppressWarnings("NullableProblems")
         var map = zipMap(keys, values);
 
         assertEquals(3, map.size());

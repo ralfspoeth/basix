@@ -84,14 +84,16 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
      * The next element available in the queue.
      */
     public Optional<T> head() {
-        return isEmpty()? Optional.empty() : Optional.of(data[top]);
+        return isEmpty() ? Optional.empty() : Optional.of(requireNonNull(data[top]));
     }
 
     /**
      * The last element added to the queue.
      */
     public Optional<T> tail() {
-        return isEmpty() ? Optional.empty() : Optional.of(data[next == 0 ? data.length - 1 : next - 1]);
+        return isEmpty() ? Optional.empty() : Optional.of(requireNonNull(
+                data[next == 0 ? data.length - 1 : next - 1]
+        ));
     }
 
 }

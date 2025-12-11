@@ -15,6 +15,7 @@ class QueueTest {
     @Test
     void testNullElems() {
         var q = new Queue<Integer>();
+        //noinspection DataFlowIssue
         assertThrows(NullPointerException.class, () -> q.add(null));
     }
 

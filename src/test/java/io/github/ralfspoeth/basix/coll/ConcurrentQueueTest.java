@@ -168,6 +168,7 @@ class ConcurrentQueueTest {
         var t = new ConcurrentSkipListSet<Integer>();
 
         Thread.ofPlatform().daemon().start(()->{
+            //noinspection InfiniteLoopStatement
             while(true) {
                 q.head().ifPresent(h::add);
                 q.tail().ifPresent(t::add);
@@ -202,6 +203,7 @@ class ConcurrentQueueTest {
             }
         }
         // remove remaining elements to s
+        //noinspection ConstantValue
         assertAll(
                 () -> assertEquals(elems, s.size()),
                 () -> assertTrue(h.size()>=0), // black hole
