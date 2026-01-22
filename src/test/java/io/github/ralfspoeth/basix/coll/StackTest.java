@@ -53,25 +53,31 @@ class StackTest {
 
     @Test
     void testPushIf() {
+        // given: an empty stack
         var s = new Stack<@NonNull Integer>();
         assertAll(
+                // then: empty at first
                 () -> assertTrue(s.isEmpty()),
+                // then: push if top element is not null has no effect; stack is still empty
                 () -> assertTrue(s.pushIf(1, Objects::nonNull).isEmpty()),
+                // then: push if top element is null succeeds leaving a non-empty stack
                 () -> assertFalse(s.pushIf(1, Objects::isNull).isEmpty()),
-                () -> assertEquals(1, s.top()),
+                // then: that element pushed is the top element
                 () -> assertEquals(1, s.top())
         );
     }
 
     @Test
     void testPopIfNotEmpty() {
-        // given
+        // given: a fresh stack
         var s = new Stack<@NonNull Integer>();
-        // when/then
         assertAll(
+                // then it is empty
                 () -> assertTrue(s.isEmpty()),
+                // then popIfNotEmpty returns an empty optional
                 () -> assertFalse(s.popIfNotEmpty().isPresent()),
-                () -> assertTrue(s.push(1).popIfNotEmpty().isPresent())
+                // then after pushing an element, that is popped by popIfNotEmpty
+                () -> assertEquals(1, s.push(1).popIfNotEmpty().orElseThrow())
         );
     }
 
