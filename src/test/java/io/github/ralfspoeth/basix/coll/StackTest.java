@@ -33,13 +33,20 @@ class StackTest {
 
     @Test
     void testPushIfEmpty() {
+        // given: a fresh stack
         var s = new Stack<@NonNull Integer>();
         assertAll(
+                // then is empty
                 () -> assertTrue(s.isEmpty()),
+                // then pushIfEmpty succeeds
                 () -> assertFalse(s.pushIfEmpty(1).isEmpty()),
+                // then top equals the last element pushed-if-empty
                 () -> assertEquals(1, s.top()),
+                // then the next pushIfEmpty does nothing
                 () -> assertEquals(1, s.pushIfEmpty(2).top()),
+                // then prior element is still the only one pushed
                 () -> assertEquals(1, s.pop()),
+                // then it's empty again and pushIfEmpty succeeds
                 () -> assertEquals(2, s.pushIfEmpty(2).top())
         );
     }
