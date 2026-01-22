@@ -11,7 +11,7 @@ work:
 
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 1.1.8
+    version: 1.1.10
 
 You'll need Java version 21 or later to utilize this library.
 
@@ -39,7 +39,7 @@ Though the Java Collections library contains a rich set
 of classes which provide much more functionality than 
 these two `Stack` and `Queue` implementations I prefer
 them frequently when I want to utilize their push/pop or 
-add/remove semantics, respectively, in pure manner.
+add/remove purity, respectively.
 
 ## Stack
 
@@ -63,6 +63,8 @@ as well as
     s.push(first);
     s.push(second);
     assert second == s.pop() && first == s.pop() && s.isEmpty();
+
+
 
 ## Queue
 
