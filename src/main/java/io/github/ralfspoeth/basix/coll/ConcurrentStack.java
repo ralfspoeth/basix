@@ -71,10 +71,10 @@ public final class ConcurrentStack<T> extends BaseStack<ConcurrentStack<T>, T> {
     }
 
     @Override
-    public ConcurrentStack<T> pushUnless(T data, Predicate<? super @Nullable T> condition) {
+    public ConcurrentStack<T> pushIf(T data, Predicate<? super @Nullable T> condition) {
         lock.lock();
         try {
-            return super.pushUnless(data, condition);
+            return super.pushIf(data, condition);
         } finally {
             lock.unlock();
         }

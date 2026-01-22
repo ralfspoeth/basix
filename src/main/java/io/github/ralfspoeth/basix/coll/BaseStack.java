@@ -75,7 +75,7 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
 
 
     public S pushIfEmpty(T data) {
-        return pushUnless(data, Objects::nonNull);
+        return pushIf(data, Objects::isNull);
     }
 
     /**
@@ -86,8 +86,8 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      * @return this
      */
     @SuppressWarnings("unchecked")
-    public S pushUnless(T data, Predicate<? super @Nullable T> condition) {
-        return condition.test(top()) ? (S) this : push(data);
+    public S pushIf(T data, Predicate<? super @Nullable T> condition) {
+        return condition.test(top()) ? push(data):(S)this;
     }
 
 

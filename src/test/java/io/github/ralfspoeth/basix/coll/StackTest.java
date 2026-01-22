@@ -45,12 +45,12 @@ class StackTest {
     }
 
     @Test
-    void testPushUnless() {
+    void testPushIf() {
         var s = new Stack<@NonNull Integer>();
         assertAll(
                 () -> assertTrue(s.isEmpty()),
-                () -> assertTrue(s.pushUnless(1, Objects::isNull).isEmpty()),
-                () -> assertFalse(s.pushUnless(1, Objects::nonNull).isEmpty()),
+                () -> assertTrue(s.pushIf(1, Objects::nonNull).isEmpty()),
+                () -> assertFalse(s.pushIf(1, Objects::isNull).isEmpty()),
                 () -> assertEquals(1, s.top()),
                 () -> assertEquals(1, s.top())
         );
@@ -58,7 +58,9 @@ class StackTest {
 
     @Test
     void testPopIfNotEmpty() {
+        // given
         var s = new Stack<@NonNull Integer>();
+        // when/then
         assertAll(
                 () -> assertTrue(s.isEmpty()),
                 () -> assertFalse(s.popIfNotEmpty().isPresent()),
