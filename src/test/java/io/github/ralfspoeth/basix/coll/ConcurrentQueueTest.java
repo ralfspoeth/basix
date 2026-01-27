@@ -3,10 +3,12 @@ package io.github.ralfspoeth.basix.coll;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -208,6 +210,30 @@ class ConcurrentQueueTest {
                 () -> assertEquals(elems, s.size()),
                 () -> assertTrue(h.size()>=0), // black hole
                 () -> assertTrue(t.size()>=0) // black hole
+        );
+    }
+
+    @Test
+    void testWithLock() {
+        // given
+        var q = new ConcurrentQueue<@NonNull Integer>();
+
+        // when
+        IntStream.range(0, 10).forEach(q::add); // 0, 1, ..., 9
+        final var al = new ArrayList<Integer>();
+        int cnt = q.withLock(x -> {
+            while(!x.isEmpty()) {
+                al.add(x.remove());
+            }
+            return al.size();
+        });
+
+        // then
+        assertAll(
+                () -> assertEquals(10, cnt),
+                () -> assertEquals(10, al.size()),
+                () -> assertFalse(al.isEmpty()),
+                () -> assertEquals(IntStream.range(0, 10).boxed().toList(), al)
         );
     }
 }

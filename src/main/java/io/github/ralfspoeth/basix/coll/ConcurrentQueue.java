@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
 /**
  * Concurrent version of a FIFO queue.
@@ -84,6 +85,16 @@ public final class ConcurrentQueue<T> extends BaseQueue<ConcurrentQueue<T>, T> {
         try {
             return super.tail();
         } finally {
+            lock.unlock();
+        }
+    }
+
+    public <R> R withLock(Function<ConcurrentQueue<T>, R> fun) {
+        lock.lock();
+        try {
+            return fun.apply(this);
+        }
+        finally {
             lock.unlock();
         }
     }
