@@ -12,6 +12,26 @@ public enum Sign {
     ZERO,
     POSITIVE;
 
+    public boolean negative() {
+        return this == NEGATIVE;
+    }
+
+    public boolean nonNegative() {
+        return !negative();
+    }
+
+    public boolean positive() {
+        return this == POSITIVE;
+    }
+
+    public boolean nonPositive() {
+        return !positive();
+    }
+
+    public boolean zero() {
+        return this == ZERO;
+    }
+
     /**
      * Turns an integer result into either {@link #NEGATIVE}, {@link #POSITIVE}, or {@link #ZERO}.
      *

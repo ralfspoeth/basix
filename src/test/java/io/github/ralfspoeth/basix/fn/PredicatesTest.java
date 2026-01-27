@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -44,22 +43,6 @@ class PredicatesTest {
                 () -> assertEquals(0, Stream.of(pNoMatch).filter(not(in(s, Int::x))).count()),
                 () -> assertEquals(1, Stream.of(pMatch).filter(not(in(s, Int::x))).count()),
                 () -> assertTrue(l.stream().noneMatch(not(in(s, identity()))))
-        );
-    }
-
-    @Test
-    void testKeyIn() {
-        var m = Map.of(1, 1, 2, 2);
-        record Int(int x) {
-        }
-        var pMatch = new Int(2);
-        var pNoMatch = new Int(3);
-
-        var l = List.of(1, 2);
-        assertAll(
-                () -> assertEquals(1, Stream.of(pMatch).filter(Predicates.in(m, Int::x)).count()),
-                () -> assertEquals(0, Stream.of(pNoMatch).filter(Predicates.in(m, Int::x)).count()),
-                () -> assertTrue(l.stream().allMatch(Predicates.in(m, identity())))
         );
     }
 

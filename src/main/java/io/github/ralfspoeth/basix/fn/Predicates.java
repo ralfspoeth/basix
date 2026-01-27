@@ -1,7 +1,6 @@
 package io.github.ralfspoeth.basix.fn;
 
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -43,23 +42,7 @@ public class Predicates {
      * @param <S> a set
      */
     public static <T, S> Predicate<T> in(Set<S> s, Function<T, ? extends S> extractor) {
-        return unboxedBoolean(extractor.andThen(s::contains));
-    }
-
-    /**
-     * Creates a {@link Predicate} which for some object {@code x}
-     * of which an {@code extractor} function extracts some property
-     * which must then be in the {@link Map#keySet() keySet} of the
-     * {@code m}ap.
-     *
-     * @param m the map
-     * @param extractor an extractor function
-     * @return a Predicate which extracts some value of an object and tests whether it is an element of the keySet of the map
-     * @param <T> The for which the predicate will be defined
-     * @param <S> the type of the elements in the keySet
-     */
-    public static <T, S> Predicate<T> in(Map<S, ?> m, Function<T, ? extends S> extractor) {
-        return unboxedBoolean(extractor.andThen(m::containsKey));
+        return asPredicate(extractor.andThen(s::contains));
     }
 
     /**
@@ -69,14 +52,14 @@ public class Predicates {
      * parameter {@code s}.
      */
     public static <T, S> Predicate<T> eq(S s, Function<T, ? extends S> extractor) {
-        return unboxedBoolean(extractor.andThen(s::equals));
+        return asPredicate(extractor.andThen(s::equals));
     }
 
     /**
      * Creates a predicate using {@link Sign#NEGATIVE} comparison results only.
      */
     public static <T> Predicate<T> smallerThan(T ref, Comparator<? super T> comparator) {
-        return comparison(ref, comparator, Sign.NEGATIVE);
+        return x -> ofCompare(comparator.compare(x, ref)).negative();
     }
 
     /**
@@ -91,7 +74,7 @@ public class Predicates {
      * Creates a predicate using {@link Sign#NEGATIVE} and {@link Sign#ZERO} comparison results.
      */
     public static <T> Predicate<T> smallerOrEqual(T ref, Comparator<? super T> comparator) {
-        return comparison(ref, comparator, Sign.NEGATIVE, Sign.ZERO);
+        return x -> ofCompare(comparator.compare(x, ref)).nonPositive();
     }
 
     /**
@@ -106,7 +89,7 @@ public class Predicates {
      * Creates a predicate using {@link Sign#ZERO} comparison results only.
      */
     public static <T> Predicate<T> equal(T ref, Comparator<? super T> comparator) {
-        return comparison(ref, comparator, Sign.ZERO);
+        return x -> ofCompare(comparator.compare(x, ref)).zero();
     }
 
     /**
@@ -121,7 +104,7 @@ public class Predicates {
      * Creates a predicate using {@link Sign#POSITIVE} and {@link Sign#ZERO} comparison results.
      */
     public static <T> Predicate<T> greaterOrEqual(T ref, Comparator<? super T> comparator) {
-        return comparison(ref, comparator, Sign.ZERO, Sign.POSITIVE);
+        return x -> ofCompare(comparator.compare(x, ref)).nonNegative();
     }
 
     /**
@@ -136,7 +119,7 @@ public class Predicates {
      * Creates a predicate using {@link Sign#NEGATIVE} comparison results only.
      */
     public static <T> Predicate<T> greaterThan(T ref, Comparator<? super T> comparator) {
-        return comparison(ref, comparator, Sign.POSITIVE);
+        return x -> ofCompare(comparator.compare(x, ref)).positive();
     }
 
     /**
@@ -152,7 +135,7 @@ public class Predicates {
      * yet no {@link Sign#ZERO} results.
      */
     public static <T> Predicate<T> smallerOrGreater(T ref, Comparator<? super T> comparator) {
-        return comparison(ref, comparator, Sign.NEGATIVE, Sign.POSITIVE);
+        return x -> !ofCompare(comparator.compare(x, ref)).zero();
     }
 
     /**
@@ -163,12 +146,7 @@ public class Predicates {
         return smallerOrGreater(ref, Comparator.naturalOrder());
     }
 
-    // helper method
-    private static <T> Predicate<T> comparison(T ref, Comparator<? super T> comparator, Sign... signs) {
-        return in(Set.of(signs), t -> ofCompare(comparator.compare(t, ref)));
-    }
-
-    private static <T> Predicate<T> unboxedBoolean(Function<T, Boolean> f) {
+    private static <T> Predicate<T> asPredicate(Function<T, Boolean> f) {
         return f::apply;
     }
 }
