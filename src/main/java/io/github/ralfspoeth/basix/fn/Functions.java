@@ -3,6 +3,7 @@ package io.github.ralfspoeth.basix.fn;
 import org.jspecify.annotations.Nullable;import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -61,8 +62,7 @@ public class Functions {
      * @return a function that maps the extracted key to a value
      */
     public static <T, R> Function<T, @Nullable R> of(Map<?, R> m, Function<T, ?> extractor) {
-        m = Map.copyOf(m);
-        return extractor.andThen(m::get);
+        return extractor.andThen(Map.copyOf(m)::get);
     }
 
     /**
@@ -74,8 +74,7 @@ public class Functions {
      * @return the function
      */
     public static <R> IntFunction<R> of(List<R> l) {
-        l = List.copyOf(l);
-        return l::get;
+        return List.copyOf(l)::get;
     }
 
     /**
@@ -206,4 +205,26 @@ public class Functions {
         return tmp;
     }
 
+    /**
+     * A gatherer that combines filtering and casting to some class.
+     * It is used to prevent copy/paste errors as in
+     * {@snippet :
+     * Stream.of(1, 2, 3d)
+     *     .filter(Double.class::isInstance) // just 3d
+     *     .map(Integer.class::cast) // not what we want
+     * }
+     * Instead use
+     * {@snippet :
+     * Stream.of(1, 2, 3d)
+     *     .gather(Functions.filterAndCast(Double.class))
+     * }
+     * @param clazz the class to filter and to cast to
+     * @return a gatherer
+     * @param <T> the target type of the downstream elements
+     */
+    public static <T> Gatherer<Object, ?, T> filterAndCast(Class<T> clazz) {
+        return Gatherer.of(Gatherer.Integrator.ofGreedy(
+                (_, e, d) -> clazz.isInstance(e)?d.push((T)clazz.cast(e)):true)
+        );
+    }
 }

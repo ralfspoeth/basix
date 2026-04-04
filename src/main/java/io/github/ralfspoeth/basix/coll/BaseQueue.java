@@ -7,7 +7,7 @@ import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
-sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, ConcurrentQueue {
+sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> implements FiFo<S, T> permits Queue, ConcurrentQueue {
 
     @SuppressWarnings("unchecked")
     private @Nullable T[] data = (T[]) new Object[4];
@@ -39,6 +39,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
         }
     }
 
+    @Override
     public boolean isEmpty() {
         return next == top && next == 0;
     }
@@ -50,6 +51,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
      * @return this
      */
     @SuppressWarnings("unchecked")
+    @Override
     public S add(T item) {
         growIfExhausted();
         data[next++] = requireNonNull(item);
@@ -62,6 +64,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
      * @return the element at the head of the queue
      * @throws NoSuchElementException when empty.
      */
+    @Override
     public T remove() {
         if (top == next) {
             throw new NoSuchElementException("queue is empty");
@@ -83,6 +86,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
     /**
      * The next element available in the queue.
      */
+    @Override
     public Optional<T> head() {
         return isEmpty() ? Optional.empty() : Optional.of(requireNonNull(data[top]));
     }
@@ -90,6 +94,7 @@ sealed abstract class BaseQueue<S extends BaseQueue<S, T>, T> permits Queue, Con
     /**
      * The last element added to the queue.
      */
+    @Override
     public Optional<T> tail() {
         return isEmpty() ? Optional.empty() : Optional.of(requireNonNull(
                 data[next == 0 ? data.length - 1 : next - 1]

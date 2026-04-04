@@ -396,4 +396,16 @@ class FunctionsTest {
         assertEquals(values, new ArrayList<>(map.values()));
     }
 
+    @Test
+    void testFilterAndCast() {
+        // given
+        var input = List.of(1, 2, 3d, false, true);
+        // then
+        assertAll(
+                () -> assertEquals(List.of(1, 2), input.stream().gather(filterAndCast(Integer.class)).toList()),
+                () -> assertEquals(List.of(3d), input.stream().gather(filterAndCast(Double.class)).toList()),
+                () -> assertEquals(List.of(false, true), input.stream().gather(filterAndCast(Boolean.class)).toList())
+        );
+
+    }
 }

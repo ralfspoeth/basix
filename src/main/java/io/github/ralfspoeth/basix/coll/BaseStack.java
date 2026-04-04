@@ -3,7 +3,6 @@ package io.github.ralfspoeth.basix.coll;
 import org.jspecify.annotations.Nullable;
 
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -45,20 +44,12 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <T> the element type
  */
-sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, ConcurrentStack {
+sealed abstract class BaseStack<S extends BaseStack<S, T>, T> implements LiFo<S, T> permits Stack, ConcurrentStack {
     @SuppressWarnings("unchecked")
     private @Nullable T[] data = (T[]) new Object[16];
     private int next = 0;
 
-    protected BaseStack() {
-    }
-
-    /**
-     * Pop the topmost element if it is not null.
-     */
-    public Optional<T> popIfNotEmpty() {
-        return popIf(Objects::nonNull);
-    }
+    protected BaseStack() {}
 
     /**
      * Remove to the top element of this stack only if it meets
@@ -69,23 +60,20 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      * @return the topmost element of the stack wrapped in an optional, or
      * {@link Optional#empty()}
      */
+    @Override
     public Optional<T> popIf(Predicate<? super @Nullable T> condition) {
         return condition.test(top()) ? Optional.of(pop()) : Optional.empty();
-    }
-
-
-    public S pushIfEmpty(T data) {
-        return pushIf(data, Objects::isNull);
     }
 
     /**
      * Push an element unless some condition is met.
      *
-     * @param data      the element to be pushed
+     * @param data the element to be pushed
      * @param condition the condition not be met if the element is to be pushed
      * @return this
      */
     @SuppressWarnings("unchecked")
+    @Override
     public S pushIf(T data, Predicate<? super @Nullable T> condition) {
         return condition.test(top()) ? push(data):(S)this;
     }
@@ -96,6 +84,7 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      *
      * @return true if empty
      */
+    @Override
     public boolean isEmpty() {
         return next == 0;
     }
@@ -106,6 +95,7 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      * @return the topmost element
      * @throws NoSuchElementException when empty
      */
+    @Override
     public T pop() {
         if (next > 0) {
             T tmp = data[--next];
@@ -123,12 +113,14 @@ sealed abstract class BaseStack<S extends BaseStack<S, T>, T> permits Stack, Con
      *
      * @return the topmost element
      */
+    @Override
     public @Nullable T top() {
         return next > 0 ? data[next - 1] : null;
     }
 
 
     @SuppressWarnings("unchecked")
+    @Override
     public S push(T elem) {
         if (next == data.length) {
             T[] tmp = (T[]) new Object[data.length * 2];
