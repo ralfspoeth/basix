@@ -3,6 +3,7 @@ package io.github.ralfspoeth.basix.coll;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
@@ -14,8 +15,17 @@ import java.util.function.Predicate;
  */
 public final class ConcurrentStack<T> extends BaseStack<ConcurrentStack<T>, T> {
 
-    // used to protect access to the internal state of the stack
-    private final Lock lock = new ReentrantLock();
+    private static class Node<T> {
+        final T data;
+        @Nullable Node<T> next;
+
+        Node(T data) {
+            this.data = data;
+        }
+    }
+
+    // Assuming the top of the stack is managed by AtomicReference
+    private final AtomicReference<Node<T>> top = new AtomicReference<>();
 
     /**
      * {@link BaseStack#popIf(Predicate)} implemented in a thread-safe way.
