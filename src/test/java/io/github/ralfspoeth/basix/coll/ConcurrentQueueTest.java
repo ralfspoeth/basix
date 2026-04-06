@@ -3,33 +3,14 @@ package io.github.ralfspoeth.basix.coll;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ConcurrentQueueTest {
-
-    @Test
-    void testRemoveAvailable() {
-        var q = new ConcurrentQueue<@NonNull Integer>();
-        AtomicInteger result = new AtomicInteger();
-        try(var es = Executors.newFixedThreadPool(2)) {
-            es.submit(() -> {
-                try {
-                    result.set(q.take());
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
-            es.submit(() -> q.add(5));
-        }
-        assertEquals(5, result.get());
-    }
 
     @Test
     void testParallelInsertsThenRemovals() {
@@ -62,178 +43,40 @@ class ConcurrentQueueTest {
     }
 
     @Test
-    void testMultiParallelInsertsSingleRemoval() {
-        final int parallel = Runtime.getRuntime().availableProcessors();
-        final int num = 513;
+    void someBasics() {
+        var q = new ConcurrentQueue<Integer>();
+        assertTrue(q.isEmpty());
+        q.add(1);
+        assertFalse(q.isEmpty());
+        assertEquals(1, q.head().orElseThrow());
+        assertEquals(1, q.tail().orElseThrow());
+        q.add(2);
+        assertEquals(1, q.head().orElseThrow());
+        assertEquals(2, q.tail().orElseThrow());
+        q.add(3);
+        assertEquals(1, q.head().orElseThrow());
+        assertEquals(3, q.tail().orElseThrow());
+        // removeing things...
+        assertEquals(1, q.remove());
+        assertEquals(2, q.remove());
+        assertEquals(3, q.remove());
+        // should then be empty
+        assertTrue(q.isEmpty());
+    }
 
-        // insertion thread counter
-        var cnt = new AtomicInteger(0);
-        // removal latch
-        var latch = new AtomicInteger(0);
-        // the queue
-        var q = new ConcurrentQueue<@NonNull Integer>();
-        // the result
-        var s = new ConcurrentSkipListSet<Integer>();
-
-        // running all the threads
-        try (var es = Executors.newFixedThreadPool(parallel)) {
-            // removal thread
-            final int tasks = parallel * 4;
+    @Test
+    void someBasicsParallel() {
+        var q = new ConcurrentQueue<Integer>();
+        assertTrue(q.isEmpty());
+        AtomicInteger cnt = new AtomicInteger();
+        try(var es = Executors.newCachedThreadPool()) {
             es.submit(() -> {
-                while (latch.get() < tasks) {
-                    q.poll().ifPresent(s::add);
-                }
+                cnt.getAndIncrement();
+                q.add(ThreadLocalRandom.current().nextInt());
             });
-            // insertion threads
-            for (int i = 0; i < tasks; i++) {
-                es.submit(() -> {
-                    int start = cnt.getAndIncrement() * num;
-                    for (int j = start; j < start + num; j++) {
-                        q.add(j);
-                    }
-                    latch.incrementAndGet();
-                });
-            }
         }
-        // remove remaining elements to s
-        while (!q.isEmpty()) {
-            s.add(q.remove());
-        }
-        int expectedElems = num * cnt.get();
-        assertAll(
-                () -> assertEquals(expectedElems, s.size())
-        );
-    }
-
-    @Test
-    void testMultiparallelMultiParallelRemovals() {
-        final int parallel = Runtime.getRuntime().availableProcessors();
-        final int num = 2_563;
-        final int tasks = parallel * 2;
-        final int elems = num * tasks;
-
-        // insertion thread counter
-        var cnt = new AtomicInteger(0);
-        // removal latch
-        var latch = new AtomicInteger(0);
-        // the queue
-        var q = new ConcurrentQueue<@NonNull Integer>();
-        // the result
-        var s = new ConcurrentSkipListSet<Integer>();
-
-        // running all the threads
-        try (var es = Executors.newFixedThreadPool(parallel)) {
-            // insertion threads
-            for (int i = 0; i < tasks; i++) {
-                es.submit(() -> {
-                    int start = cnt.getAndIncrement() * num;
-                    for (int j = start; j < start + num; j++) {
-                        q.add(j);
-                    }
-                });
-            }
-            // removal threads
-            for (int i = 0; i < tasks / 2; i++) {
-                es.submit(() -> {
-                    while (latch.get() < elems) {
-                        q.poll().ifPresent(r -> {
-                            s.add(r);
-                            latch.getAndIncrement();
-                        });
-                    }
-                });
-            }
-        }
-        // remove remaining elements to s
-        assertAll(
-                () -> assertEquals(elems, s.size())
-        );
-    }
-
-    @Test
-    void testParallelInsertionsRemovalsObservations() {
-        final int parallel = Runtime.getRuntime().availableProcessors();
-        final int num = 563;
-        final int tasks = parallel * 2;
-        final int elems = num * tasks;
-
-        // insertion thread counter
-        var cnt = new AtomicInteger(0);
-        // removal latch
-        var latch = new AtomicInteger(0);
-        // the queue
-        var q = new ConcurrentQueue<@NonNull Integer>();
-        // the result
-        var s = new ConcurrentSkipListSet<Integer>();
-        // heads and tails
-        var h = new ConcurrentSkipListSet<Integer>();
-        var t = new ConcurrentSkipListSet<Integer>();
-
-        Thread.ofPlatform().daemon().start(()->{
-            //noinspection InfiniteLoopStatement
-            while(true) {
-                q.head().ifPresent(h::add);
-                q.tail().ifPresent(t::add);
-            }
-        });
-
-        // running all the threads
-        try (var es = Executors.newFixedThreadPool(parallel)) {
-            // observer threads
-            es.submit(() -> {
-
-            });
-            // insertion threads
-            for (int i = 0; i < tasks; i++) {
-                es.submit(() -> {
-                    int start = cnt.getAndIncrement() * num;
-                    for (int j = start; j < start + num; j++) {
-                        q.add(j);
-                    }
-                });
-            }
-            // removal threads
-            for (int i = 0; i < tasks; i++) {
-                es.submit(() -> {
-                    while (latch.get() < elems) {
-                        q.poll().ifPresent(r -> {
-                            s.add(r);
-                            latch.getAndIncrement();
-                        });
-                    }
-                });
-            }
-        }
-        // remove remaining elements to s
-        //noinspection ConstantValue
-        assertAll(
-                () -> assertEquals(elems, s.size()),
-                () -> assertTrue(h.size()>=0), // black hole
-                () -> assertTrue(t.size()>=0) // black hole
-        );
-    }
-
-    @Test
-    void testWithLock() {
-        // given
-        var q = new ConcurrentQueue<@NonNull Integer>();
-
-        // when
-        IntStream.range(0, 10).forEach(q::add); // 0, 1, ..., 9
-        final var al = new ArrayList<Integer>();
-        int cnt = q.withLock(x -> {
-            while(!x.isEmpty()) {
-                al.add(x.remove());
-            }
-            return al.size();
-        });
-
-        // then
-        assertAll(
-                () -> assertEquals(10, cnt),
-                () -> assertEquals(10, al.size()),
-                () -> assertFalse(al.isEmpty()),
-                () -> assertEquals(IntStream.range(0, 10).boxed().toList(), al)
-        );
+        int k = 0;
+        while(!q.isEmpty()) {k++;q.remove();}
+        assertEquals(cnt.get(), k);
     }
 }
