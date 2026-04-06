@@ -32,7 +32,7 @@ public final class ConcurrentStack<T> implements LiFo<ConcurrentStack<T>, T> {
     }
 
     @Override
-    public Optional<T> popIf(Predicate<? super T> condition) {
+    public Optional<T> popIf(Predicate<? super @Nullable T> condition) {
         Node<T> currentTop, next;
         T data;
         do {
