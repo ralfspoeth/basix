@@ -70,7 +70,7 @@ public final class ConcurrentStack<T> implements LiFo<ConcurrentStack<T>, T> {
 
     @Override
     public T pop() {
-        return null;
+        return popIf(_ -> true).orElseThrow(NoSuchElementException::new);
     }
 
 
