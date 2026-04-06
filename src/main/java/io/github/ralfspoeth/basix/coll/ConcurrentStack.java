@@ -21,7 +21,7 @@ public final class ConcurrentStack<T> extends BaseStack<ConcurrentStack<T>, T> {
      * {@link BaseStack#popIf(Predicate)} implemented in a thread-safe way.
      */
     @Override
-    public Optional<T> popIf(Predicate<? super T> condition) {
+    public Optional<T> popIf(Predicate<? super @Nullable T> condition) {
         lock.lock();
         try {
             return condition.test(top()) ? Optional.of(pop()) : Optional.empty();
@@ -61,7 +61,7 @@ public final class ConcurrentStack<T> extends BaseStack<ConcurrentStack<T>, T> {
     }
 
     @Override
-    public T top() {
+    public @Nullable T top() {
         lock.lock();
         try {
             return super.top();

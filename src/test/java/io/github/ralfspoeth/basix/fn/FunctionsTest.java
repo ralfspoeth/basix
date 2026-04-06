@@ -22,7 +22,7 @@ class FunctionsTest {
     }
 
     @Test
-    void testOfMapAndExtrFunc() {
+    void testOfMapAndExtractFunction() {
         var m = Map.of(1, "one", 2, "two");
         record Int(int x) {}
         var x = new Int(1);
@@ -209,7 +209,10 @@ class FunctionsTest {
         record R(int x) {}
         var l = List.of(new R(2), new R(3));
         var expected = List.of("two", "three");
-        assertEquals(expected, l.stream().map(of(m, R::x)).toList());
+        //noinspection NullableProblems
+        assertEquals(expected, l.stream()
+                .map(of(m, R::x))
+                .toList());
     }
 
     @Test
