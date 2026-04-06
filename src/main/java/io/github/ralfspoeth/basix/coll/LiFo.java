@@ -12,7 +12,7 @@ import java.util.function.Predicate;
  * @param <S> the actual implementation
  * @param <T> the type of the elements in the structure
  */
-public interface LiFo<S extends LiFo<S, T>, T> {
+public sealed interface LiFo<S extends LiFo<S, T>, T> permits Stack, ConcurrentStack{
 
     /**
      * Add an element to the structure.
