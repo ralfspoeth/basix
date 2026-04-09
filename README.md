@@ -334,7 +334,7 @@ or
         ...
 ```
 both of which are pretty ugly. This can be simplified to
-```
+```java
     Stream.of(...)
         .gather(filterAndCast(MyClass.class))
         ...
