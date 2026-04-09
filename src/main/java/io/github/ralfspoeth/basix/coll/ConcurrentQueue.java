@@ -1,101 +1,40 @@
 package io.github.ralfspoeth.basix.coll;
 
 import java.util.Optional;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * Concurrent version of a FIFO queue.
  *
  * @param <T>
  */
-public final class ConcurrentQueue<T> extends BaseQueue<ConcurrentQueue<T>, T> {
+public final class ConcurrentQueue<T> implements FiFo<ConcurrentQueue<T>, T> {
 
-    private final Lock lock = new ReentrantLock();
-    private final Condition isEmptyCondition = lock.newCondition();
+    private final ConcurrentLinkedDeque<T> internalQueue = new ConcurrentLinkedDeque<>();
 
     @Override
     public boolean isEmpty() {
-        lock.lock();
-        try {
-            return super.isEmpty();
-        } finally {
-            lock.unlock();
-        }
+        return internalQueue.isEmpty();
     }
 
     @Override
     public ConcurrentQueue<T> add(T item) {
-        lock.lock();
-        try {
-            var retValue = super.add(item);
-            isEmptyCondition.signal();
-            return retValue;
-        } finally {
-            lock.unlock();
-        }
+        internalQueue.add(item);
+        return this;
     }
 
     @Override
     public T remove() {
-        lock.lock();
-        try {
-            return super.remove();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public Optional<T> poll() {
-        lock.lock();
-        try {
-            return isEmpty() ? Optional.empty() : Optional.of(remove());
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public T take() throws InterruptedException {
-        lock.lock();
-        try {
-            while (isEmpty()) {
-                isEmptyCondition.await();
-            }
-            return super.remove();
-        } finally {
-            lock.unlock();
-        }
+        return internalQueue.remove();
     }
 
     @Override
     public Optional<T> head() {
-        lock.lock();
-        try {
-            return super.head();
-        } finally {
-            lock.unlock();
-        }
+        return Optional.ofNullable(internalQueue.peekFirst());
     }
 
     @Override
     public Optional<T> tail() {
-        lock.lock();
-        try {
-            return super.tail();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public <R> R withLock(Function<ConcurrentQueue<T>, R> fun) {
-        lock.lock();
-        try {
-            return fun.apply(this);
-        }
-        finally {
-            lock.unlock();
-        }
+        return Optional.ofNullable(internalQueue.peekLast());
     }
 }

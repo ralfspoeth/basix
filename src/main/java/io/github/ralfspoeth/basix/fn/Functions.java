@@ -61,7 +61,7 @@ public class Functions {
      * @param <R>  return type of the function
      * @return a function that maps the extracted key to a value
      */
-    public static <T, R> Function<T, @Nullable R> of(Map<?, R> m, Function<T, ?> extractor) {
+    public static <T, R> Function<@Nullable T, @Nullable R> of(Map<?, R> m, Function<T, ?> extractor) {
         return extractor.andThen(Map.copyOf(m)::get);
     }
 
@@ -224,7 +224,7 @@ public class Functions {
      */
     public static <T> Gatherer<Object, ?, T> filterAndCast(Class<T> clazz) {
         return Gatherer.of(Gatherer.Integrator.ofGreedy(
-                (_, e, d) -> clazz.isInstance(e)?d.push((T)clazz.cast(e)):true)
+                (_, e, d) -> !clazz.isInstance(e) || d.push(clazz.cast(e)))
         );
     }
 }

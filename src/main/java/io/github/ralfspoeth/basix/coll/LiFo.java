@@ -12,7 +12,7 @@ import java.util.function.Predicate;
  * @param <S> the actual implementation
  * @param <T> the type of the elements in the structure
  */
-public interface LiFo<S extends LiFo<S, T>, T> {
+public sealed interface LiFo<S extends LiFo<S, T>, T> permits Stack, ConcurrentStack{
 
     /**
      * Add an element to the structure.
@@ -35,7 +35,7 @@ public interface LiFo<S extends LiFo<S, T>, T> {
      * @param condition the condition applied to the topmost element
      * @return {@code this}, regardless of the addition has been successful or not
      */
-    S pushIf(T data, Predicate<? super T> condition);
+    S pushIf(T data, Predicate<? super @Nullable T> condition);
 
     /**
      * Push only if the topmost element is {@code null}.
@@ -59,7 +59,7 @@ public interface LiFo<S extends LiFo<S, T>, T> {
      * @param condition the condition
      * @return an optional wrapping the topmost element, or an empty optional
      */
-    Optional<T> popIf(Predicate<? super T> condition);
+    Optional<T> popIf(Predicate<? super @Nullable T> condition);
 
     /**
      * Remove and return the topmost element if it is not {@code null}.

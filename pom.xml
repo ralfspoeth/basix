@@ -8,7 +8,7 @@
         <version>2.0.7</version>
     </parent>
     <artifactId>basix</artifactId>
-    <version>1.2.1-SNAPSHOT</version>
+    <version>1.2.4-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>https://github.com/ralfspoeth/basix</url>
     <properties>
