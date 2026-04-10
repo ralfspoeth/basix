@@ -1,6 +1,9 @@
 package io.github.ralfspoeth.basix.fn;
 
-import org.jspecify.annotations.Nullable;import java.util.*;
+import org.jspecify.annotations.Nullable;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.Collector;
@@ -53,7 +56,7 @@ public class Functions {
      * // when
      * var l = List.of(new R(2), new R(3));
      * // then
-     * assert List.of("two", "three").equals(l.stream().map(of(m, R::x)).toList());
+     * assert List.of("two", "three").equals(l.stream().map( of(m, R::x)).toList());
      *}
      *
      * @param m    a map
@@ -237,7 +240,7 @@ public class Functions {
      * @param <T> the type of elements in the collection
      * @param <C> the collection type
      */
-    public static <T, C extends Collection<T>> BinaryOperator<C> combiner() {
+    public static <T, C extends Collection<T>> BinaryOperator<C> collectionCombiner() {
         return (c1, c2) -> {
             if(c1.isEmpty()) {
                 return c2;
@@ -251,5 +254,27 @@ public class Functions {
                 return c1;
             }
         };
+    }
+
+    public static <T, C extends Collection<T>> Supplier<C> collectionInitializer(Class<C> collectionClass) {
+        return () -> {
+            try {
+                return collectionClass.getDeclaredConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e)
+            {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
+    /**
+     *
+     * @return
+     * @param <T>
+     * @param <C>
+     */
+    public static <T, C extends Collection<T>> BiConsumer<C, Gatherer.Downstream<? super T>> collectionFinisher() {
+        return (c, d) -> c.stream().allMatch(d::push);
     }
 }

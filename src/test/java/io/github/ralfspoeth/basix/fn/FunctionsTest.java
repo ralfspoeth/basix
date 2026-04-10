@@ -413,19 +413,18 @@ class FunctionsTest {
     }
 
     @Test
-    void testCombiner() {
+    void testCollectionCombiner() {
         // given
         var input = IntStream.range(0, 10).boxed().toList();
         var li = input.stream()
-                .gather(
-                Gatherer.<Integer, Collection<Integer>, Integer>of(
+                .gather(Gatherer.of(
                         HashSet::new,
                         (a, e, d) -> {
-                            if(!a.add(e)) return d.push(e);
+                            a.add(e);
                             return true;
                         },
-                        Functions.combiner(),
-                        (s, d) -> s.stream().allMatch(d::push)
+                        Functions.<Integer, Set<Integer>>collectionCombiner(),
+                        Functions.<Integer, Set<Integer>>collectionFinisher()
                         ))
                 .toList();
         // then
