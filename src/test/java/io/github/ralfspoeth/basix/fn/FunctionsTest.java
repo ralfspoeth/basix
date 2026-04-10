@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherer;
 import java.util.stream.IntStream;
 
 import static io.github.ralfspoeth.basix.fn.Functions.*;
@@ -409,6 +410,27 @@ class FunctionsTest {
                 () -> assertEquals(List.of(3d), input.stream().gather(filterAndCast(Double.class)).toList()),
                 () -> assertEquals(List.of(false, true), input.stream().gather(filterAndCast(Boolean.class)).toList())
         );
+    }
 
+    @Test
+    void testCombiner() {
+        // given
+        var input = IntStream.range(0, 10).boxed().toList();
+        var li = input.stream()
+                .gather(
+                Gatherer.<Integer, Collection<Integer>, Integer>of(
+                        HashSet::new,
+                        (a, e, d) -> {
+                            if(!a.add(e)) return d.push(e);
+                            return true;
+                        },
+                        Functions.combiner(),
+                        (s, d) -> s.stream().allMatch(d::push)
+                        ))
+                .toList();
+        // then
+        assertAll(
+                () -> assertEquals(input, li)
+        );
     }
 }

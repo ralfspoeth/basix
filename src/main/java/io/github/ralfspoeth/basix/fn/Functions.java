@@ -3,6 +3,7 @@ package io.github.ralfspoeth.basix.fn;
 import org.jspecify.annotations.Nullable;import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.stream.Collector;
 import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -226,5 +227,29 @@ public class Functions {
         return Gatherer.of(Gatherer.Integrator.ofGreedy(
                 (_, e, d) -> !clazz.isInstance(e) || d.push(clazz.cast(e)))
         );
+    }
+
+    /**
+     * Create a combiner for generic types of collections as used by
+     * {@link Gatherer#combiner()} or {@link Collector#combiner()}.
+     * @return a combiner with some optimization with empty and unbalanced
+     * partial results
+     * @param <T> the type of elements in the collection
+     * @param <C> the collection type
+     */
+    public static <T, C extends Collection<T>> BinaryOperator<C> combiner() {
+        return (c1, c2) -> {
+            if(c1.isEmpty()) {
+                return c2;
+            } else if(c2.isEmpty()) {
+                return c1;
+            } else if(c1.size() < c2.size()) {
+                c2.addAll(c1);
+                return c2;
+            } else {
+                c1.addAll(c2);
+                return c1;
+            }
+        };
     }
 }
