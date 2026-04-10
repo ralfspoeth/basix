@@ -235,9 +235,8 @@ public class Functions {
      * @return a combiner with some optimization with empty and unbalanced
      * partial results
      * @param <T> the type of elements in the collection
-     * @param <C> the collection type
      */
-    public static <T, C extends Collection<T>> BinaryOperator<C> combiner() {
+    public static <T> BinaryOperator<Collection<T>> collectionCombiner() {
         return (c1, c2) -> {
             if(c1.isEmpty()) {
                 return c2;
@@ -251,5 +250,9 @@ public class Functions {
                 return c1;
             }
         };
+    }
+
+    public static <T> BiConsumer<Collection<T>, Gatherer.Downstream<? super T>> collectionFinisher() {
+        return (c, d) -> c.stream().allMatch(d::push);
     }
 }

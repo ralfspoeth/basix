@@ -413,20 +413,20 @@ class FunctionsTest {
     }
 
     @Test
-    void testCombiner() {
+    void testCollectionCombiner() {
         // given
         var input = IntStream.range(0, 10).boxed().toList();
         var li = input.stream()
-                .gather(
-                Gatherer.<Integer, Collection<Integer>, Integer>of(
+                .gather(Gatherer.<Integer, Collection<Integer>, Integer>of(
                         HashSet::new,
-                        (a, e, d) -> {
-                            if(!a.add(e)) return d.push(e);
-                            return true;
-                        },
-                        Functions.combiner(),
-                        (s, d) -> s.stream().allMatch(d::push)
-                        ))
+                        Gatherer.Integrator.ofGreedy(
+                                (a, e, d) -> {
+                                    if (!a.add(e)) return d.push(e);
+                                    else return true;
+                                }),
+                        Functions.collectionCombiner(),
+                        Functions.collectionFinisher()
+                ))
                 .toList();
         // then
         assertAll(
