@@ -424,8 +424,8 @@ class FunctionsTest {
                                     if (!a.add(e)) return d.push(e);
                                     else return true;
                                 }),
-                        Functions.collectionCombiner(),
-                        Functions.collectionFinisher()
+                        collectionCombiner(),
+                        collectionFinisher()
                 ))
                 .toList();
         // then

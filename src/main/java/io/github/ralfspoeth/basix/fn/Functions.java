@@ -2,7 +2,6 @@ package io.github.ralfspoeth.basix.fn;
 
 import org.jspecify.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
@@ -255,6 +254,12 @@ public class Functions {
         };
     }
 
+    /**
+     * Creates a finisher which pushes all accumulated elements
+     * downstream until it is rejecting.
+     * @return a finisher for a {@link Gatherer}
+     * @param <T> the type of the accumulated elements
+     */
     public static <T> BiConsumer<Collection<T>, Gatherer.Downstream<? super T>> collectionFinisher() {
         return (c, d) -> c.stream().allMatch(d::push);
     }
