@@ -342,6 +342,13 @@ both of which are pretty ugly. This can be simplified to
 which is simpler, more elegant and not that prone to copy/paste failures especially compared
 to the first solution.
 
+### Combiner and Finisher for Collections
+
+`Gatherer`s that use `combiner`s and `finisher`s for collection based
+accumulators are a bit awkwardly to use.
+This library adds support for these gatherers with the help
+of `Functions.collectionCombiner` and `Functions.collectionFinisher`.
+
 ---
 
 ## MIT License
