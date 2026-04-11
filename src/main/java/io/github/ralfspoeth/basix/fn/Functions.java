@@ -261,6 +261,7 @@ public class Functions {
      * @param <T> the type of the accumulated elements
      */
     public static <T> BiConsumer<Collection<T>, Gatherer.Downstream<? super T>> collectionFinisher() {
+        //noinspection ResultOfMethodCallIgnored
         return (c, d) -> c.stream().allMatch(d::push);
     }
 }

@@ -416,6 +416,7 @@ class FunctionsTest {
     void testCollectionCombiner() {
         // given
         var input = IntStream.range(0, 10).boxed().toList();
+        // when
         var li = input.stream()
                 .gather(Gatherer.<Integer, Collection<Integer>, Integer>of(
                         HashSet::new,
@@ -432,5 +433,22 @@ class FunctionsTest {
         assertAll(
                 () -> assertEquals(input, li)
         );
+    }
+
+    @Test
+    void testLargeParallelCombination() {
+        // given
+        int num = Integer.MAX_VALUE/64;
+        // when
+        long count = IntStream.range(0, num)
+                .parallel()
+                .boxed()
+                .gather(Gatherer.<Integer, Collection<Integer>, Integer>of(
+                        ArrayList::new
+                        , Gatherer.Integrator.ofGreedy((a, e, d) -> a.add(e)),
+                        Functions.collectionCombiner(), Functions.collectionFinisher()
+                )).count();
+        // then
+        assertEquals(num, count);
     }
 }
