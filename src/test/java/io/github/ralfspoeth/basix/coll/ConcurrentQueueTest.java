@@ -14,28 +14,36 @@ class ConcurrentQueueTest {
 
     @Test
     void testParallelInsertsThenRemovals() {
-        final int parallel = Runtime.getRuntime().availableProcessors();
-        final int num = 1_024;
-        var cnt = new AtomicInteger(0);
-        var q = new ConcurrentQueue<@NonNull Integer>();
+        // given: some constants, the sequenceNumber, and the concurrent queue
+        final int parallel = Runtime.getRuntime().availableProcessors() * 4;
+        final int numPerProcessor = 1_024<<4;
+        final var sequenceNumber = new AtomicInteger(0);
+        final var queue = new ConcurrentQueue<@NonNull Integer>();
+        // when we got as many executors as we got processors...
+        // each of them shall add elements to the queue concurrently
         try (var es = Executors.newFixedThreadPool(parallel)) {
-            for (int i = 0; i < parallel * 4; i++) {
+            for (int i = 0; i < parallel; i++) {
                 es.submit(() -> {
-                    int start = cnt.getAndIncrement() * num;
-                    for (int j = start; j < start + num; j++) {
-                        q.add(j);
+                    int start = sequenceNumber.getAndIncrement() * numPerProcessor;
+                    for (int j = start; j < start + numPerProcessor; j++) {
+                        queue.add(j);
                     }
                 });
             }
         }
-        int expectedElems = num * cnt.get();
+        // then
+        int expectedElems = numPerProcessor * parallel;
+        // will collect the distinct set of elements
         var s = HashSet.<Integer>newHashSet(expectedElems);
+        // count the additions to the queue
+        // by moving them into a set
         int calls = 0;
-        while (!q.isEmpty()) {
-            s.add(q.remove());
+        while (!queue.isEmpty()) {
+            s.add(queue.remove());
             calls++;
         }
-        int c = calls;
+        final int c = calls; // necessary with assertAll
+        // both the number of calls and the elements in the distinct set must equal #procs X
         assertAll(
                 () -> assertEquals(expectedElems, c),
                 () -> assertEquals(expectedElems, s.size())
