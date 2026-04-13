@@ -456,4 +456,36 @@ class FunctionsTest {
         // then
         assertEquals(num, count);
     }
+
+    @Test
+    void testContents_simpleEasyThings() {
+        assertAll(
+                // empty coll's
+                () -> assertTrue(contentsEquals(Set.of(), Set.of())),
+                () -> assertTrue(contentsEquals(Set.of(), List.of())),
+                () -> assertTrue(contentsEquals(List.of(), List.of())),
+                () -> assertTrue(contentsEquals(List.of(), new ArrayList<>())),
+                () -> assertTrue(contentsEquals(List.of(), new HashSet<>())),
+                () -> assertTrue(contentsEquals(List.of(), new TreeSet<>())),
+                () -> assertTrue(contentsEquals(List.of(3, 2, 1), List.of(1, 2, 3))),
+                () -> assertTrue(contentsEquals(List.of(3, 2, 1), Set.of(1, 2, 3))),
+                () -> assertTrue(contentsEquals(List.of(3, 2, 1), Arrays.asList(1, 2, 3)))
+        );
+    }
+
+    @Test
+    void testContents_easyDiffs() {
+        assertAll(
+                () -> assertFalse(contentsEquals(List.of(1), List.of())),
+                () -> assertFalse(contentsEquals(List.of(), List.of(1))),
+                () -> assertFalse(contentsEquals(Set.of(1), List.of())),
+                () -> assertFalse(contentsEquals(Set.of(1), List.of(1, 1))),
+                () -> assertFalse(contentsEquals(List.of(1), List.of(1, 1))),
+                () -> assertTrue(contentsEquals(Map.of(1, 1, 2, 2).keySet(), Map.of(1, 1, 2, 2).values())),
+                () -> assertTrue(contentsEquals(List.of(1, 2, 2, 3, 3, 3, 4, 4, 4, 4), List.of(1, 2, 3, 4, 2, 3, 4, 3, 4, 4))),
+                () -> assertFalse(contentsEquals(List.of(1, 2, 2, 3, 3, 3, 4, 4, 4, 4), List.of(2, 3, 4, 2, 3, 4, 3, 4, 4))),
+                () -> assertFalse(contentsEquals(List.of(1, 2, 2, 3, 3, 3, 4, 4, 4), List.of(1, 2, 3, 4, 2, 3, 4, 3, 4, 4))),
+                () -> assertFalse(contentsEquals(Set.of(1), Set.of()))
+        );
+    }
 }

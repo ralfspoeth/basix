@@ -58,10 +58,10 @@ public class Functions {
      * assert List.of("two", "three").equals(l.stream().map(of(m, R::x)).toList());
      *}
      *
-     * @param m    a map
+     * @param m         a map
      * @param extractor a function
-     * @param <T>  target type of the function
-     * @param <R>  return type of the function
+     * @param <T>       target type of the function
+     * @param <R>       return type of the function
      * @return a function that maps the extracted key to a value
      */
     public static <T, R> Function<@Nullable T, @Nullable R> of(Map<?, R> m, Function<T, ?> extractor) {
@@ -215,15 +215,16 @@ public class Functions {
      * Stream.of(1, 2, 3d)
      *     .filter(Double.class::isInstance) // just 3d
      *     .map(Integer.class::cast) // not what we want
-     * }
+     *}
      * Instead use
      * {@snippet :
      * Stream.of(1, 2, 3d)
      *     .gather(Functions.filterAndCast(Double.class))
-     * }
+     *}
+     *
      * @param clazz the class to filter and to cast to
+     * @param <T>   the target type of the downstream elements
      * @return a gatherer
-     * @param <T> the target type of the downstream elements
      */
     public static <T> Gatherer<Object, ?, T> filterAndCast(Class<T> clazz) {
         return Gatherer.of(Gatherer.Integrator.ofGreedy(
@@ -234,17 +235,18 @@ public class Functions {
     /**
      * Create a combiner for generic types of collections as used by
      * {@link Gatherer#combiner()} or {@link Collector#combiner()}.
+     *
+     * @param <T> the type of elements in the collection
      * @return a combiner with some optimization with empty and unbalanced
      * partial results
-     * @param <T> the type of elements in the collection
      */
     public static <T> BinaryOperator<Collection<T>> collectionCombiner() {
         return (c1, c2) -> {
-            if(c1.isEmpty()) {
+            if (c1.isEmpty()) {
                 return c2;
-            } else if(c2.isEmpty()) {
+            } else if (c2.isEmpty()) {
                 return c1;
-            } else if(c1.size() < c2.size()) {
+            } else if (c1.size() < c2.size()) {
                 c2.addAll(c1);
                 return c2;
             } else {
@@ -257,11 +259,46 @@ public class Functions {
     /**
      * Creates a finisher which pushes all accumulated elements
      * downstream until it is rejecting.
-     * @return a finisher for a {@link Gatherer}
+     *
      * @param <T> the type of the accumulated elements
+     * @return a finisher for a {@link Gatherer}
      */
     public static <T> BiConsumer<Collection<T>, Gatherer.Downstream<? super T>> collectionFinisher() {
         //noinspection ResultOfMethodCallIgnored
         return (c, d) -> c.stream().allMatch(d::push);
+    }
+
+    /**
+     * Compare the elements of two collections.
+     * It is not necessary that the collection types are identical (or equal);
+     * the method exclusively tests the contents.
+     */
+    public static <T> boolean contentsEquals(Collection<? extends T> a, Collection<? extends T> b) {
+        if (a.isEmpty()) {
+            return b.isEmpty();
+        } else if (b.isEmpty()) {
+            return false;
+        } else if (a.size() != b.size()) {
+            return false;
+        } else { // two non-empty collections of the same size
+            Map<Object, Long> map = new HashMap<>();
+            for (T t : a) {
+                map.compute(t, (_, v) -> v == null ? ((1L << 32) + 1) : v + 1L);
+            }
+            for (T t : b) {
+                if(!map.containsKey(t)) {
+                    return false;
+                } else {
+                    map.put(t, map.get(t) + 1L);
+                }
+            }
+            for(Map.Entry<Object, Long> entry : map.entrySet()) {
+                long value = entry.getValue();
+                int _a = (int)value>>>32;
+                int _b = (int)(value&0xFFFFFFFFL);
+                if(_a!=_b) return false;
+            }
+            return true;
+        }
     }
 }
