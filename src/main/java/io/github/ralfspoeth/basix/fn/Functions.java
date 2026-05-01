@@ -26,6 +26,13 @@ public class Functions {
      * _ -> "NULL",
      * t -> "not null-y: " + t
      * ).apply(x); // "not null-y: 7"
+     * }
+     * or better
+     * {@snippet :
+     * Stream.of(x)
+     *     .map(conditional(t->t==0, "NULL", "not null but " + t))
+     *     .findFirst()
+     *     .orElseThrow();
      *}
      *
      * @param condition the test condition

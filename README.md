@@ -8,19 +8,20 @@ others as well.
 
 Use these maven coordinates to incorporate the library in your
 work:
-
+```
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 1.2.4
-
+    version: 1.2.5
+```
 You'll need Java version 25 or later to utilize this library.
 
 When working with JPMS modules, add this to your
 `module-info.java` file:
-
+```java
     module your.module {
         requires io.github.ralfspoeth.basix;
     }
+```
 
 ## History and Compatibility
 
