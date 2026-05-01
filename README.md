@@ -11,8 +11,8 @@ work:
 ```
     groupId: io.github.ralfspoeth
     artefactId: basix
-    version: 1.2.5
-```
+    version: 1.2.6
+
 You'll need Java version 25 or later to utilize this library.
 
 When working with JPMS modules, add this to your

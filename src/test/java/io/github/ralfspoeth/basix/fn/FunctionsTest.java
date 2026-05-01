@@ -3,12 +3,14 @@ package io.github.ralfspoeth.basix.fn;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Gatherer;
 import java.util.stream.IntStream;
 
 import static io.github.ralfspoeth.basix.fn.Functions.*;
+import static java.util.stream.Gatherer.Integrator.ofGreedy;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FunctionsTest {
@@ -187,8 +189,8 @@ class FunctionsTest {
     void conditionalTrue() {
         Function<Integer, String> f = conditional(
                 i -> i > 0,
-                i -> "positive",
-                i -> "not positive"
+                _ -> "positive",
+                _ -> "not positive"
         );
         assertEquals("positive", f.apply(5));
     }
@@ -197,8 +199,8 @@ class FunctionsTest {
     void conditionalFalse() {
         Function<Integer, String> f = conditional(
                 i -> i > 0,
-                i -> "positive",
-                i -> "not positive"
+                _ -> "positive",
+                _ -> "not positive"
         );
         assertEquals("not positive", f.apply(-5));
         assertEquals("not positive", f.apply(0));
@@ -420,7 +422,7 @@ class FunctionsTest {
         var li = input.stream()
                 .gather(Gatherer.<Integer, Collection<Integer>, Integer>of(
                         HashSet::new,
-                        Gatherer.Integrator.ofGreedy(
+                        ofGreedy(
                                 (a, e, d) -> {
                                     if (!a.add(e)) return d.push(e);
                                     else return true;
@@ -438,17 +440,52 @@ class FunctionsTest {
     @Test
     void testLargeParallelCombination() {
         // given
-        int num = Integer.MAX_VALUE/64;
+        int num = Integer.MAX_VALUE / 256;
         // when
         long count = IntStream.range(0, num)
                 .parallel()
+                .mapToDouble(_ -> ThreadLocalRandom.current().nextDouble())
                 .boxed()
-                .gather(Gatherer.<Integer, Collection<Integer>, Integer>of(
-                        ArrayList::new
-                        , Gatherer.Integrator.ofGreedy((a, e, d) -> a.add(e)),
-                        Functions.collectionCombiner(), Functions.collectionFinisher()
-                )).count();
+                .gather(Gatherer.<Double, Collection<Double>, Double>of(
+                        ArrayList::new,
+                        ofGreedy((a, e, _) -> a.add(e)),
+                        Functions.collectionCombiner(),
+                        Functions.collectionFinisher()
+                ))
+                .count();
         // then
         assertEquals(num, count);
+    }
+
+    @Test
+    void testContents_simpleEasyThings() {
+        assertAll(
+                // empty coll's
+                () -> assertTrue(contentsEquals(Set.of(), Set.of())),
+                () -> assertTrue(contentsEquals(Set.of(), List.of())),
+                () -> assertTrue(contentsEquals(List.of(), List.of())),
+                () -> assertTrue(contentsEquals(List.of(), new ArrayList<>())),
+                () -> assertTrue(contentsEquals(List.of(), new HashSet<>())),
+                () -> assertTrue(contentsEquals(List.of(), new TreeSet<>())),
+                () -> assertTrue(contentsEquals(List.of(3, 2, 1), List.of(1, 2, 3))),
+                () -> assertTrue(contentsEquals(List.of(3, 2, 1), Set.of(1, 2, 3))),
+                () -> assertTrue(contentsEquals(List.of(3, 2, 1), Arrays.asList(1, 2, 3)))
+        );
+    }
+
+    @Test
+    void testContents_easyDiffs() {
+        assertAll(
+                () -> assertFalse(contentsEquals(List.of(1), List.of())),
+                () -> assertFalse(contentsEquals(List.of(), List.of(1))),
+                () -> assertFalse(contentsEquals(Set.of(1), List.of())),
+                () -> assertFalse(contentsEquals(Set.of(1), List.of(1, 1))),
+                () -> assertFalse(contentsEquals(List.of(1), List.of(1, 1))),
+                () -> assertTrue(contentsEquals(Map.of(1, 1, 2, 2).keySet(), Map.of(1, 1, 2, 2).values())),
+                () -> assertTrue(contentsEquals(List.of(1, 2, 2, 3, 3, 3, 4, 4, 4, 4), List.of(1, 2, 3, 4, 2, 3, 4, 3, 4, 4))),
+                () -> assertFalse(contentsEquals(List.of(1, 2, 2, 3, 3, 3, 4, 4, 4, 4), List.of(2, 3, 4, 2, 3, 4, 3, 4, 4))),
+                () -> assertFalse(contentsEquals(List.of(1, 2, 2, 3, 3, 3, 4, 4, 4), List.of(1, 2, 3, 4, 2, 3, 4, 3, 4, 4))),
+                () -> assertFalse(contentsEquals(Set.of(1), Set.of()))
+        );
     }
 }
