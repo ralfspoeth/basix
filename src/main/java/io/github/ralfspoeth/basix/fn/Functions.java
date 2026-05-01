@@ -10,6 +10,18 @@ import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * Static factory methods for functional interfaces and stream
+ * {@link Gatherer Gatherers} that complement those in {@link java.util.function}
+ * and {@link java.util.stream}.
+ * <p>
+ * Includes adapters that view a {@link Map} or {@link List} as a
+ * {@link Function}, helpers for attaching indices ({@link #indexed(int)})
+ * or labels ({@link #labeled(Map)}) to stream elements, the
+ * {@link #filterAndCast(Class)} gatherer, and a content-based
+ * comparison ({@link #contentsEquals(Collection, Collection)}).
+ * This class cannot be instantiated.
+ */
 public class Functions {
 
     private Functions() {
@@ -276,9 +288,20 @@ public class Functions {
     }
 
     /**
-     * Compare the elements of two collections.
+     * Compare the elements of two collections by content (multiset equality).
      * It is not necessary that the collection types are identical (or equal);
-     * the method exclusively tests the contents.
+     * the method exclusively tests that each element appears the same number
+     * of times in {@code a} as in {@code b}.
+     * <p>
+     * Element identity is determined by {@link Object#equals(Object)} /
+     * {@link Object#hashCode()}, since the implementation uses a {@link HashMap}
+     * internally.
+     *
+     * @param a   the first collection
+     * @param b   the second collection
+     * @param <T> the (common) element type
+     * @return {@code true} iff {@code a} and {@code b} contain the same elements
+     *         with the same multiplicities, ignoring order
      */
     public static <T> boolean contentsEquals(Collection<? extends T> a, Collection<? extends T> b) {
         if (a.isEmpty()) {
@@ -288,9 +311,10 @@ public class Functions {
         } else if (a.size() != b.size()) {
             return false;
         } else { // two non-empty collections of the same size
+            // High 32 bits: count of occurrences in a; low 32 bits: count of occurrences in b.
             Map<Object, Long> map = new HashMap<>();
             for (T t : a) {
-                map.compute(t, (_, v) -> v == null ? ((1L << 32) + 1) : v + 1L);
+                map.compute(t, (_, v) -> v == null ? (1L << 32) : v + (1L << 32));
             }
             for (T t : b) {
                 if(!map.containsKey(t)) {
@@ -301,8 +325,8 @@ public class Functions {
             }
             for(Map.Entry<Object, Long> entry : map.entrySet()) {
                 long value = entry.getValue();
-                int _a = (int)value>>>32;
-                int _b = (int)(value&0xFFFFFFFFL);
+                int _a = (int)(value >>> 32);
+                int _b = (int)(value & 0xFFFFFFFFL);
                 if(_a!=_b) return false;
             }
             return true;

@@ -31,6 +31,11 @@ import static java.util.Objects.requireNonNull;
  */
 public class Queue<T> implements FiFo<Queue<T>, T> {
 
+    /**
+     * Creates a new, empty queue.
+     */
+    public Queue() {}
+
     @SuppressWarnings("unchecked")
     private @Nullable T[] data = (T[]) new Object[4];
     private int next = 0; // next available slot

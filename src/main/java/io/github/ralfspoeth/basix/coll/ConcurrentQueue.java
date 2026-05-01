@@ -4,11 +4,19 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
- * Concurrent version of a FIFO queue.
+ * Thread-safe FIFO queue, backed by a {@link ConcurrentLinkedDeque}.
+ * All operations are non-blocking; the {@link #head()} and {@link #tail()}
+ * snapshots reflect the state of the queue at the moment of the call and
+ * may be stale by the time the caller inspects them.
  *
- * @param <T>
+ * @param <T> the element type
  */
 public final class ConcurrentQueue<T> implements FiFo<ConcurrentQueue<T>, T> {
+
+    /**
+     * Creates a new, empty concurrent queue.
+     */
+    public ConcurrentQueue() {}
 
     private final ConcurrentLinkedDeque<T> internalQueue = new ConcurrentLinkedDeque<>();
 

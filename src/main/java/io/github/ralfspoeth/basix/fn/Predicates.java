@@ -7,6 +7,16 @@ import java.util.function.Predicate;
 
 import static io.github.ralfspoeth.basix.fn.Sign.ofCompare;
 
+/**
+ * Factory methods for {@link Predicate}s built around a value extracted
+ * from an object: containment in a set or map, equality, and the family
+ * of comparator-based ordering predicates ({@link #smallerThan},
+ * {@link #smallerOrEqual}, {@link #equal}, {@link #greaterOrEqual},
+ * {@link #greaterThan}, {@link #smallerOrGreater}).
+ * <p>
+ * All factory methods return new {@link Predicate} instances and never
+ * mutate the inputs. This class cannot be instantiated.
+ */
 public class Predicates {
 
     private Predicates(){
@@ -47,9 +57,15 @@ public class Predicates {
 
     /**
      * Creates a {@link Predicate} which for some object {@code x}
-     * of which an {@code extractor} function extracts some property
-     * {@code p} which is tested for equality with the given
-     * parameter {@code s}.
+     * extracts a property {@code p} via {@code extractor} and tests
+     * it for equality with the given reference value {@code s} using
+     * {@link Object#equals(Object)}.
+     *
+     * @param s         the reference value to compare against
+     * @param extractor the function used to extract the property to compare; must not be {@code null}
+     * @param <T>       the type of the target object to be tested
+     * @param <S>       the type of the extracted property
+     * @return a predicate equivalent to {@code t -> Objects.equals(s, extractor.apply(t))}
      */
     public static <T, S> Predicate<T> eq(S s, Function<T, ? extends S> extractor) {
         return asPredicate(extractor.andThen(s::equals));
@@ -57,6 +73,11 @@ public class Predicates {
 
     /**
      * Creates a predicate using {@link Sign#NEGATIVE} comparison results only.
+     *
+     * @param ref        the reference value to compare against
+     * @param comparator the comparator to use; must not be {@code null}
+     * @param <T>        the element type
+     * @return a predicate that returns {@code true} for values strictly smaller than {@code ref}
      */
     public static <T> Predicate<T> smallerThan(T ref, Comparator<? super T> comparator) {
         return x -> ofCompare(comparator.compare(x, ref)).negative();
@@ -65,6 +86,10 @@ public class Predicates {
     /**
      * Same as {@link #smallerThan(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
+     *
+     * @param ref the reference value to compare against
+     * @param <T> the element type, which must implement {@link Comparable}
+     * @return a predicate that returns {@code true} for values strictly smaller than {@code ref}
      */
     public static <T extends Comparable<? super T>> Predicate<T> smallerThan(T ref) {
         return smallerThan(ref, Comparator.naturalOrder());
@@ -72,6 +97,11 @@ public class Predicates {
 
     /**
      * Creates a predicate using {@link Sign#NEGATIVE} and {@link Sign#ZERO} comparison results.
+     *
+     * @param ref        the reference value to compare against
+     * @param comparator the comparator to use; must not be {@code null}
+     * @param <T>        the element type
+     * @return a predicate that returns {@code true} for values smaller than or equal to {@code ref}
      */
     public static <T> Predicate<T> smallerOrEqual(T ref, Comparator<? super T> comparator) {
         return x -> ofCompare(comparator.compare(x, ref)).nonPositive();
@@ -80,6 +110,10 @@ public class Predicates {
     /**
      * Same as {@link #smallerOrEqual(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
+     *
+     * @param ref the reference value to compare against
+     * @param <T> the element type, which must implement {@link Comparable}
+     * @return a predicate that returns {@code true} for values smaller than or equal to {@code ref}
      */
     public static <T extends Comparable<? super T>> Predicate<T> smallerOrEqual(T ref) {
         return smallerOrEqual(ref, Comparator.naturalOrder());
@@ -87,6 +121,12 @@ public class Predicates {
 
     /**
      * Creates a predicate using {@link Sign#ZERO} comparison results only.
+     *
+     * @param ref        the reference value to compare against
+     * @param comparator the comparator to use; must not be {@code null}
+     * @param <T>        the element type
+     * @return a predicate that returns {@code true} for values that compare equal to {@code ref}
+     *         under the given comparator
      */
     public static <T> Predicate<T> equal(T ref, Comparator<? super T> comparator) {
         return x -> ofCompare(comparator.compare(x, ref)).zero();
@@ -95,6 +135,11 @@ public class Predicates {
     /**
      * Same as {@link #equal(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
+     *
+     * @param ref the reference value to compare against
+     * @param <T> the element type, which must implement {@link Comparable}
+     * @return a predicate that returns {@code true} for values that compare equal to {@code ref}
+     *         under natural order
      */
     public static <T extends Comparable<? super T>> Predicate<T> equal(T ref) {
         return equal(ref, Comparator.naturalOrder());
@@ -102,6 +147,11 @@ public class Predicates {
 
     /**
      * Creates a predicate using {@link Sign#POSITIVE} and {@link Sign#ZERO} comparison results.
+     *
+     * @param ref        the reference value to compare against
+     * @param comparator the comparator to use; must not be {@code null}
+     * @param <T>        the element type
+     * @return a predicate that returns {@code true} for values greater than or equal to {@code ref}
      */
     public static <T> Predicate<T> greaterOrEqual(T ref, Comparator<? super T> comparator) {
         return x -> ofCompare(comparator.compare(x, ref)).nonNegative();
@@ -110,13 +160,22 @@ public class Predicates {
     /**
      * Same as {@link #greaterOrEqual(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
+     *
+     * @param ref the reference value to compare against
+     * @param <T> the element type, which must implement {@link Comparable}
+     * @return a predicate that returns {@code true} for values greater than or equal to {@code ref}
      */
     public static <T extends Comparable<? super T>> Predicate<T> greaterOrEqual(T ref) {
         return greaterOrEqual(ref, Comparator.naturalOrder());
     }
 
     /**
-     * Creates a predicate using {@link Sign#NEGATIVE} comparison results only.
+     * Creates a predicate using {@link Sign#POSITIVE} comparison results only.
+     *
+     * @param ref        the reference value to compare against
+     * @param comparator the comparator to use; must not be {@code null}
+     * @param <T>        the element type
+     * @return a predicate that returns {@code true} for values strictly greater than {@code ref}
      */
     public static <T> Predicate<T> greaterThan(T ref, Comparator<? super T> comparator) {
         return x -> ofCompare(comparator.compare(x, ref)).positive();
@@ -125,6 +184,10 @@ public class Predicates {
     /**
      * Same as {@link #greaterThan(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
+     *
+     * @param ref the reference value to compare against
+     * @param <T> the element type, which must implement {@link Comparable}
+     * @return a predicate that returns {@code true} for values strictly greater than {@code ref}
      */
     public static <T extends Comparable<T>> Predicate<T> greaterThan(T ref) {
         return greaterThan(ref, Comparator.naturalOrder());
@@ -133,6 +196,12 @@ public class Predicates {
     /**
      * Creates a predicate using {@link Sign#NEGATIVE} and {@link Sign#POSITIVE} comparison results,
      * yet no {@link Sign#ZERO} results.
+     *
+     * @param ref        the reference value to compare against
+     * @param comparator the comparator to use; must not be {@code null}
+     * @param <T>        the element type
+     * @return a predicate that returns {@code true} for values that compare unequal to {@code ref}
+     *         under the given comparator
      */
     public static <T> Predicate<T> smallerOrGreater(T ref, Comparator<? super T> comparator) {
         return x -> !ofCompare(comparator.compare(x, ref)).zero();
@@ -141,6 +210,11 @@ public class Predicates {
     /**
      * Same as {@link #smallerOrGreater(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
+     *
+     * @param ref the reference value to compare against
+     * @param <T> the element type, which must implement {@link Comparable}
+     * @return a predicate that returns {@code true} for values that compare unequal to {@code ref}
+     *         under natural order
      */
     public static <T extends Comparable<? super T>> Predicate<T> smallerOrGreater(T ref) {
         return smallerOrGreater(ref, Comparator.naturalOrder());

@@ -11,8 +11,20 @@ import java.util.function.Predicate;
 /**
  * The concurrent, i.e. thread-safe variant of a stack
  * which offers atomic test-and-modify operations.
+ * <p>
+ * Implemented as a lock-free Treiber stack using a single
+ * {@link AtomicReference} as the head pointer, so {@link #push},
+ * {@link #pop}, {@link #pushIf}, and {@link #popIf} are atomic
+ * with respect to one another.
+ *
+ * @param <T> the element type
  */
 public final class ConcurrentStack<T> implements LiFo<ConcurrentStack<T>, T> {
+
+    /**
+     * Creates a new, empty concurrent stack.
+     */
+    public ConcurrentStack() {}
 
     private static class Node<T> {
         final T data;
@@ -54,16 +66,14 @@ public final class ConcurrentStack<T> implements LiFo<ConcurrentStack<T>, T> {
 
     @Override
     public ConcurrentStack<T> pushIf(T data, Predicate<? super @Nullable T> condition) {
+        Node<T> newNode = new Node<>(data);
         Node<T> oldTop;
-        Node<T> newNode;
         do {
             oldTop = top.get();
-            if(condition.test(data)) {
+            if (!condition.test(oldTop == null ? null : oldTop.data)) {
                 return this;
-            } else {
-                newNode = new Node<>(data);
-                newNode.next = oldTop;
             }
+            newNode.next = oldTop;
         } while (!top.compareAndSet(oldTop, newNode));
         return this;
     }

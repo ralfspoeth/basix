@@ -8,26 +8,51 @@ import java.util.Comparator;
  * instead of enumerable values. This enum tries to fix that.
  */
 public enum Sign {
+    /** Indicates a strictly negative comparison result ({@code < 0}). */
     NEGATIVE,
+    /** Indicates an equal comparison result ({@code == 0}). */
     ZERO,
+    /** Indicates a strictly positive comparison result ({@code > 0}). */
     POSITIVE;
 
+    /**
+     * Tests whether this sign is {@link #NEGATIVE}.
+     * @return {@code true} iff this is {@link #NEGATIVE}
+     */
     public boolean negative() {
         return this == NEGATIVE;
     }
 
+    /**
+     * Tests whether this sign is not {@link #NEGATIVE}, i.e. it is
+     * either {@link #ZERO} or {@link #POSITIVE}.
+     * @return {@code true} iff this is not {@link #NEGATIVE}
+     */
     public boolean nonNegative() {
         return !negative();
     }
 
+    /**
+     * Tests whether this sign is {@link #POSITIVE}.
+     * @return {@code true} iff this is {@link #POSITIVE}
+     */
     public boolean positive() {
         return this == POSITIVE;
     }
 
+    /**
+     * Tests whether this sign is not {@link #POSITIVE}, i.e. it is
+     * either {@link #ZERO} or {@link #NEGATIVE}.
+     * @return {@code true} iff this is not {@link #POSITIVE}
+     */
     public boolean nonPositive() {
         return !positive();
     }
 
+    /**
+     * Tests whether this sign is {@link #ZERO}.
+     * @return {@code true} iff this is {@link #ZERO}
+     */
     public boolean zero() {
         return this == ZERO;
     }

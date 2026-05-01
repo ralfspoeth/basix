@@ -9,11 +9,10 @@ import java.util.function.Predicate;
 import static java.util.Objects.requireNonNull;
 
 /**
- * List in, first out (LIFO) data structure.
- * The package provides an non-concurrent {@link Stack}
- * and a concurrent {@link ConcurrentStack} variant of this baseclass,
- * which cannot be instantiated directly.
- * Most of the
+ * Last in, first out (LIFO) data structure.
+ * The package provides a non-concurrent {@link Stack}
+ * and a concurrent {@link ConcurrentStack} variant of the
+ * common {@link LiFo} interface.
  * A stack is empty after creation:
  * {@snippet :
  * Stack<Integer> stack = new Stack<>(); // new ConcurrentStack<>();
@@ -50,6 +49,9 @@ public final class Stack<T> implements LiFo<Stack<T>, T> {
     private @Nullable T[] data = (T[]) new Object[16];
     private int next = 0;
 
+    /**
+     * Creates a new, empty stack.
+     */
     public Stack() {}
 
     /**
@@ -119,6 +121,14 @@ public final class Stack<T> implements LiFo<Stack<T>, T> {
     }
 
 
+    /**
+     * Push an element onto the top of the stack.
+     * The internal storage is grown automatically as needed.
+     *
+     * @param elem the element to be pushed; must not be {@code null}
+     * @return this
+     * @throws NullPointerException if {@code elem} is {@code null}
+     */
     @SuppressWarnings("unchecked")
     @Override
     public Stack<T> push(T elem) {
