@@ -85,6 +85,26 @@ class QueueTest {
     }
 
     @Test
+    void testRemoveAfterWrapFillsCompletely() {
+        // Regression test: when add()s wrap around the internal array
+        // and refill it back up to `top`, the queue is in the full-wrap
+        // state (top == next > 0). A subsequent remove() must succeed
+        // and return the elements in FIFO order, not throw
+        // NoSuchElementException.
+        var q = new Queue<Integer>();
+        q.add(1).add(2).add(3).add(4);     // top=0, next=4
+        assertEquals(1, q.remove());       // top=1, next=4
+        q.add(5);                          // top=1, next=1, data=[5,2,3,4]
+        // queue now logically holds [2, 3, 4, 5] in FIFO order
+        assertEquals(2, q.remove());
+        assertEquals(3, q.remove());
+        assertEquals(4, q.remove());
+        assertEquals(5, q.remove());
+        assertTrue(q.isEmpty());
+        assertThrows(NoSuchElementException.class, q::remove);
+    }
+
+    @Test
     void testReorg() {
         // given
         var q = new Queue<Integer>();

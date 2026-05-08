@@ -29,7 +29,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <T> the element type.
  */
-public class Queue<T> implements FiFo<Queue<T>, T> {
+public final class Queue<T> implements FiFo<Queue<T>, T> {
 
     /**
      * Creates a new, empty queue.
@@ -92,13 +92,15 @@ public class Queue<T> implements FiFo<Queue<T>, T> {
      */
     @Override
     public T remove() {
-        if (top == next) {
+        // NB: must use isEmpty() rather than `top == next`, because
+        // `top == next > 0` is the full-wrap state (queue full), not empty.
+        if (isEmpty()) {
             throw new NoSuchElementException("queue is empty");
         } else {
             T tmp = data[top];
             data[top++] = null; // prevent memory leak
-            // next == top -> empty
-            // we can move both pointers back to the start
+            // top reaching next means we just removed the last element
+            // and can reset both pointers to the start
             if (top == next) {
                 next = top = 0;
             } else if (top == data.length) {

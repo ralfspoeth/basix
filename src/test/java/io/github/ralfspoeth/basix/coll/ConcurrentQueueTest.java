@@ -73,6 +73,46 @@ class ConcurrentQueueTest {
     }
 
     @Test
+    void removeIfNotEmptyOnEmpty() {
+        var q = new ConcurrentQueue<Integer>();
+        assertTrue(q.removeIfNotEmpty().isEmpty());
+    }
+
+    @Test
+    void removeIfNotEmptyDrainsInOrder() {
+        var q = new ConcurrentQueue<Integer>();
+        q.add(1).add(2).add(3);
+        assertEquals(1, q.removeIfNotEmpty().orElseThrow());
+        assertEquals(2, q.removeIfNotEmpty().orElseThrow());
+        assertEquals(3, q.removeIfNotEmpty().orElseThrow());
+        assertTrue(q.removeIfNotEmpty().isEmpty());
+        assertTrue(q.isEmpty());
+    }
+
+    @Test
+    void removeIfNotEmptyParallelConsumers() {
+        // Multiple threads racing to drain the same queue must never
+        // see NoSuchElementException -- removeIfNotEmpty handles the
+        // emptiness check atomically.
+        final int parallel = Runtime.getRuntime().availableProcessors();
+        final int items = 50_000;
+        var q = new ConcurrentQueue<Integer>();
+        for (int i = 0; i < items; i++) q.add(i);
+        var drained = new AtomicInteger(0);
+        try (var es = Executors.newFixedThreadPool(parallel)) {
+            for (int p = 0; p < parallel; p++) {
+                es.submit(() -> {
+                    while (q.removeIfNotEmpty().isPresent()) {
+                        drained.incrementAndGet();
+                    }
+                });
+            }
+        }
+        assertEquals(items, drained.get());
+        assertTrue(q.isEmpty());
+    }
+
+    @Test
     void someBasicsParallel() {
         var q = new ConcurrentQueue<Integer>();
         assertTrue(q.isEmpty());

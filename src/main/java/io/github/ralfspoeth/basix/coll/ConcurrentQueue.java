@@ -36,6 +36,17 @@ public final class ConcurrentQueue<T> implements FiFo<ConcurrentQueue<T>, T> {
         return internalQueue.remove();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This implementation delegates to {@link ConcurrentLinkedDeque#pollFirst()},
+     * which is atomic and lock-free.
+     */
+    @Override
+    public Optional<T> removeIfNotEmpty() {
+        return Optional.ofNullable(internalQueue.pollFirst());
+    }
+
     @Override
     public Optional<T> head() {
         return Optional.ofNullable(internalQueue.peekFirst());
