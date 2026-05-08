@@ -9,9 +9,10 @@ others as well.
 Use these maven coordinates to incorporate the library in your
 work:
 ```
-    groupId: io.github.ralfspoeth
-    artefactId: basix
-    version: 1.2.7
+    groupId:    io.github.ralfspoeth
+    artifactId: basix
+    version:    1.3.0
+```
 
 You'll need Java version 25 or later to utilize this library.
 
@@ -26,21 +27,31 @@ When working with JPMS modules, add this to your
 ## History and Compatibility
 
 The initial 1.0.x releases provide the foundation of this library,
-providing purity `Stack`s and `Queue`s and functions that I found useful.
-The minimum JDK version 21.
+providing minimal `Stack`s and `Queue`s and functions that I found useful.
+The minimum JDK version was 21.
 
 Beginning with versions 1.1.x we incorporate `org.jspecify` in the library.
 
-Beginning with version 1.2.0 we will use version 24 or later of the JDK
-and will use stream `Gatherer`s in particular.
+Beginning with version 1.2.0 we use version 24 or later of the JDK
+and use stream `Gatherer`s in particular.
 
-# Purity Stack and Queue Implementations
+Version 1.3.0 introduces concurrent variants and tightens the API:
+
+- `LiFo` and `FiFo` are now sealed interfaces (`permits Stack, ConcurrentStack`
+  and `permits Queue, ConcurrentQueue` respectively). `Queue` is `final`.
+- `FiFo` adds `removeIfNotEmpty()`, a non-throwing head-remove that is
+  atomic on `ConcurrentQueue`.
+- Several bug fixes in `Queue.remove()` (full-wrap state),
+  `ConcurrentStack.pushIf` (semantics now match `Stack.pushIf`), and
+  `Functions.contentsEquals` (multiset comparison).
+
+# Minimal Stack and Queue Implementations
 
 Though the Java Collections library contains a rich set
-of classes which provide much more functionality than 
+of classes which provide much more functionality than
 these two `Stack` and `Queue` implementations I prefer
-them frequently when I want to utilize their push/pop or 
-add/remove purity, respectively.
+them frequently when I want to utilize their pure push/pop or
+add/remove semantics.
 
 ## Stack
 
@@ -87,9 +98,58 @@ and for the operations
     assert first == q.remove() && second == q.remove() && q.isEmpty();
 ```
 Both queues and stacks do not implement
-interfaces of the Java Collections Framework. They are useful 
+interfaces of the Java Collections Framework. They are useful
 exclusively when Java collections simply provide way too much
 for the task at hand.
+
+The abstract operations are exposed through two sealed interfaces:
+`LiFo<S, T>` (implemented by `Stack` and `ConcurrentStack`) and
+`FiFo<S, T>` (implemented by `Queue` and `ConcurrentQueue`).
+User code can be written against these interfaces and remain agnostic
+to whether the underlying structure is concurrent.
+
+## Concurrent variants
+
+For multi-threaded use the package also provides `ConcurrentStack` and
+`ConcurrentQueue`. Both are lock-free and share the same `LiFo` / `FiFo`
+interfaces as their non-concurrent counterparts, so user code written against
+the interface works unchanged with either variant:
+```java
+    LiFo<?, Integer> stack = parallel
+        ? new ConcurrentStack<Integer>()
+        : new Stack<Integer>();
+```
+`ConcurrentStack` is a lock-free Treiber stack on a single
+`AtomicReference`. Its `push`, `pop`, `pushIf`, and `popIf` operations
+are atomic test-and-modify with respect to one another.
+
+`ConcurrentQueue` wraps `ConcurrentLinkedDeque` and adds an atomic
+`removeIfNotEmpty()` so callers can drain the head without the
+emptiness-check race that the throwing `remove()` permits under contention.
+
+## Conditional operations
+
+`LiFo` and `FiFo` include a small family of methods that combine an
+emptiness or predicate check with the respective add or remove in a
+single call:
+```java
+    var s = new Stack<Integer>();
+    s.pushIfEmpty(1);                       // pushes (top was null)
+    s.pushIfEmpty(2);                       // no-op (top is now 1)
+    s.push(5).push(7);
+    s.popIf(t -> t == 7);                   // Optional.of(7)
+    s.popIfNotEmpty();                      // Optional.of(5)
+    s.popIfNotEmpty();                      // Optional.of(1)
+    s.popIfNotEmpty();                      // Optional.empty()
+
+    var q = new ConcurrentQueue<Integer>();
+    q.add(1).add(2);
+    q.removeIfNotEmpty();                   // Optional.of(1) -- atomic
+    q.removeIfNotEmpty();                   // Optional.of(2)
+    q.removeIfNotEmpty();                   // Optional.empty(), no exception
+```
+On the concurrent variants these calls are atomic with respect to other
+mutations on the same structure.
 
 # Functions and Predicates
 
@@ -133,6 +193,20 @@ Similarly, `Functions::of(List)` returns an `IntFunction` as in
 ```
 Implementation note: both factory methods make a defensive copy of the given list or map and are
 therefore unmodifiable; and immutable when the elements of the list or map are immutable.
+
+### Multiset Equality
+
+`Functions.contentsEquals(Collection, Collection)` compares two collections
+by content with multiplicity, ignoring order and ignoring the concrete
+collection types:
+```java
+    var a = List.of(1, 2, 2, 3);
+    var b = new ArrayDeque<>(List.of(3, 2, 1, 2));
+    assert  Functions.contentsEquals(a, b);          // same elements, same counts
+    assert !Functions.contentsEquals(a, List.of(1, 2, 3, 3)); // counts differ
+```
+Element identity uses `equals` / `hashCode`; the implementation is `O(n)`
+on average using a single `HashMap` pass.
 
 ## Indexed and Labeled
 
