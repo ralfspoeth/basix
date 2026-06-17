@@ -58,6 +58,15 @@ public enum Sign {
     }
 
     /**
+     * Tests whether this sign is not zero.
+     *
+     * @return {@code !zero()}
+     */
+    public boolean nonZero() {
+        return !zero();
+    }
+
+    /**
      * Turns an integer result into either {@link #NEGATIVE}, {@link #POSITIVE}, or {@link #ZERO}.
      *
      * @param num an integer
