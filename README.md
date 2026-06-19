@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.3.0
+    version:    1.3.1
 ```
 
 You'll need Java version 25 or later to utilize this library.
