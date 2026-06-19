@@ -63,6 +63,7 @@ public sealed interface LiFo<S extends LiFo<S, T>, T> permits Stack, ConcurrentS
 
     /**
      * Remove and return the topmost element if it is not {@code null}.
+     * @return same as {@code popIf} with {@code Objects::nonNull} as condition.
      */
     default Optional<T> popIfNotEmpty() {
         return popIf(Objects::nonNull);
