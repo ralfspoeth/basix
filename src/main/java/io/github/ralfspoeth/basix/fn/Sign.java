@@ -58,15 +58,6 @@ public enum Sign {
     }
 
     /**
-     * Tests whether this sign is not zero.
-     *
-     * @return {@code !zero()}
-     */
-    public boolean nonZero() {
-        return !zero();
-    }
-
-    /**
      * Turns an integer result into either {@link #NEGATIVE}, {@link #POSITIVE}, or {@link #ZERO}.
      *
      * @param num an integer
@@ -76,4 +67,8 @@ public enum Sign {
         return (num < 0 ? Sign.NEGATIVE : (num == 0 ? Sign.ZERO : Sign.POSITIVE));
     }
 
+
+    public static <T extends Comparable<? super T>> Sign ofCompare(T t1, T t2 ) {
+        return Sign.ofCompare(t1.compareTo(t2));
+    }
 }

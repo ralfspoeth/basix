@@ -133,6 +133,33 @@ public class Predicates {
     }
 
     /**
+     * Creates a predicate using {@link Sign#NEGATIVE} and {@link Sign#POSITIVE} comparison results,
+     * yet no {@link Sign#ZERO} results.
+     *
+     * @param ref        the reference value to compare against
+     * @param comparator the comparator to use; must not be {@code null}
+     * @param <T>        the element type
+     * @return a predicate that returns {@code true} for values that compare unequal to {@code ref}
+     *         under the given comparator
+     */
+    public static <T> Predicate<T> nonEqual(T ref, Comparator<? super T> comparator) {
+        return smallerOrGreater(ref, comparator);
+    }
+
+    /**
+     * Same as {@link #nonEqual(Object, Comparator)} with {@link Comparator#naturalOrder()}
+     * as comparator.
+     *
+     * @param ref the reference value to compare against
+     * @param <T> the element type, which must implement {@link Comparable}
+     * @return a predicate that returns {@code true} for values that compare unequal to {@code ref}
+     *         under natural order
+     */
+    public static <T extends Comparable<? super T>> Predicate<T> nonEqual(T ref) {
+        return nonEqual(ref, Comparator.naturalOrder());
+    }
+
+    /**
      * Same as {@link #equal(Object, Comparator)} with {@link Comparator#naturalOrder()}
      * as comparator.
      *
