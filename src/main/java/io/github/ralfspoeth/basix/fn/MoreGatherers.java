@@ -1,6 +1,7 @@
 package io.github.ralfspoeth.basix.fn;
 
 import io.github.ralfspoeth.basix.coll.Stack;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,6 +27,12 @@ import static java.util.Objects.requireNonNull;
  *     {@link #interleaveRotating(Collection)}, {@link #interleaveAvailable(Collection)},
  *     and {@link #interleaveAppendRest(Collection)}</li>
  * </ul>
+ * <p>
+ * Null policy: the comparison-based gatherers reject {@code null} elements
+ * with a {@link NullPointerException} while the stream is being processed,
+ * in line with the non-null type parameter bounds implied by {@code @NullMarked}.
+ * Gatherers which are declared with a {@code <T extends @Nullable Object>} type
+ * parameter tolerate {@code null} elements and pass them through.
  */
 public final class MoreGatherers {
 
@@ -51,20 +58,21 @@ public final class MoreGatherers {
      * Note that this gatherer is different from the {@link Stream#distinct()} built-in method
      * since every element of upstream is compared to the last element pushed downstream only,
      * in contrast to all previous elements as {@link Stream#distinct()} does.
-     * Furthermore, note that {@code null}s are silently swallowed.
+     * Furthermore, note that {@code null} elements are rejected with a
+     * {@link NullPointerException} while the stream is being processed.
      *
      * @param <T> the element type
      * @return a gatherer removing consecutively equal elements
      */
     public static <T> Gatherer<T, ?, T> distinctUntilChanged() {
-        Gatherer<T, AtomicReference<T>, T> gatherer = Gatherer.ofSequential(
+        return Gatherer.<T, AtomicReference<@Nullable T>, T>ofSequential(
                 AtomicReference::new,
                 (state, element, downstream) -> {
+                    // this check is load-bearing: the paths below may push nothing,
+                    // so it is the only way to observe downstream cancellation
                     if (downstream.isRejecting()) {
                         return false;
-                    } else if (element == null) {
-                        return true; // nulls are silently swallowed
-                    } else if (!Objects.equals(state.get(), element)) {
+                    } else if (!requireNonNull(element).equals(state.get())) {
                         state.set(element);
                         return downstream.push(element);
                     } else {
@@ -72,14 +80,14 @@ public final class MoreGatherers {
                     }
                 }
         );
-        return gatherer;
     }
 
     /**
      * Same as {@link #distinctUntilChanged()} but with the elements being compared
      * to the previous element pushed downstream using a {@link Comparator};
      * an element is pushed if and only if it compares to non-zero with the last one pushed.
-     * {@code null}s are silently swallowed.
+     * {@code null} elements are rejected with a {@link NullPointerException}
+     * while the stream is being processed.
      *
      * @param comparator the comparator
      * @param <T>        the type of the elements
@@ -103,7 +111,8 @@ public final class MoreGatherers {
      *}
      * Note that in the given example the first occurrences of 2, 3, and 4, respectively
      * are being pushed downstream.
-     * {@code null}s are silently swallowed.
+     * {@code null} elements are rejected with a {@link NullPointerException}
+     * while the stream is being processed.
      *
      * @param comparator the comparator
      * @param <T>        the type of the stream elements.
@@ -143,22 +152,26 @@ public final class MoreGatherers {
      * and {@link #decreasing(Comparator)}: compares each element with the last element pushed
      * downstream and pushes it only if the comparison result satisfies the given predicate.
      */
-    private static <T> Gatherer<T, AtomicReference<T>, T> comparingLastPushed(
+    private static <T> Gatherer<T, AtomicReference<@Nullable T>, T> comparingLastPushed(
             Comparator<? super T> comparator,
             IntPredicate acceptComparisonResult
     ) {
         return Gatherer.ofSequential(
                 AtomicReference::new,
                 (state, element, downstream) -> {
+                    requireNonNull(element);
+                    // this check is load-bearing: the paths below may push nothing,
+                    // so it is the only way to observe downstream cancellation
                     if (downstream.isRejecting()) {
                         return false;
-                    } else if (element == null) {
-                        return true; // nulls are silently swallowed
-                    } else if (state.get() == null || acceptComparisonResult.test(comparator.compare(element, state.get()))) {
-                        state.set(element);
-                        return downstream.push(element);
                     } else {
-                        return true;
+                        var current = state.get();
+                        if (current==null || acceptComparisonResult.test(comparator.compare(element, current))) {
+                            state.set(element);
+                            return downstream.push(element);
+                        } else {
+                            return true;
+                        }
                     }
                 }
         );
@@ -178,9 +191,11 @@ public final class MoreGatherers {
      * @return a gatherer which reverses the encountering order
      */
     public static <T> Gatherer<T, ?, T> reverse() {
-        Gatherer<T, Stack<T>, T> gatherer = Gatherer.ofSequential(
+        return Gatherer.<T, Stack<T>, T>ofSequential(
                 Stack::new,
                 (stack, element, downstream) -> {
+                    // this check is load-bearing: the paths below may push nothing,
+                    // so it is the only way to observe downstream cancellation
                     if (downstream.isRejecting()) {
                         return false;
                     } else {
@@ -194,7 +209,6 @@ public final class MoreGatherers {
                     }
                 }
         );
-        return gatherer;
     }
 
     /**
@@ -222,7 +236,7 @@ public final class MoreGatherers {
      * @param <T> the element type
      * @return a gatherer, may be used in parallel streams
      */
-    public static <T> Gatherer<T, ?, T> single() {
+    public static <T extends @Nullable Object> Gatherer<T, ?, T> single() {
         return exactly(1);
     }
 
@@ -236,13 +250,15 @@ public final class MoreGatherers {
      * @return a gatherer, may be used in parallel streams
      * @throws IllegalArgumentException if {@code n} is negative
      */
-    public static <T> Gatherer<T, ?, T> exactly(int n) {
+    public static <T extends @Nullable Object> Gatherer<T, ?, T> exactly(int n) {
         if (n < 0) {
             throw new IllegalArgumentException("n must not be negative: " + n);
         }
-        Gatherer<T, Collection<T>, T> gatherer = Gatherer.of(
+        return Gatherer.<T, Collection<T>, T>of(
                 ArrayList::new,
                 (elementsSoFar, elem, downstream) -> {
+                    // this check is load-bearing: the paths below may push nothing,
+                    // so it is the only way to observe downstream cancellation
                     if (downstream.isRejecting()) {
                         return false;
                     } else {
@@ -259,7 +275,6 @@ public final class MoreGatherers {
                     }
                 }
         );
-        return gatherer;
     }
 
     /**
@@ -287,7 +302,8 @@ public final class MoreGatherers {
      * // result == [1, 2, 3], [3, 1], [1, 2, 3]
      *}
      * </p>
-     * {@code null}s are silently swallowed.
+     * {@code null} elements are rejected with a {@link NullPointerException}
+     * while the stream is being processed.
      * <p>
      * The resulting lists are never empty so that one may detect the order of a list
      * by comparing the first and the last element easily:
@@ -311,13 +327,14 @@ public final class MoreGatherers {
      * @return a gatherer producing a stream of monotone sequences
      */
     public static <T> Gatherer<T, ?, List<T>> monotoneSequences(Comparator<? super T> comparator) {
-        Gatherer<T, ContCollection<T>, List<T>> gatherer = Gatherer.ofSequential(
+        return Gatherer.<T, ContCollection<T>, List<T>>ofSequential(
                 () -> new ContCollection<>(comparator),
                 (coll, item, downstream) -> {
+                    requireNonNull(item);
+                    // this check is load-bearing: the paths below may push nothing,
+                    // so it is the only way to observe downstream cancellation
                     if (downstream.isRejecting()) {
                         return false;
-                    } else if (item == null) {
-                        return true; // nulls are silently swallowed
                     } else if (coll.add(item)) {
                         return true;
                     } else {
@@ -335,7 +352,6 @@ public final class MoreGatherers {
                     }
                 }
         );
-        return gatherer;
     }
 
     /**
@@ -371,21 +387,12 @@ public final class MoreGatherers {
      * @param <T>       the element type
      * @return a gatherer
      */
-    public static <T> Gatherer<T, ?, T> interleave(Supplier<? extends T> generator) {
-        Gatherer<T, Void, T> gatherer = Gatherer.ofSequential((_, item, downstream) -> {
-            if (downstream.isRejecting()) {
-                return false;
-            } else {
-                downstream.push(item);
-                if (downstream.isRejecting()) {
-                    return false;
-                } else {
-                    downstream.push(generator.get());
-                    return true;
-                }
-            }
-        });
-        return gatherer;
+    public static <T extends @Nullable Object> Gatherer<T, ?, T> interleave(Supplier<? extends T> generator) {
+        // no isRejecting() check needed: every path pushes,
+        // and push() reports rejection through its return value
+        return Gatherer.ofSequential((_, item, downstream) ->
+                downstream.push(item) && downstream.push(generator.get())
+        );
     }
 
     /**
@@ -407,20 +414,19 @@ public final class MoreGatherers {
      * @param <T>       the element type
      * @return a gatherer
      */
-    public static <T> Gatherer<T, ?, T> intersperse(T separator) {
-        Gatherer<T, AtomicBoolean, T> gatherer = Gatherer.ofSequential(
+    public static <T extends @Nullable Object> Gatherer<T, ?, T> intersperse(T separator) {
+        return Gatherer.ofSequential(
                 AtomicBoolean::new, // false: nothing pushed downstream yet
+                // no isRejecting() check needed: every path pushes,
+                // and push() reports rejection through its return value
                 (anyPushed, element, downstream) -> {
-                    if (downstream.isRejecting()) {
-                        return false;
-                    } else if (anyPushed.getAndSet(true) && !downstream.push(separator)) {
+                    if (anyPushed.getAndSet(true) && !downstream.push(separator)) {
                         return false;
                     } else {
                         return downstream.push(element);
                     }
                 }
         );
-        return gatherer;
     }
 
     /**
@@ -447,24 +453,21 @@ public final class MoreGatherers {
         if (requireNonNull(source).isEmpty()) {
             throw new IllegalArgumentException("The source cannot be empty");
         }
-        Gatherer<T, AtomicReference<Iterator<? extends T>>, T> gatherer = Gatherer.ofSequential(
+        return Gatherer.<T, AtomicReference<Iterator<? extends T>>, T>ofSequential(
                 () -> new AtomicReference<>(source.iterator()),
+                // no isRejecting() check needed: every path pushes,
+                // and push() reports rejection through its return value
                 (state, element, downstream) -> {
-                    if (downstream.isRejecting()) {
-                        return false;
-                    } else {
-                        boolean down = downstream.push(element);
-                        if (down) {
-                            if (!state.get().hasNext()) {
-                                state.set(source.iterator());
-                            }
-                            down = downstream.push(state.get().next());
+                    boolean down = downstream.push(element);
+                    if (down) {
+                        if (!state.get().hasNext()) {
+                            state.set(source.iterator());
                         }
-                        return down;
+                        down = downstream.push(state.get().next());
                     }
+                    return down;
                 }
         );
-        return gatherer;
     }
 
     /**
@@ -484,11 +487,10 @@ public final class MoreGatherers {
      * @param source the collection
      */
     public static <T> Gatherer<T, ?, T> interleaveAvailable(Collection<? extends T> source) {
-        Gatherer<T, Iterator<? extends T>, T> gatherer = Gatherer.ofSequential(
+        return Gatherer.<T, Iterator<? extends T>, T>ofSequential(
                 source::iterator,
                 MoreGatherers::pushAndInterpose
         );
-        return gatherer;
     }
 
     /**
@@ -511,7 +513,7 @@ public final class MoreGatherers {
      * @param source the collection of elements to inserted and finally appended to the stream
      */
     public static <T> Gatherer<T, ?, T> interleaveAppendRest(Collection<? extends T> source) {
-        Gatherer<T, Iterator<? extends T>, T> gatherer = Gatherer.ofSequential(
+        return Gatherer.<T, Iterator<? extends T>, T>ofSequential(
                 source::iterator,
                 MoreGatherers::pushAndInterpose,
                 (iterator, downstream) -> {
@@ -520,7 +522,6 @@ public final class MoreGatherers {
                     }
                 }
         );
-        return gatherer;
     }
 
     /**
@@ -533,15 +534,13 @@ public final class MoreGatherers {
             T element,
             Gatherer.Downstream<? super T> downstream
     ) {
-        if (downstream.isRejecting()) {
-            return false;
-        } else {
-            boolean down = downstream.push(element);
-            if (down && iterator.hasNext()) {
-                down = downstream.push(iterator.next());
-            }
-            return down;
+        // no isRejecting() check needed: every path pushes,
+        // and push() reports rejection through its return value
+        boolean down = downstream.push(element);
+        if (down && iterator.hasNext()) {
+            down = downstream.push(iterator.next());
         }
+        return down;
     }
 
     //
@@ -550,7 +549,7 @@ public final class MoreGatherers {
         private final Comparator<? super T> comparator;
 
         private final List<T> elements = new ArrayList<>();
-        private Order order = null;
+        private @Nullable Order order = null;
 
         private ContCollection(Comparator<? super T> comparator) {
             this.comparator = comparator;
@@ -558,27 +557,22 @@ public final class MoreGatherers {
 
         @Override
         public boolean add(T item) {
-            if (item == null) {
-                return false;
+            requireNonNull(item);
+            if (elements.isEmpty()) {
+                return elements.add(item);
+            } else if (order == null) {
+                order = switch (Sign.ofCompare(comparator.compare(elements.getLast(), item))) {
+                    case NEGATIVE -> Order.INCREASING;
+                    case POSITIVE -> Order.DECREASING;
+                    case ZERO -> null;
+                };
+                return elements.add(item);
             } else {
-                if (elements.isEmpty()) {
-                    return elements.add(item);
-                } else {
-                    if (order == null) {
-                        order = switch (Sign.ofCompare(comparator.compare(elements.getLast(), item))) {
-                            case NEGATIVE -> Order.INCREASING;
-                            case POSITIVE -> Order.DECREASING;
-                            case ZERO -> null;
-                        };
-                        return elements.add(item);
-                    } else {
-                        return (order == Order.INCREASING
-                                && comparator.compare(elements.getLast(), item) <= 0
-                                || order == Order.DECREASING
-                                && comparator.compare(elements.getLast(), item) >= 0
-                        ) && elements.add(item);
-                    }
-                }
+                return (order == Order.INCREASING
+                        && comparator.compare(elements.getLast(), item) <= 0
+                        || order == Order.DECREASING
+                        && comparator.compare(elements.getLast(), item) >= 0
+                ) && elements.add(item);
             }
         }
 

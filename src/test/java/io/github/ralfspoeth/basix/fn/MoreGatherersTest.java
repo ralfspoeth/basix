@@ -49,8 +49,8 @@ class MoreGatherersTest {
     @Test
     void testDistinctUntilChangedComparator() {
         assertAll(
-                () -> assertEquals(List.of(1, 2, 1), Stream.of(1, 1, 2, 2, 1, 1).gather(distinctUntilChanged(Comparator.<Integer>naturalOrder())).toList()),
-                () -> assertEquals(List.of(3, 1, 3), Stream.of(3, 3, 1, 3).gather(distinctUntilChanged(Comparator.<Integer>naturalOrder())).toList())
+                () -> assertEquals(List.of(1, 2, 1), Stream.of(1, 1, 2, 2, 1, 1).gather(distinctUntilChanged(Comparator.naturalOrder())).toList()),
+                () -> assertEquals(List.of(3, 1, 3), Stream.of(3, 3, 1, 3).gather(distinctUntilChanged(Comparator.naturalOrder())).toList())
         );
     }
 
@@ -126,13 +126,15 @@ class MoreGatherersTest {
     }
 
     @Test
-    void testNullsSwallowed() {
+    void testNullsRejected() {
+        // comparison-based gatherers fail fast on null elements,
+        // in line with the @NullMarked contract of the module
         assertAll(
-                () -> assertEquals(List.of(1, 2), Stream.of(1, null, 1, 2).gather(distinctUntilChanged()).toList()),
-                () -> assertEquals(List.of(1, 2), Stream.of(null, 1, null, 2, null).gather(increasing()).toList()),
-                () -> assertEquals(List.of(2, 1), Stream.of(2, null, 2, 1).gather(distinctUntilChanged(Comparator.<Integer>naturalOrder())).toList()),
-                // a null must not split a monotone run
-                () -> assertEquals(List.of(List.of(1, 2, 3)), Stream.of(1, null, 2, null, 3).gather(monotoneSequences()).toList())
+                () -> assertThrows(NullPointerException.class, () -> Stream.of(1, null, 2).gather(distinctUntilChanged()).toList()),
+                () -> assertThrows(NullPointerException.class, () -> Stream.of(2, null, 1).gather(distinctUntilChanged(Comparator.naturalOrder())).toList()),
+                () -> assertThrows(NullPointerException.class, () -> Stream.of((Integer) null).gather(increasing()).toList()),
+                () -> assertThrows(NullPointerException.class, () -> Stream.of((Integer) null).gather(decreasing()).toList()),
+                () -> assertThrows(NullPointerException.class, () -> Stream.of(1, null, 2).gather(monotoneSequences()).toList())
         );
     }
 
@@ -148,7 +150,7 @@ class MoreGatherersTest {
 
     @Test
     void testInterleaveRotatingReusable() {
-        var gatherer = MoreGatherers.<Integer>interleaveRotating(List.of(8, 9));
+        var gatherer = MoreGatherers.interleaveRotating(List.of(8, 9));
         // each stream must start the rotation afresh
         assertEquals(List.of(1, 8, 2, 9), Stream.of(1, 2).gather(gatherer).toList());
         assertEquals(List.of(1, 8, 2, 9), Stream.of(1, 2).gather(gatherer).toList());
@@ -169,7 +171,7 @@ class MoreGatherersTest {
                 () -> assertEquals(List.of(1), Stream.of(1).gather(intersperse(0)).toList()),
                 () -> assertEquals(List.of(), Stream.<Integer>of().gather(intersperse(0)).toList()),
                 // separator may be null
-                () -> assertEquals(Arrays.asList(1, null, 2), Stream.of(1, 2).gather(intersperse((Integer) null)).toList())
+                () -> assertEquals(Arrays.asList(1, null, 2), Stream.of(1, 2).gather(intersperse(null)).toList())
         );
     }
 
