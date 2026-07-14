@@ -38,7 +38,7 @@ public class Functions {
      * _ -> "NULL",
      * t -> "not null-y: " + t
      * ).apply(x); // "not null-y: 7"
-     * }
+     *}
      * or better
      * {@snippet :
      * Stream.of(x)
@@ -301,7 +301,7 @@ public class Functions {
      * @param b   the second collection
      * @param <T> the (common) element type
      * @return {@code true} iff {@code a} and {@code b} contain the same elements
-     *         with the same multiplicities, ignoring order
+     * with the same multiplicities, ignoring order
      */
     public static <T> boolean contentsEquals(Collection<? extends T> a, Collection<? extends T> b) {
         if (a.isEmpty()) {
@@ -317,17 +317,17 @@ public class Functions {
                 map.compute(t, (_, v) -> v == null ? (1L << 32) : v + (1L << 32));
             }
             for (T t : b) {
-                if(!map.containsKey(t)) {
+                if (!map.containsKey(t)) {
                     return false;
                 } else {
                     map.put(t, map.get(t) + 1L);
                 }
             }
-            for(Map.Entry<Object, Long> entry : map.entrySet()) {
+            for (Map.Entry<Object, Long> entry : map.entrySet()) {
                 long value = entry.getValue();
-                int _a = (int)(value >>> 32);
-                int _b = (int)(value & 0xFFFFFFFFL);
-                if(_a!=_b) return false;
+                int _a = (int) (value >>> 32);
+                int _b = (int) (value & 0xFFFFFFFFL);
+                if (_a != _b) return false;
             }
             return true;
         }

@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.3.2
+    version:    1.4.0
 ```
 
 You'll need Java version 25 or later to utilize this library.
@@ -44,6 +44,25 @@ Version 1.3.0 introduces concurrent variants and tightens the API:
 - Several bug fixes in `Queue.remove()` (full-wrap state),
   `ConcurrentStack.pushIf` (semantics now match `Stack.pushIf`), and
   `Functions.contentsEquals` (multiset comparison).
+
+Version 1.4.0 adds `MoreGatherers` to the library, a factory class for
+stream `Gatherer`s complementing those in `java.util.stream.Gatherers`:
+
+- comparison-based gatherers: `distinctUntilChanged` (with and without a
+  `Comparator`) drops consecutively equal elements, `increasing` and
+  `decreasing` retain only elements strictly greater or smaller than the
+  last one pushed, and `monotoneSequences` splits a stream into its
+  monotone runs.
+- buffering gatherers: `reverse` reverses the encounter order, while
+  `single` and `exactly(n)` push elements downstream only if the upstream
+  provides exactly one or exactly `n` of them.
+- interleaving gatherers: `interleave` and `intersperse` insert generated
+  elements or separators, and `interleaveRotating`, `interleaveAvailable`,
+  and `interleaveAppendRest` interpose the elements of a source collection
+  with different exhaustion policies.
+
+`Functions.filterAndCast` — combined filtering and casting by type —
+remains where it was and rounds off the gatherer support.
 
 # Minimal Stack and Queue Implementations
 
@@ -391,7 +410,9 @@ But I admit it's a matter of taste...
 Gatherers are enhancement to stream processors allowing for much 
 richer algorithms with streams.
 See [JEP 485](https://openjdk.org/jeps/485) for an in-depth explanation.
-The `Functions` class contains some support for creating gatherers.
+The `Functions` class contains some support for creating gatherers;
+the `MoreGatherers` class provides ready-made gatherers complementing
+those in `java.util.stream.Gatherers`.
 
 ### Filter and Cast
 
@@ -416,6 +437,29 @@ both of which are pretty ugly. This can be simplified to
 ```
 which is simpler, more elegant and not that prone to copy/paste failures especially compared
 to the first solution.
+
+### MoreGatherers
+
+The `MoreGatherers` factory class provides three families of gatherers:
+
+Comparison-based: `distinctUntilChanged()` drops consecutively equal elements,
+`distinctUntilChanged(Comparator)` does the same based on a comparator,
+`increasing()` and `decreasing()` keep only elements strictly greater or smaller
+than the last one pushed downstream, and `monotoneSequences()` splits a stream
+into lists of increasing or decreasing runs, with the boundary element shared
+between adjacent runs.
+
+Buffering: `reverse()` reverses the encounter order, and `single()` and
+`exactly(n)` push elements downstream only if the upstream provides exactly
+one or exactly `n` of them.
+
+Interleaving: `interleave(Supplier)` inserts a generated element after each
+upstream element, `intersperse(T)` pushes a separator between any two
+consecutive elements (with no trailing separator),
+`interleaveRotating(Collection)` cycles through a source
+collection, `interleaveAvailable(Collection)` inserts until the source is
+exhausted, and `interleaveAppendRest(Collection)` additionally appends
+leftover source elements at the end.
 
 ### Combiner and Finisher for Collections
 
