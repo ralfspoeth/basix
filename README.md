@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.4.0
+    version:    1.4.1
 ```
 
 You'll need Java version 25 or later to utilize this library.
@@ -63,6 +63,8 @@ stream `Gatherer`s complementing those in `java.util.stream.Gatherers`:
 
 `Functions.filterAndCast` — combined filtering and casting by type —
 remains where it was and rounds off the gatherer support.
+
+Version 1.4.1 corrects nullness issues.
 
 # Minimal Stack and Queue Implementations
 
