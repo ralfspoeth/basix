@@ -1,6 +1,6 @@
 package io.github.ralfspoeth.basix.fn;
 
-import io.github.ralfspoeth.basix.fn.SwitchingFunction.Case;
+import io.github.ralfspoeth.basix.fn.Switch.Case;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,16 +13,14 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SwitchingFunctionTest {
+class SwitchTest {
 
     @Test
     void testFirstMatchingCaseWins() {
         // given: overlapping cases; order matters
-        var f = SwitchingFunction.<Integer, String>of(
-                _ -> "default",
-                Case.of(i -> i > 0, _ -> "positive"),
-                Case.of(i -> i > 10, _ -> "large")
-        );
+        var f = Switch.<Integer, String>when(i -> i > 0, _ -> "positive")
+                .when(i -> i > 10, _ -> "large")
+                .otherwise(_ -> "default");
         // then
         assertAll(
                 () -> assertEquals("positive", f.apply(5)),
@@ -33,16 +31,14 @@ class SwitchingFunctionTest {
 
     @Test
     void testDefaultWhenNoCaseMatches() {
-        var f = SwitchingFunction.<Integer, String>of(
-                Object::toString,
-                Case.of(_ -> false, _ -> "never")
-        );
+        var f = Switch.<Integer, String>when(_ -> false, _ -> "never")
+                .otherwise(Object::toString);
         assertEquals("7", f.apply(7));
     }
 
     @Test
     void testNoCases() {
-        var f = SwitchingFunction.<Integer, Integer>of(i -> i * 2);
+        var f = new Switch<Integer, Integer>(List.of(), i -> i * 2);
         assertEquals(6, f.apply(3));
     }
 
@@ -51,7 +47,7 @@ class SwitchingFunctionTest {
         // given: a mutable list, cleared after construction
         var cases = new java.util.ArrayList<Case<Integer, String>>();
         cases.add(new Case<>(i -> i == 1, _ -> "one"));
-        var f = new SwitchingFunction<>(cases, _ -> "default");
+        var f = new Switch<>(cases, _ -> "default");
         // when
         cases.clear();
         // then: the function is unaffected
@@ -64,7 +60,7 @@ class SwitchingFunctionTest {
         Predicate<Number> even = n -> n.intValue() % 2 == 0;
         Function<Number, String> name = n -> "even:" + n.intValue();
         Case<Integer, String> c = Case.of(even, name);
-        var f = SwitchingFunction.of(_ -> "odd", c);
+        var f = new Switch<>(List.of(c), (Integer _) -> "odd");
         // then
         assertAll(
                 () -> assertEquals("even:4", f.apply(4)),
@@ -77,24 +73,25 @@ class SwitchingFunctionTest {
         assertAll(
                 () -> assertThrows(NullPointerException.class, () -> new Case<Integer, String>(null, _ -> "")),
                 () -> assertThrows(NullPointerException.class, () -> new Case<Integer, String>(_ -> true, null)),
-                () -> assertThrows(NullPointerException.class, () -> new SwitchingFunction<Integer, String>(null, _ -> "")),
-                () -> assertThrows(NullPointerException.class, () -> new SwitchingFunction<Integer, String>(List.of(), null)),
-                () -> assertThrows(NullPointerException.class, () -> SwitchingFunction.of(_ -> "", (Case<Integer, String>) null))
+                () -> assertThrows(NullPointerException.class, () -> new Switch<Integer, String>(null, _ -> "")),
+                () -> assertThrows(NullPointerException.class, () -> new Switch<Integer, String>(List.of(), null)),
+                () -> assertThrows(NullPointerException.class, () -> Switch.<Integer, String>when(null, _ -> "")),
+                () -> assertThrows(NullPointerException.class, () -> Switch.<Integer, String>when(_ -> true, null)),
+                () -> assertThrows(NullPointerException.class, () -> Switch.<Integer, String>when(_ -> true, _ -> "").otherwise(null))
         );
     }
 
     @Test
     void testFizzBuzzStreamPipeline() {
-        // given: no explicit type arguments; T and R are inferred
-        // from the Stream<Integer> target type of map()
+        // given: no explicit type arguments; T and R are inferred through
+        // the diamond operator from the target type of map()
         var result = IntStream.rangeClosed(1, 15)
                 .boxed()
-                .map(SwitchingFunction.of(
-                        String::valueOf,
+                .map(new Switch<>(List.of(
                         Case.of(i -> i % 15 == 0, _ -> "FizzBuzz"),
                         Case.of(i -> i % 3 == 0, _ -> "Fizz"),
                         Case.of(i -> i % 5 == 0, _ -> "Buzz")
-                ))
+                ), String::valueOf))
                 .toList();
         // then
         assertEquals(
@@ -107,11 +104,10 @@ class SwitchingFunctionTest {
     @Test
     void testStringClassificationStreamPipeline() {
         var result = Stream.of("a", "bb", "CCC", "")
-                .map(SwitchingFunction.of(
-                        _ -> "other",
+                .map(new Switch<>(List.of(
                         Case.of(String::isEmpty, _ -> "empty"),
                         Case.of(s -> s.length() == 1, _ -> "single")
-                ))
+                ), _ -> "other"))
                 .toList();
         assertEquals(List.of("single", "other", "other", "empty"), result);
     }
@@ -119,11 +115,10 @@ class SwitchingFunctionTest {
     @Test
     void testGroupingByClassifierInPipeline() {
         var groups = Stream.of(-2, -1, 0, 1, 2)
-                .collect(Collectors.groupingBy(SwitchingFunction.of(
-                        _ -> "zero",
-                        Case.of(i -> i < 0, _ -> "negative"),
-                        Case.of(i -> i > 0, _ -> "positive")
-                )));
+                .collect(Collectors.groupingBy(new Switch<>(List.of(
+                        Case.of((Integer i) -> i < 0, _ -> "negative"),
+                        Case.of((Integer i) -> i > 0, _ -> "positive")
+                ), _ -> "zero")));
         assertEquals(
                 Map.of(
                         "negative", List.of(-2, -1),
@@ -136,11 +131,10 @@ class SwitchingFunctionTest {
 
     @Test
     void testComposesAsFunction() {
-        var f = SwitchingFunction.<Integer, Integer>of(
-                _ -> 0,
-                Case.of(i -> i < 0, _ -> -1),
-                Case.of(i -> i > 0, _ -> 1)
-        ).andThen(i -> i * 100);
+        var f = Switch.<Integer, Integer>when(i -> i < 0, _ -> -1)
+                .when(i -> i > 0, _ -> 1)
+                .otherwise(_ -> 0)
+                .andThen(i -> i * 100);
         assertAll(
                 () -> assertEquals(-100, f.apply(-5)),
                 () -> assertEquals(100, f.apply(5)),

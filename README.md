@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.4.1
+    version:    1.5.0
 ```
 
 You'll need Java version 25 or later to utilize this library.
@@ -65,6 +65,38 @@ stream `Gatherer`s complementing those in `java.util.stream.Gatherers`:
 remains where it was and rounds off the gatherer support.
 
 Version 1.4.1 corrects nullness issues.
+
+Version 1.5.0 adds `Switch`, a `Function` composed of an ordered
+list of guarded cases plus a default function — a `switch` expression with
+`when` clauses, reified as a composable, immutable function object:
+
+```java
+var f = Switch.<Integer, String>when(i -> i == 0, _ -> "none")
+        .when(i -> i == 1, _ -> "one")
+        .otherwise(_ -> "many");
+f.apply(0); // "none"
+f.apply(7); // "many"
+```
+
+The cases are evaluated in order and the function of the first case whose
+predicate matches is applied; the default function is applied when no case
+matches. The fluent builder reads in source order — cases first, default
+last — and only `otherwise` produces the function, just as a `switch`
+expression is complete only with its `default` arm. For dynamically
+assembled rule sets, or in target-typed positions where the diamond
+operator infers the type arguments, use the constructor instead:
+
+```java
+stream.map(new Switch<>(List.of(
+        Case.of(i -> i % 15 == 0, _ -> "FizzBuzz"),
+        Case.of(i -> i % 3 == 0, _ -> "Fizz"),
+        Case.of(i -> i % 5 == 0, _ -> "Buzz")
+), String::valueOf))
+```
+
+Since a `Switch` is an ordinary `Function` it may be passed to
+`Stream.map`, composed via `andThen`/`compose`, and so on — in places
+where a `switch` expression would require a wrapping lambda.
 
 # Minimal Stack and Queue Implementations
 
