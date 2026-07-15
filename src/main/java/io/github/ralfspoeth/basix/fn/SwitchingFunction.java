@@ -15,9 +15,9 @@ import java.util.function.Predicate;
  * if no case matches, the default function is applied instead. Example:
  * {@snippet :
  * var f = SwitchingFunction.<Integer, String>of(
- *         i -> "many",                          // default
- *         Case.of(i -> i == 0, i -> "none"),
- *         Case.of(i -> i == 1, i -> "one")
+ *         _ -> "many",                          // default
+ *         Case.of(i -> i == 0, _ -> "none"),
+ *         Case.of(i -> i == 1, _ -> "one")
  * );
  * f.apply(0); // "none"
  * f.apply(7); // "many"

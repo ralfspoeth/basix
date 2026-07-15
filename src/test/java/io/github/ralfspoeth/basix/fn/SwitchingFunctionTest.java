@@ -4,8 +4,12 @@ import io.github.ralfspoeth.basix.fn.SwitchingFunction.Case;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -76,6 +80,57 @@ class SwitchingFunctionTest {
                 () -> assertThrows(NullPointerException.class, () -> new SwitchingFunction<Integer, String>(null, _ -> "")),
                 () -> assertThrows(NullPointerException.class, () -> new SwitchingFunction<Integer, String>(List.of(), null)),
                 () -> assertThrows(NullPointerException.class, () -> SwitchingFunction.of(_ -> "", (Case<Integer, String>) null))
+        );
+    }
+
+    @Test
+    void testFizzBuzzStreamPipeline() {
+        // given: no explicit type arguments; T and R are inferred
+        // from the Stream<Integer> target type of map()
+        var result = IntStream.rangeClosed(1, 15)
+                .boxed()
+                .map(SwitchingFunction.of(
+                        String::valueOf,
+                        Case.of(i -> i % 15 == 0, _ -> "FizzBuzz"),
+                        Case.of(i -> i % 3 == 0, _ -> "Fizz"),
+                        Case.of(i -> i % 5 == 0, _ -> "Buzz")
+                ))
+                .toList();
+        // then
+        assertEquals(
+                List.of("1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8",
+                        "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz"),
+                result
+        );
+    }
+
+    @Test
+    void testStringClassificationStreamPipeline() {
+        var result = Stream.of("a", "bb", "CCC", "")
+                .map(SwitchingFunction.of(
+                        _ -> "other",
+                        Case.of(String::isEmpty, _ -> "empty"),
+                        Case.of(s -> s.length() == 1, _ -> "single")
+                ))
+                .toList();
+        assertEquals(List.of("single", "other", "other", "empty"), result);
+    }
+
+    @Test
+    void testGroupingByClassifierInPipeline() {
+        var groups = Stream.of(-2, -1, 0, 1, 2)
+                .collect(Collectors.groupingBy(SwitchingFunction.of(
+                        _ -> "zero",
+                        Case.of(i -> i < 0, _ -> "negative"),
+                        Case.of(i -> i > 0, _ -> "positive")
+                )));
+        assertEquals(
+                Map.of(
+                        "negative", List.of(-2, -1),
+                        "zero", List.of(0),
+                        "positive", List.of(1, 2)
+                ),
+                groups
         );
     }
 
