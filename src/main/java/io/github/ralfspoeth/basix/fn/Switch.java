@@ -89,7 +89,7 @@ public class Switch<T, R> implements Function<T, R> {
      * @throws NullPointerException if any argument or element is {@code null}
      */
     public Switch(List<Case<T, R>> cases,
-                             Function<? super T, ? extends R> defaultFunction)
+                  Function<? super T, ? extends R> defaultFunction)
     {
         this.cases = List.copyOf(cases);
         this.defaultFunction = defaultFunction::apply;
