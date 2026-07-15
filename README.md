@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.5.0
+    version:    1.5.1
 ```
 
 You'll need Java version 25 or later to utilize this library.
@@ -97,6 +97,12 @@ stream.map(new Switch<>(List.of(
 Since a `Switch` is an ordinary `Function` it may be passed to
 `Stream.map`, composed via `andThen`/`compose`, and so on — in places
 where a `switch` expression would require a wrapping lambda.
+
+Version 1.5.1 makes `Switch.apply` final. `Switch` remains open for
+specialization — a subclass gives a rule set a domain name by fixing the
+cases and the default function through the constructor — but every
+`Switch` now reliably dispatches first-match-wins; decoration belongs in
+`andThen`/`compose` rather than in an override.
 
 # Minimal Stack and Queue Implementations
 

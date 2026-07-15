@@ -170,12 +170,19 @@ public class Switch<T, R> implements Function<T, R> {
     /**
      * Applies the function of the first case whose predicate matches {@code e},
      * or the default function if none matches.
+     * <p>
+     * This method is {@code final}: subclasses specialize a {@code Switch}
+     * by fixing the cases and the default function through the
+     * {@linkplain #Switch(List, Function) constructor}, not by overriding
+     * its behavior — every {@code Switch} is guaranteed to dispatch
+     * first-match-wins. Use {@link Function#andThen(Function)} or
+     * {@link Function#compose(Function)} for decoration.
      *
      * @param e the function argument
      * @return the result of the selected function
      */
     @Override
-    public R apply(T e) {
+    public final R apply(T e) {
         for(var c : cases) {
             if(c.when.test(e)) {
                 return c.then.apply(e);
