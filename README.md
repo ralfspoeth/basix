@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.5.1
+    version:    1.5.2
 ```
 
 You'll need Java version 25 or later to utilize this library.
@@ -71,8 +71,8 @@ list of guarded cases plus a default function — a `switch` expression with
 `when` clauses, reified as a composable, immutable function object:
 
 ```java
-var f = Switch.<Integer, String>when(i -> i == 0, _ -> "none")
-        .when(i -> i == 1, _ -> "one")
+var f = Switch.<Integer, String>when(i -> i == 0).then(_ -> "none")
+        .when(i -> i == 1).then(_ -> "one")
         .otherwise(_ -> "many");
 f.apply(0); // "none"
 f.apply(7); // "many"
@@ -103,6 +103,22 @@ specialization — a subclass gives a rule set a domain name by fixing the
 cases and the default function through the constructor — but every
 `Switch` now reliably dispatches first-match-wins; decoration belongs in
 `andThen`/`compose` rather than in an override.
+
+Version 1.5.2 adds a two-step spelling for the cases of a `Switch`:
+`when(predicate).then(function)` splits a case into its guard and its
+result, reading even closer to the construct it mimics; the compact
+`when(predicate, function)` remains available and the two forms may be
+mixed freely within one chain:
+
+```java
+var f = Switch.<Integer, String>when(i -> i < 0, _ -> "negative")
+        .when(i -> i > 0).then(_ -> "positive")
+        .otherwise(_ -> "zero");
+```
+
+The intermediate stub returned by `when(predicate)` holds just the guard;
+`then` completes the case and returns the builder. As before, only
+`otherwise` produces the function. The change is purely additive.
 
 # Minimal Stack and Queue Implementations
 

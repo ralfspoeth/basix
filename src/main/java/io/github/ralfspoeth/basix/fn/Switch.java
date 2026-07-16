@@ -15,8 +15,8 @@ import java.util.function.Predicate;
  * function of the first case whose predicate matches is applied to the argument;
  * if no case matches, the default function is applied instead. Example:
  * {@snippet :
- * var f = Switch.<Integer, String>when(i -> i == 0, _ -> "none")
- *         .when(i -> i == 1, _ -> "one")
+ * var f = Switch.<Integer, String>when(i -> i == 0).then(_ -> "none")
+ *         .when(i -> i == 1).then(_ -> "one")
  *         .otherwise(_ -> "many");
  * f.apply(0); // "none"
  * f.apply(7); // "many"
@@ -97,15 +97,36 @@ public class Switch<T, R> implements Function<T, R> {
 
     /**
      * Starts building a {@link Switch} in source order — cases first,
-     * default last:
+     * default last, each case a {@code when}/{@code then} pair:
      * {@snippet :
-     * var f = Switch.<Integer, String>when(i -> i < 0, _ -> "negative")
-     *         .when(i -> i > 0, _ -> "positive")
+     * var f = Switch.<Integer, String>when(i -> i < 0).then(_ -> "negative")
+     *         .when(i -> i > 0).then(_ -> "positive")
      *         .otherwise(_ -> "zero");
      * }
-     * The returned {@link Builder} is not a function; only
-     * {@link Builder#otherwise(Function)} produces one, just as a
-     * {@code switch} expression is complete only with its {@code default} arm.
+     * Neither the returned {@link Builder.Stub} nor the {@link Builder} is
+     * a function; only {@link Builder#otherwise(Function)} produces one,
+     * just as a {@code switch} expression is complete only with its
+     * {@code default} arm.
+     *
+     * @param when the guarding predicate of the first case; must not be {@code null}
+     * @param <T>  the type of the input
+     * @param <R>  the type of the result
+     * @return the first case under construction, to be completed with
+     *         {@link Builder.Stub#then(Function)}
+     * @throws NullPointerException if {@code when} is {@code null}
+     */
+    public static <T, R> Builder<T, R>.Stub when(Predicate<? super T> when) {
+        return new Builder<T, R>().when(when);
+    }
+
+    /**
+     * Compact form of {@link #when(Predicate)} followed by
+     * {@link Builder.Stub#then(Function)}; the two are equivalent:
+     * {@snippet :
+     * var f = Switch.<Integer, String>when(i -> i < 0, _ -> "negative")
+     *         .when(i -> i > 0).then(_ -> "positive")
+     *         .otherwise(_ -> "zero");
+     * }
      *
      * @param when the guarding predicate of the first case; must not be {@code null}
      * @param then the function applied when {@code when} matches; must not be {@code null}
@@ -117,13 +138,13 @@ public class Switch<T, R> implements Function<T, R> {
     public static <T, R> Builder<T, R> when(Predicate<? super T> when,
                                             Function<? super T, ? extends R> then)
     {
-        return new Builder<T, R>().when(when, then);
+        return Switch.<T, R>when(when).then(then);
     }
 
     /**
      * Accumulates {@link Case}s in source order until
      * {@link #otherwise(Function)} completes them with the default function
-     * to a {@link Switch}. Obtained via {@link Switch#when(Predicate, Function)}.
+     * to a {@link Switch}. Obtained via {@link Switch#when(Predicate)}.
      * <p>
      * The builder may be reused after calling {@code otherwise}; the
      * {@link Switch} instances snapshot the cases accumulated so far.
@@ -140,7 +161,21 @@ public class Switch<T, R> implements Function<T, R> {
         }
 
         /**
-         * Adds a case; cases are evaluated in the order they are added.
+         * Starts a case with its guarding predicate; cases are evaluated
+         * in the order they are added.
+         *
+         * @param when the guarding predicate; must not be {@code null}
+         * @return a fresh {@link Stub} holding the predicate, to be
+         *         completed with {@link Stub#then(Function)}
+         * @throws NullPointerException if {@code when} is {@code null}
+         */
+        public Stub when(Predicate<? super T> when) {
+            return new Stub(when);
+        }
+
+        /**
+         * Compact form of {@link #when(Predicate)} followed by
+         * {@link Stub#then(Function)}; the two are equivalent.
          *
          * @param when the guarding predicate; must not be {@code null}
          * @param then the function applied when {@code when} matches; must not be {@code null}
@@ -150,8 +185,7 @@ public class Switch<T, R> implements Function<T, R> {
         public Builder<T, R> when(Predicate<? super T> when,
                                   Function<? super T, ? extends R> then)
         {
-            cases.add(Case.of(when, then));
-            return this;
+            return when(when).then(then);
         }
 
         /**
@@ -165,18 +199,39 @@ public class Switch<T, R> implements Function<T, R> {
         public Switch<T, R> otherwise(Function<? super T, ? extends R> defaultFunction) {
             return new Switch<>(cases, defaultFunction);
         }
+
+        /**
+         * A case under construction: the guarding predicate is fixed;
+         * {@link #then(Function)} completes the {@link Case}, adds it to
+         * the enclosing builder, and returns that builder.
+         */
+        public final class Stub {
+
+            private final Predicate<? super T> when;
+
+            private Stub(Predicate<? super T> when) {
+                this.when = Objects.requireNonNull(when);
+            }
+
+            /**
+             * Completes the case with the function applied when the
+             * predicate matches.
+             *
+             * @param then the matching function; must not be {@code null}
+             * @return the enclosing builder, for the next case or
+             *         {@link Builder#otherwise(Function)}
+             * @throws NullPointerException if {@code then} is {@code null}
+             */
+            public Builder<T, R> then(Function<? super T, ? extends R> then) {
+                cases.add(Case.of(when, then));
+                return Builder.this;
+            }
+        }
     }
 
     /**
      * Applies the function of the first case whose predicate matches {@code e},
      * or the default function if none matches.
-     * <p>
-     * This method is {@code final}: subclasses specialize a {@code Switch}
-     * by fixing the cases and the default function through the
-     * {@linkplain #Switch(List, Function) constructor}, not by overriding
-     * its behavior — every {@code Switch} is guaranteed to dispatch
-     * first-match-wins. Use {@link Function#andThen(Function)} or
-     * {@link Function#compose(Function)} for decoration.
      *
      * @param e the function argument
      * @return the result of the selected function

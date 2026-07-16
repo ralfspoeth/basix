@@ -18,8 +18,8 @@ class SwitchTest {
     @Test
     void testFirstMatchingCaseWins() {
         // given: overlapping cases; order matters
-        var f = Switch.<Integer, String>when(i -> i > 0, _ -> "positive")
-                .when(i -> i > 10, _ -> "large")
+        var f = Switch.<Integer, String>when(i -> i > 0).then(_ -> "positive")
+                .when(i -> i > 10).then(_ -> "large")
                 .otherwise(_ -> "default");
         // then
         assertAll(
@@ -31,7 +31,7 @@ class SwitchTest {
 
     @Test
     void testDefaultWhenNoCaseMatches() {
-        var f = Switch.<Integer, String>when(_ -> false, _ -> "never")
+        var f = Switch.<Integer, String>when(_ -> false).then(_ -> "never")
                 .otherwise(Object::toString);
         assertEquals("7", f.apply(7));
     }
@@ -75,9 +75,9 @@ class SwitchTest {
                 () -> assertThrows(NullPointerException.class, () -> new Case<Integer, String>(_ -> true, null)),
                 () -> assertThrows(NullPointerException.class, () -> new Switch<Integer, String>(null, _ -> "")),
                 () -> assertThrows(NullPointerException.class, () -> new Switch<Integer, String>(List.of(), null)),
-                () -> assertThrows(NullPointerException.class, () -> Switch.<Integer, String>when(null, _ -> "")),
-                () -> assertThrows(NullPointerException.class, () -> Switch.<Integer, String>when(_ -> true, null)),
-                () -> assertThrows(NullPointerException.class, () -> Switch.<Integer, String>when(_ -> true, _ -> "").otherwise(null))
+                () -> assertThrows(NullPointerException.class, () -> Switch.<Integer, String>when(null)),
+                () -> assertThrows(NullPointerException.class, () -> Switch.<Integer, String>when(_ -> true).then(null)),
+                () -> assertThrows(NullPointerException.class, () -> Switch.<Integer, String>when(_ -> true).then(_ -> "").otherwise(null))
         );
     }
 
@@ -130,9 +130,22 @@ class SwitchTest {
     }
 
     @Test
+    void testCompactAndTwoStepFormsAreEquivalent() {
+        // both forms may be mixed freely within one chain
+        var f = Switch.<Integer, String>when(i -> i < 0, _ -> "negative")
+                .when(i -> i > 0).then(_ -> "positive")
+                .otherwise(_ -> "zero");
+        assertAll(
+                () -> assertEquals("negative", f.apply(-1)),
+                () -> assertEquals("zero", f.apply(0)),
+                () -> assertEquals("positive", f.apply(1))
+        );
+    }
+
+    @Test
     void testComposesAsFunction() {
-        var f = Switch.<Integer, Integer>when(i -> i < 0, _ -> -1)
-                .when(i -> i > 0, _ -> 1)
+        var f = Switch.<Integer, Integer>when(i -> i < 0).then(_ -> -1)
+                .when(i -> i > 0).then(_ -> 1)
                 .otherwise(_ -> 0)
                 .andThen(i -> i * 100);
         assertAll(
