@@ -15,7 +15,8 @@ import java.util.function.Predicate;
  * function of the first case whose predicate matches is applied to the argument;
  * if no case matches, the default function is applied instead. Example:
  * {@snippet :
- * var f = Switch.<Integer, String>when(i -> i == 0).then(_ -> "none")
+ * var f = Switch.<Integer, String>builder()
+ *         .when(i -> i == 0).then(_ -> "none")
  *         .when(i -> i == 1).then(_ -> "one")
  *         .otherwise(_ -> "many");
  * f.apply(0); // "none"
@@ -107,6 +108,10 @@ public class Switch<T, R> implements Function<T, R> {
      * a function; only {@link Builder#otherwise(Function)} produces one,
      * just as a {@code switch} expression is complete only with its
      * {@code default} arm.
+     * <p>
+     * Note that when the type arguments must be spelled out — as in the
+     * example above — starting with {@link #builder()} usually reads
+     * better than wedging the witnesses into the first {@code when}.
      *
      * @param when the guarding predicate of the first case; must not be {@code null}
      * @param <T>  the type of the input
@@ -142,15 +147,20 @@ public class Switch<T, R> implements Function<T, R> {
     }
 
     /**
-     * Creates an empty {@link Builder}; useful as the entry point for
-     * type-guarded cases where the instance method
-     * {@link Builder#when(Class)} infers the case type from its argument:
+     * Creates an empty {@link Builder}; the preferred entry point whenever
+     * the type arguments must be spelled out — which, since inference does
+     * not flow backwards through a method chain, is nearly always the case
+     * for the fluent style. The witnesses read better on {@code builder()}
+     * than wedged into the first {@code when}:
      * {@snippet :
      * var f = Switch.<Object, String>builder()
      *         .when(Integer.class).then(i -> "int:" + i)   // i is an Integer
      *         .when(String.class).then(s -> "str:" + s.length())
      *         .otherwise(x -> "other:" + x);
      * }
+     * It is also the entry point for type-guarded cases, where the instance
+     * method {@link Builder#when(Class)} infers the case type from its
+     * argument.
      *
      * @param <T> the type of the input
      * @param <R> the type of the result

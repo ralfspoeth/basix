@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.5.2
+    version:    1.5.4
 ```
 
 You'll need Java version 25 or later to utilize this library.
@@ -492,7 +492,8 @@ higher-order APIs directly. Classifying tokens by regular expressions and
 grouping in a single step:
 
 ```java
-var tokenType = Switch.<String, String>when(s -> s.matches("\\d+")).thenValue("number")
+var tokenType = Switch.<String, String>builder()
+        .when(s -> s.matches("\\d+")).thenValue("number")
         .when(s -> s.matches("[a-zA-Z_]\\w*")).thenValue("identifier")
         .when(Set.of("+", "-", "*", "/")::contains).thenValue("operator")
         .otherwiseValue("unknown");
@@ -504,6 +505,32 @@ A modern `switch` can express such guards (`case String s when
 s.matches(...)`), but the expression itself cannot be stored in a field,
 passed to `groupingBy`, or composed via `andThen` — it needs a wrapping
 lambda at every use site, and its cases remain compile-time constants.
+
+Guarded patterns also expose a degenerate case of `switch` itself:
+pattern matching earns its keep when the *type* varies per case. When
+every case matches the same type and only the guards differ — mapping
+XML DOM elements onto a sealed hierarchy of data carriers, say — the
+type pattern is pure ceremony, repeated in every arm:
+
+```java
+Data data = switch (element) {
+    case Element e when "person".equals(e.getTagName()) -> new Person(e);
+    case Element e when "address".equals(e.getTagName()) -> new Address(e);
+    case Element e -> new Unknown(e.getTagName());
+};
+```
+
+Every arm restates what never changes; only the guard and the result
+carry meaning. A `switch` in which every case begins identically is an
+if-else chain in disguise, and as a `Switch` the same dispatch is all
+signal:
+
+```java
+var mapper = Switch.<Element, Data>builder()
+        .when(e -> "person".equals(e.getTagName())).then(Person::new)
+        .when(e -> "address".equals(e.getTagName())).then(Address::new)
+        .otherwise(e -> new Unknown(e.getTagName()));
+```
 
 Type-guarded cases narrow the argument like type patterns do
 (`case Integer i -> ...`), see `Builder.when(Class)`:
