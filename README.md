@@ -461,6 +461,60 @@ and considering that the extraction function may be defined once and then reused
 we may have more readable code in the end.
 But I admit it's a matter of taste...
 
+## Switch
+
+`Switch` reifies a `switch` expression with `when` clauses as an ordinary,
+immutable `Function`. For a fixed, hardcoded list of cases the language
+construct is usually the better choice — `Switch` earns its place where
+`switch` cannot go: when the cases are *data*.
+
+Consider discount rules that are configured rather than compiled — loaded
+from a database, reordered by priority, enabled per tenant:
+
+```java
+record Order(BigDecimal total, boolean firstOrder, String loyaltyLevel) {}
+
+// assembled at runtime, e.g. from configuration, in priority order
+var rules = List.of(
+        Case.of(Order::firstOrder, _ -> new BigDecimal("0.15")),
+        Case.of((Order o) -> o.total().compareTo(new BigDecimal(500)) > 0, _ -> new BigDecimal("0.10")),
+        Case.of((Order o) -> "gold".equals(o.loyaltyLevel()), _ -> new BigDecimal("0.05"))
+);
+var discount = new Switch<>(rules, _ -> BigDecimal.ZERO);
+```
+
+No `switch` expression can be built from a `List` at runtime; the
+hand-written alternative is a loop over predicate/function pairs — which
+is exactly what `Switch` is, written once.
+
+Second, being a `Function`, a `Switch` drops into stream pipelines and
+higher-order APIs directly. Classifying tokens by regular expressions and
+grouping in a single step:
+
+```java
+var tokenType = Switch.<String, String>when(s -> s.matches("\\d+")).thenValue("number")
+        .when(s -> s.matches("[a-zA-Z_]\\w*")).thenValue("identifier")
+        .when(Set.of("+", "-", "*", "/")::contains).thenValue("operator")
+        .otherwiseValue("unknown");
+
+var groups = tokens.stream().collect(Collectors.groupingBy(tokenType));
+```
+
+A modern `switch` can express such guards (`case String s when
+s.matches(...)`), but the expression itself cannot be stored in a field,
+passed to `groupingBy`, or composed via `andThen` — it needs a wrapping
+lambda at every use site, and its cases remain compile-time constants.
+
+Type-guarded cases narrow the argument like type patterns do
+(`case Integer i -> ...`), see `Builder.when(Class)`:
+
+```java
+var describe = Switch.<Object, String>builder()
+        .when(Integer.class).then(i -> "int:" + i)
+        .when(String.class).then(s -> "str:" + s.length())
+        .otherwise(x -> "other:" + x);
+```
+
 ## Gatherers
 
 Gatherers are enhancement to stream processors allowing for much 

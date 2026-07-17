@@ -3,6 +3,7 @@ package io.github.ralfspoeth.basix.fn;
 import io.github.ralfspoeth.basix.fn.Switch.Case;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -139,6 +140,67 @@ class SwitchTest {
                 () -> assertEquals("negative", f.apply(-1)),
                 () -> assertEquals("zero", f.apply(0)),
                 () -> assertEquals("positive", f.apply(1))
+        );
+    }
+
+    @Test
+    void testThenValueAndOtherwiseValue() {
+        var f = Switch.<Integer, String>when(i -> i == 0).thenValue("zero")
+                .when(i -> i > 0, _ -> "positive")
+                .otherwiseValue("negative");
+        assertAll(
+                () -> assertEquals("zero", f.apply(0)),
+                () -> assertEquals("positive", f.apply(3)),
+                () -> assertEquals("negative", f.apply(-3))
+        );
+    }
+
+    @Test
+    void testTypeGuardedCasesNarrow() {
+        // the functions receive the already-cast value,
+        // mirroring case Integer i -> ... type patterns
+        var f = Switch.<Object, String>builder()
+                .when(Integer.class).then(i -> "int:" + (i + 1))
+                .when(String.class).then(s -> "str:" + s.length())
+                .when(Long.class).thenValue("long")
+                .otherwise(x -> "other:" + x);
+        assertAll(
+                () -> assertEquals("int:42", f.apply(41)),
+                () -> assertEquals("str:3", f.apply("abc")),
+                () -> assertEquals("long", f.apply(5L)),
+                () -> assertEquals("other:2.5", f.apply(2.5d))
+        );
+    }
+
+    @Test
+    void testTypeGuardNulls() {
+        assertAll(
+                () -> assertThrows(NullPointerException.class,
+                        () -> Switch.<Object, String>builder().when((Class<Integer>) null)),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Switch.<Object, String>builder().when(Integer.class).then(null))
+        );
+    }
+
+    @Test
+    void testRulesAssembledAtRuntime() {
+        // the README use case: cases as data — impossible with a switch
+        // expression, whose cases are compile-time constants
+        record Order(BigDecimal total, boolean firstOrder, String loyaltyLevel) {}
+        // e.g. loaded from configuration, in priority order
+        var rules = List.of(
+                Case.of(Order::firstOrder, _ -> new BigDecimal("0.15")),
+                Case.of((Order o) -> o.total().compareTo(new BigDecimal(500)) > 0, _ -> new BigDecimal("0.10")),
+                Case.of((Order o) -> "gold".equals(o.loyaltyLevel()), _ -> new BigDecimal("0.05"))
+        );
+        var discount = new Switch<>(rules, _ -> BigDecimal.ZERO);
+        assertAll(
+                // first order wins over all other rules
+                () -> assertEquals(new BigDecimal("0.15"), discount.apply(new Order(new BigDecimal(1000), true, "gold"))),
+                // large total wins over loyalty
+                () -> assertEquals(new BigDecimal("0.10"), discount.apply(new Order(new BigDecimal(1000), false, "gold"))),
+                () -> assertEquals(new BigDecimal("0.05"), discount.apply(new Order(new BigDecimal(100), false, "gold"))),
+                () -> assertEquals(BigDecimal.ZERO, discount.apply(new Order(new BigDecimal(100), false, "none")))
         );
     }
 
