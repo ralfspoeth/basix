@@ -7,7 +7,7 @@
         <version>2.1.0</version>
     </parent>
     <artifactId>basix</artifactId>
-    <version>1.5.5-SNAPSHOT</version>
+    <version>1.5.5</version>
     <packaging>jar</packaging>
     <url>https://github.com/ralfspoeth/basix</url>
     <properties>
@@ -24,7 +24,7 @@
     <scm>
         <url>scm:git:https://github.com/ralfspoeth/basix</url>
         <developerConnection>scm:git:https://github.com/ralfspoeth/basix.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>basix-1.5.5</tag>
     </scm>
     <licenses>
         <license>
