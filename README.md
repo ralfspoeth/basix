@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.5.2
+    version:    1.5.4
 ```
 
 You'll need Java version 25 or later to utilize this library.
@@ -71,8 +71,8 @@ list of guarded cases plus a default function — a `switch` expression with
 `when` clauses, reified as a composable, immutable function object:
 
 ```java
-var f = Switch.<Integer, String>when(i -> i == 0, _ -> "none")
-        .when(i -> i == 1, _ -> "one")
+var f = Switch.<Integer, String>when(i -> i == 0).then(_ -> "none")
+        .when(i -> i == 1).then(_ -> "one")
         .otherwise(_ -> "many");
 f.apply(0); // "none"
 f.apply(7); // "many"
@@ -103,6 +103,22 @@ specialization — a subclass gives a rule set a domain name by fixing the
 cases and the default function through the constructor — but every
 `Switch` now reliably dispatches first-match-wins; decoration belongs in
 `andThen`/`compose` rather than in an override.
+
+Version 1.5.2 adds a two-step spelling for the cases of a `Switch`:
+`when(predicate).then(function)` splits a case into its guard and its
+result, reading even closer to the construct it mimics; the compact
+`when(predicate, function)` remains available and the two forms may be
+mixed freely within one chain:
+
+```java
+var f = Switch.<Integer, String>when(i -> i < 0, _ -> "negative")
+        .when(i -> i > 0).then(_ -> "positive")
+        .otherwise(_ -> "zero");
+```
+
+The intermediate stub returned by `when(predicate)` holds just the guard;
+`then` completes the case and returns the builder. As before, only
+`otherwise` produces the function. The change is purely additive.
 
 # Minimal Stack and Queue Implementations
 
@@ -444,6 +460,87 @@ and considering that the extraction function may be defined once and then reused
 ```
 we may have more readable code in the end.
 But I admit it's a matter of taste...
+
+## Switch
+
+`Switch` reifies a `switch` expression with `when` clauses as an ordinary,
+immutable `Function`. For a fixed, hardcoded list of cases the language
+construct is usually the better choice — `Switch` earns its place where
+`switch` cannot go: when the cases are *data*.
+
+Consider discount rules that are configured rather than compiled — loaded
+from a database, reordered by priority, enabled per tenant:
+
+```java
+record Order(BigDecimal total, boolean firstOrder, String loyaltyLevel) {}
+
+// assembled at runtime, e.g. from configuration, in priority order
+var rules = List.of(
+        Case.of(Order::firstOrder, _ -> new BigDecimal("0.15")),
+        Case.of((Order o) -> o.total().compareTo(new BigDecimal(500)) > 0, _ -> new BigDecimal("0.10")),
+        Case.of((Order o) -> "gold".equals(o.loyaltyLevel()), _ -> new BigDecimal("0.05"))
+);
+var discount = new Switch<>(rules, _ -> BigDecimal.ZERO);
+```
+
+No `switch` expression can be built from a `List` at runtime; the
+hand-written alternative is a loop over predicate/function pairs — which
+is exactly what `Switch` is, written once.
+
+Second, being a `Function`, a `Switch` drops into stream pipelines and
+higher-order APIs directly. Classifying tokens by regular expressions and
+grouping in a single step:
+
+```java
+var tokenType = Switch.<String, String>builder()
+        .when(s -> s.matches("\\d+")).thenValue("number")
+        .when(s -> s.matches("[a-zA-Z_]\\w*")).thenValue("identifier")
+        .when(Set.of("+", "-", "*", "/")::contains).thenValue("operator")
+        .otherwiseValue("unknown");
+
+var groups = tokens.stream().collect(Collectors.groupingBy(tokenType));
+```
+
+A modern `switch` can express such guards (`case String s when
+s.matches(...)`), but the expression itself cannot be stored in a field,
+passed to `groupingBy`, or composed via `andThen` — it needs a wrapping
+lambda at every use site, and its cases remain compile-time constants.
+
+Guarded patterns also expose a degenerate case of `switch` itself:
+pattern matching earns its keep when the *type* varies per case. When
+every case matches the same type and only the guards differ — mapping
+XML DOM elements onto a sealed hierarchy of data carriers, say — the
+type pattern is pure ceremony, repeated in every arm:
+
+```java
+Data data = switch (element) {
+    case Element e when "person".equals(e.getTagName()) -> new Person(e);
+    case Element e when "address".equals(e.getTagName()) -> new Address(e);
+    case Element e -> new Unknown(e.getTagName());
+};
+```
+
+Every arm restates what never changes; only the guard and the result
+carry meaning. A `switch` in which every case begins identically is an
+if-else chain in disguise, and as a `Switch` the same dispatch is all
+signal:
+
+```java
+var mapper = Switch.<Element, Data>builder()
+        .when(e -> "person".equals(e.getTagName())).then(Person::new)
+        .when(e -> "address".equals(e.getTagName())).then(Address::new)
+        .otherwise(e -> new Unknown(e.getTagName()));
+```
+
+Type-guarded cases narrow the argument like type patterns do
+(`case Integer i -> ...`), see `Builder.when(Class)`:
+
+```java
+var describe = Switch.<Object, String>builder()
+        .when(Integer.class).then(i -> "int:" + i)
+        .when(String.class).then(s -> "str:" + s.length())
+        .otherwise(x -> "other:" + x);
+```
 
 ## Gatherers
 
