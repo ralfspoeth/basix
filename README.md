@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.5.5
+    version:    1.5.6
 ```
 
 You'll need Java version 25 or later to utilize this library.
@@ -119,6 +119,9 @@ var f = Switch.<Integer, String>when(i -> i < 0, _ -> "negative")
 The intermediate stub returned by `when(predicate)` holds just the guard;
 `then` completes the case and returns the builder. As before, only
 `otherwise` produces the function. The change is purely additive.
+
+Version 1.5.3 through 1.5.6 rework the pom to make the handling better,
+and are just internal improvements.
 
 # Minimal Stack and Queue Implementations
 
