@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.5.6
+    version:    1.6.0
 ```
 
 You'll need Java version 25 or later to utilize this library.
@@ -122,6 +122,10 @@ The intermediate stub returned by `when(predicate)` holds just the guard;
 
 Version 1.5.3 through 1.5.6 rework the pom to make the handling better,
 and are just internal improvements.
+
+Version 1.6.0 adds a new Gatherer `present(Function<?, Optional<?>)` 
+which may be used with functions returning optional return values
+in stream pipelines. (It has been smuggled into 1.5.7 unintentionally).
 
 # Minimal Stack and Queue Implementations
 
