@@ -2,10 +2,7 @@ package io.github.ralfspoeth.basix.fn;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -218,6 +215,21 @@ class MoreGatherersTest {
                         List.of(1, 91, 2, 3),
                         Stream.of(1, 2, 3).gather(interleaveAppendRest(List.of(91))).toList()
                 )
+        );
+    }
+
+    @Test
+    void testPresent() {
+        // given
+        var elems = List.of(1, 2, "Three", 4, 5, 6, "Seven", 8, 9, 10);
+        // when
+        var result = elems.stream().gather(MoreGatherers.present(
+                x -> x instanceof String s?Optional.of(s):Optional.empty())
+        ).toList();
+        // then
+        assertAll(
+                () -> assertEquals("Three", result.getFirst()),
+                () -> assertEquals("Seven", result.getLast())
         );
     }
 }

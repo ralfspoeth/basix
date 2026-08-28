@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
 import java.util.stream.Gatherer;
@@ -166,7 +167,7 @@ public final class MoreGatherers {
                         return false;
                     } else {
                         var current = state.get();
-                        if (current==null || acceptComparisonResult.test(comparator.compare(element, current))) {
+                        if (current == null || acceptComparisonResult.test(comparator.compare(element, current))) {
                             state.set(element);
                             return downstream.push(element);
                         } else {
@@ -377,7 +378,7 @@ public final class MoreGatherers {
      * assert result.size()==6;
      * assert result.get(0)==1 && result.get(2)==2 && result.get(4)==3;
      *}
-     *
+     * <p>
      * Note that the generated item is also pushed after the <em>last</em> upstream
      * element; if you are looking for separator semantics — an item <em>between</em>
      * any two consecutive elements only — use {@link #intersperse(Object)} instead.
@@ -543,7 +544,39 @@ public final class MoreGatherers {
         return down;
     }
 
-    //
+    /**
+     * Returns a {@code Gatherer} that applies the given function to each element and pushes the
+     * contained value downstream whenever the resulting {@code Optional} is present. Elements for
+     * which the function returns an empty {@code Optional} are discarded.
+     *
+     * <p>This combines mapping and filtering into a single step, which is convenient for operations
+     * whose result may be absent, such as parsing or lookups:
+     * <p>
+     * {@snippet :
+     * var _ = Stream.of("1", "two", "3")
+     *       .gather(present(Parsers::tryParseInt))
+     *       .toList(); // [1, 3]
+     *}
+     *
+     * <p>The returned gatherer is stateless and its integrator is greedy: every element is consumed
+     * and handled independently, in encounter order, so the gatherer can be used with parallel
+     * streams and does not prevent short-circuiting downstream.
+     *
+     * @param f   the function applied to each element; must not be {@code null} and must not
+     *            return {@code null}
+     * @param <T> the type of the input elements
+     * @param <R> the type of the elements pushed downstream
+     * @return a stateless {@code Gatherer} that maps and filters in one step
+     */
+    public static <T, R> Gatherer<T, ?, R> present(Function<? super @Nullable T, Optional<? extends R>> f) {
+        return Gatherer.of(
+                Gatherer.Integrator.ofGreedy(
+                        (_, t, d) -> f.apply(t).map(d::push).orElse(true)
+                )
+        );
+    }
+
+    // helper class used in continuous gatherers
     private static class ContCollection<T> extends AbstractSequentialList<T> {
 
         private final Comparator<? super T> comparator;
