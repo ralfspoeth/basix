@@ -2,9 +2,11 @@ package io.github.ralfspoeth.basix.fn;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.SequencedCollection;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * A {@link Function} composed of an ordered list of guarded {@link Case}s
@@ -23,7 +25,7 @@ import java.util.function.Predicate;
  * f.apply(7); // "many"
  * }
  * In target-typed positions such as {@link java.util.stream.Stream#map(Function) Stream.map}
- * the {@linkplain #Switch(List, Function) constructor} may be preferable
+ * the {@linkplain #Switch(SequencedCollection, Function) constructor} may be preferable
  * because the diamond operator infers the type arguments which the
  * fluent style above needs spelled out:
  * {@snippet :
@@ -57,8 +59,8 @@ public class Switch<T, R> implements Function<T, R> {
          * @throws NullPointerException if {@code when} or {@code then} is {@code null}
          */
         public Case {
-            Objects.requireNonNull(when);
-            Objects.requireNonNull(then);
+            requireNonNull(when);
+            requireNonNull(then);
         }
 
         /**
@@ -77,7 +79,7 @@ public class Switch<T, R> implements Function<T, R> {
         }
     }
 
-    private final List<Case<T, R>> cases;
+    private final SequencedCollection<Case<T, R>> cases;
     private final Function<T, R> defaultFunction;
 
     /**
@@ -89,7 +91,7 @@ public class Switch<T, R> implements Function<T, R> {
      * @param defaultFunction the function applied when no case matches; must not be {@code null}
      * @throws NullPointerException if any argument or element is {@code null}
      */
-    public Switch(List<Case<T, R>> cases,
+    public Switch(SequencedCollection<Case<T, R>> cases,
                   Function<? super T, ? extends R> defaultFunction)
     {
         this.cases = List.copyOf(cases);
@@ -183,7 +185,7 @@ public class Switch<T, R> implements Function<T, R> {
      */
     public static final class Builder<T, R> {
 
-        private final List<Case<T, R>> cases = new ArrayList<>();
+        private final SequencedCollection<Case<T, R>> cases = new ArrayList<>();
 
         // instantiated through Switch.when only
         private Builder() {
@@ -287,8 +289,8 @@ public class Switch<T, R> implements Function<T, R> {
             private final Function<? super T, ? extends U> narrow;
 
             private Stub(Predicate<? super T> guard, Function<? super T, ? extends U> narrow) {
-                this.guard = Objects.requireNonNull(guard);
-                this.narrow = Objects.requireNonNull(narrow);
+                this.guard = requireNonNull(guard);
+                this.narrow = requireNonNull(narrow);
             }
 
             /**
@@ -301,7 +303,7 @@ public class Switch<T, R> implements Function<T, R> {
              * @throws NullPointerException if {@code then} is {@code null}
              */
             public Builder<T, R> then(Function<? super U, ? extends R> then) {
-                Objects.requireNonNull(then);
+                requireNonNull(then);
                 cases.add(new Case<>(guard::test, x -> then.apply(narrow.apply(x))));
                 return Builder.this;
             }
