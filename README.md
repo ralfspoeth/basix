@@ -11,7 +11,7 @@ work:
 ```
     groupId:    io.github.ralfspoeth
     artifactId: basix
-    version:    1.6.0
+    version:    1.6.1
 ```
 
 You'll need Java version 25 or later to utilize this library.
@@ -126,6 +126,12 @@ and are just internal improvements.
 Version 1.6.0 adds a new Gatherer `present(Function<?, Optional<?>)` 
 which may be used with functions returning optional return values
 in stream pipelines. (It has been smuggled into 1.5.7 unintentionally).
+
+Version 1.6.1 widens the `Switch` constructor from `List` to
+`SequencedCollection`, so any ordered collection of cases — a `Deque`, a
+`LinkedHashSet` — can be passed directly. `junit-jupiter-api` is now
+declared with `test` scope; 1.6.0 published it as a compile dependency
+by mistake. The parent is `plumbum` 3.0.6.
 
 # Minimal Stack and Queue Implementations
 
@@ -288,7 +294,7 @@ collection types:
     assert !Functions.contentsEquals(a, List.of(1, 2, 3, 3)); // counts differ
 ```
 Element identity uses `equals` / `hashCode`; the implementation is `O(n)`
-on average using a single `HashMap` pass.
+on average using a single `HashMap`.
 
 ## Indexed and Labeled
 

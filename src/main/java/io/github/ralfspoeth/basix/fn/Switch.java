@@ -84,9 +84,9 @@ public class Switch<T, R> implements Function<T, R> {
 
     /**
      * Creates a switching function from the given cases and default function.
-     * The list of cases is copied; later modifications to it have no effect.
+     * The collection of cases is copied; later modifications to it have no effect.
      *
-     * @param cases           the cases, evaluated in the given order; must not be
+     * @param cases           the cases, evaluated in encounter order; must not be
      *                        {@code null} nor contain {@code null} elements, may be empty
      * @param defaultFunction the function applied when no case matches; must not be {@code null}
      * @throws NullPointerException if any argument or element is {@code null}
